@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Studio — Domain Glossary</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400&display=swap');
+
+    :root {
+      --color-bg: #fffcf7;
+      --color-text: #2c2c2c;
+      --color-muted: #6b6b6b;
+      --color-accent: #d64000;
+      --color-border: #e0dcd4;
+      --color-term-bg: #f5f0e8;
+      --color-avoid-bg: #fdf0ec;
+      --color-section: #1a1a1a;
+      --font-serif: 'Source Serif 4', Georgia, serif;
+      --font-sans: 'Source Sans 3', system-ui, sans-serif;
+      --font-mono: 'Source Code Pro', monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #1a1a1a;
+        --color-text: #e0dcd4;
+        --color-muted: #9a9a9a;
+        --color-accent: #ff6b35;
+        --color-border: #3a3a3a;
+        --color-term-bg: #252520;
+        --color-avoid-bg: #2a1f1a;
+        --color-section: #f0ece4;
+      }
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-serif);
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--color-text);
+      background: var(--color-bg);
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem;
+    }
+
+    h1 {
+      font-family: var(--font-sans);
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: var(--color-section);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-family: var(--font-sans);
+      color: var(--color-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 1.5rem;
+    }
+
+    h2 {
+      font-family: var(--font-sans);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .term-block {
+      background: var(--color-term-bg);
+      border-left: 3px solid var(--color-accent);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1rem;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .term-name {
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 1.05rem;
+      color: var(--color-section);
+    }
+
+    .term-def {
+      margin-top: 0.3rem;
+      font-size: 0.95rem;
+    }
+
+    .term-avoid {
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--color-muted);
+      background: var(--color-avoid-bg);
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 3px;
+      margin-top: 0.4rem;
+    }
+
+    .term-avoid::before {
+      content: "✗ Avoid: ";
+      font-weight: 600;
+    }
+
+    .flagged {
+      border-left-color: var(--color-muted);
+      opacity: 0.85;
+    }
+
+    .flagged .term-name::after {
+      content: " — not in v1";
+      font-weight: 400;
+      font-size: 0.82rem;
+      color: var(--color-muted);
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--color-border);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      color: var(--color-muted);
+    }
+
+    footer a { color: var(--color-accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media print {
+      body { max-width: 100%; padding: 1rem; font-size: 11pt; }
+      .term-block { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Live Studio — Domain Glossary</h1>
+  <p class="subtitle">The canonical vocabulary for Live Studio v1. Use these terms in code, docs, and conversation. Source: <a href="file:///Users/riza/Documents/inilive/CONTEXT.md">CONTEXT.md</a></p>
+
+  <h2>People &amp; Identity</h2>
+
+  <div class="term-block">
+    <div class="term-name">Host</div>
+    <div class="term-def">The person who owns a Room, joins with their own camera and microphone, invites Guests, controls what goes live, removes Guests, and starts or stops the broadcast.</div>
+    <div class="term-avoid">Author, creator, room owner</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Account</div>
+    <div class="term-def">A sign-in identity required for a Host to create and return to Rooms. Guests do not need Accounts in v1.</div>
+    <div class="term-avoid">User profile, member, workspace</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Guest</div>
+    <div class="term-def">An invited contributor in a Room who can share their own camera and microphone. Guests do not control invitations, broadcast state, or other participants. A Guest can be removed, force-muted, or forced camera-off by the Host.</div>
+    <div class="term-avoid">Participant, speaker, attendee</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Display Name</div>
+    <div class="term-def">The name a person types before entering a Room. Appears inside the Room and in the Composed Room Feed. Limited to 50 characters, plain text.</div>
+    <div class="term-avoid">Username, profile name, handle</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Audience</div>
+    <div class="term-def">People who watch the broadcast outside the Room on YouTube. The Audience is not part of the Room and does not join as Guests.</div>
+    <div class="term-avoid">Viewer, attendee, participant</div>
+  </div>
+
+  <h2>The Room</h2>
+
+  <div class="term-block">
+    <div class="term-name">Room</div>
+    <div class="term-def">A reusable private live space created by one Host. Up to three Guests can be invited. While Broadcasting, everyone in the Room is visible to the Audience.</div>
+    <div class="term-avoid">Studio, meeting, session</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Room Title</div>
+    <div class="term-def">A Host-facing name for a reusable Room. Helps the Host manage Rooms. Not part of the Composed Room Feed in v1.</div>
+    <div class="term-avoid">Show title, event name, stream title</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Room Full</div>
+    <div class="term-def">The state shown when an invited person tries to enter a Room that already has the Host and three Guests. No waiting queue in v1.</div>
+    <div class="term-avoid">Waiting room, queue, overflow</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Guest Invite</div>
+    <div class="term-def">A hard-to-guess link (≥128-bit URL-safe token) created by the Host that grants a Guest entry into a Room. Can be revoked or regenerated.</div>
+    <div class="term-avoid">Meeting link, access code, participant URL</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Join Check</div>
+    <div class="term-def">The pre-entry step: type Display Name, grant camera/mic permissions, choose devices, set initial state, preview yourself.</div>
+    <div class="term-avoid">Lobby, setup screen, waiting room</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Room Chat</div>
+    <div class="term-def">Private text conversation between Host and Guests. Not visible to the Audience. Not persisted in v1.</div>
+    <div class="term-avoid">Audience chat, comments, messages</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Backstage</div>
+    <div class="term-def">The state of a Room where participants can see and hear each other, but the Audience cannot watch. Default state; a Room returns to Backstage when a Broadcast ends.</div>
+    <div class="term-avoid">Preview, waiting room, pre-live</div>
+  </div>
+
+  <h2>Broadcasting</h2>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast</div>
+    <div class="term-def">One live run of a reusable Room sent to one Broadcast Destination. A Room can have many Broadcasts. Each uses its own ephemeral stream credentials.</div>
+    <div class="term-avoid">Stream, event, session</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcasting</div>
+    <div class="term-def">The Room state with an active Broadcast: everyone in the Room is visible to the Audience through a Broadcast Destination.</div>
+    <div class="term-avoid">Live, streaming, published</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast State</div>
+    <div class="term-def">Room-visible state: Backstage → Countdown → Broadcasting → Ended or Failed. Visible to everyone in the Room.</div>
+    <div class="term-avoid">Room state, live status, stream state</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast Countdown</div>
+    <div class="term-def">A short (5-second) countdown shown to Host and Guests before Broadcasting starts. Host can cancel before it completes. Added in Milestone 3.</div>
+    <div class="term-avoid">Timer, pre-roll, slate</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast Health</div>
+    <div class="term-def">Host-visible operational condition: connecting, broadcasting, degraded, failed, or ended. Guests see only Broadcast State, not health details.</div>
+    <div class="term-avoid">Status, diagnostics, stream state</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast Destination</div>
+    <div class="term-def">An external platform receiving the Composed Room Feed. V1 supports YouTube, keeping the concept compatible with RTMP destinations.</div>
+    <div class="term-avoid">Channel, output, stream target</div>
+  </div>
+
+  <h2>Media &amp; Composition</h2>
+
+  <div class="term-block">
+    <div class="term-name">Composed Room Feed</div>
+    <div class="term-def">A single audio/video feed of everyone in the Room arranged as one broadcast output. Targets 720p at 30fps. Includes participant name labels and camera-off placeholders.</div>
+    <div class="term-avoid">Separate participant feeds, individual sources, raw tracks</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast Preview</div>
+    <div class="term-def">The Room-visible preview of the Composed Room Feed. While Backstage: shows what would go live. While Broadcasting: shows what is being sent. Host can toggle; Guests always see it during Broadcasting.</div>
+    <div class="term-avoid">Program monitor, output preview, canvas preview</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Screen Share</div>
+    <div class="term-def">A shared display, window, or browser tab contributed by the Host. One active at a time. When active, it becomes the primary visual in the Composed Room Feed with participant cameras as smaller tiles.</div>
+    <div class="term-avoid">Presentation, slides, desktop source</div>
+  </div>
+
+  <div class="term-block">
+    <div class="term-name">Broadcast Bridge</div>
+    <div class="term-def">Server-side service carrying the Composed Room Feed to the Broadcast Destination. Implemented with GStreamer (WHIP ingest → H.264/AAC → RTMP sink). Runs as a separate Podman Compose service.</div>
+    <div class="term-avoid">OBS, stream client, relay</div>
+  </div>
+
+  <h2>Technical Terms</h2>
+
+  <div class="term-block">
+    <div class="term-name">Supported Browser</div>
+    <div class="term-def">Chromium-based browser (Chrome or Edge) for Hosts. Chrome on Android for mobile Guests. iOS Safari is out of scope for v1.</div>
+    <div class="term-avoid">Safari, Firefox, unsupported browser</div>
+  </div>
+
+  <h2 style="color: var(--color-muted);">Flagged — Not In V1</h2>
+
+  <div class="term-block flagged">
+    <div class="term-name">Stage</div>
+    <div class="term-def">Host-selected subset of participants visible to Audience. In v1, everyone in the Room is visible.</div>
+  </div>
+
+  <div class="term-block flagged">
+    <div class="term-name">Producer-only Host</div>
+    <div class="term-def">A Host who controls but is not visible. In v1, a Host is always a visible participant.</div>
+  </div>
+
+  <div class="term-block flagged">
+    <div class="term-name">Guest Screen Share</div>
+    <div class="term-def">Only the Host can Screen Share in v1.</div>
+  </div>
+
+  <div class="term-block flagged">
+    <div class="term-name">Brand Kit</div>
+    <div class="term-def">Logos, banners, custom backgrounds, themes, lower-thirds. Outside v1 scope.</div>
+  </div>
+
+  <div class="term-block flagged">
+    <div class="term-name">Scheduled Broadcast</div>
+    <div class="term-def">Host manually starts a Broadcast in v1. No scheduling.</div>
+  </div>
+
+  <footer>
+    <p>Reference document for <a href="file:///Users/riza/Documents/inilive/lessons/">Live Studio lessons</a>. Sourced from <a href="file:///Users/riza/Documents/inilive/CONTEXT.md">CONTEXT.md</a> and <a href="file:///Users/riza/Documents/inilive/docs/plan.md">plan.md</a>.</p>
+    <p>Last updated: June 2026</p>
+  </footer>
+
+</body>
+</html>
