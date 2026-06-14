@@ -1,0 +1,3 @@
+# Spike inLive Before Other Managed SFU Providers
+
+The first managed SFU spike should try inLive before comparing a broad provider set, because it is already under consideration and appears aligned with multi-input WebRTC rooms. Time-box the spike to 3 working days. Success requires: multi-participant room API, screen-share support, per-participant access tokens, and node-compatible server SDK. If inLive does not meet all four within the time-box, switch to LiveKit Cloud without further forcing. Peer-to-peer mesh is only a temporary fallback (max 2 days) to unblock UI while evaluating managed SFU.
