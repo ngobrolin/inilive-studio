@@ -5,8 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: room-002 "Build Join Check with local media preview" in PLAN.org.
-- Current blocker: none for room-002. room-001 is passing.
+- Current highest-priority unfinished feature: room-003 "Add ephemeral Room presence" in PLAN.org.
+- Current blocker: none for room-003. room-002 is passing.
 
 * Session Log
 
@@ -319,3 +319,73 @@ Complete room-001 using TDD: promote prototype variant B into real authless Host
 *** Next best step
 
 Start room-002 Join Check with TDD: Display Name entry and local media preview before entering the Room.
+
+** Session 007
+:PROPERTIES:
+:SESSION_ID: 007
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete room-002 using TDD: Join Check with Display Name, local media preview, device selection, and error states.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting.
+- TDD cycle 1: Host navigates from entry to Join Check.
+- TDD cycle 2: Guest navigates from invite entry to Join Check.
+- TDD cycle 3: Display Name required before Enter Room.
+- TDD cycle 4: Display Name 50-character limit (Vitest + e2e).
+- TDD cycle 5: Local preview when camera and microphone granted.
+- TDD cycle 6: Initial camera and microphone mute toggles.
+- TDD cycle 7–9: Permission denied, no-device retry, and unsupported browser copy.
+- TDD cycle 10: Camera and microphone device selectors.
+- Updated PLAN.org room-002 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh: passed.
+  - Vitest: 4 tests passed (2 greet/demo + 2 display-name).
+  - Playwright: 14 tests passed (10 join-check + 3 room entry + 1 demo).
+- npm run check: 0 errors, 1 existing @types/node warning.
+
+*** Evidence captured
+
+- Host Join Check: /room/demo/join
+- Guest Join Check: /room/demo/invite/demo/join
+- E2E tests: src/routes/room/[roomId]/join-check.e2e.ts
+- Unit tests: src/lib/room/display-name.spec.ts
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- src/lib/room/JoinCheckPanel.svelte
+- src/lib/room/display-name.ts
+- src/lib/room/display-name.spec.ts
+- src/lib/room/join-check-media.ts
+- src/lib/room/entry-copy.ts
+- src/lib/room/RoomEntryPanel.svelte
+- src/routes/room/[roomId]/join/+page.svelte
+- src/routes/room/[roomId]/join/+page.server.ts
+- src/routes/room/[roomId]/invite/[token]/join/+page.svelte
+- src/routes/room/[roomId]/invite/[token]/join/+page.server.ts
+- src/routes/room/[roomId]/join-check.e2e.ts
+- src/routes/room/[roomId]/+page.svelte
+- src/routes/room/[roomId]/invite/[token]/+page.svelte
+- playwright.config.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Enter Room button is still a placeholder until room-003 ephemeral presence exists.
+- Device switching uses stream track replacement; manual browser verification recommended on multi-device setups.
+- Throwaway /prototype/room-entry route still exists until cleanup-001.
+
+*** Next best step
+
+Start room-003 ephemeral Room presence with TDD: one Host and up to three Guests with Display Names in Backstage.

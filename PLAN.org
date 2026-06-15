@@ -102,7 +102,7 @@ Create the first demoable Room prototype entry path. A Host can open an authless
 :TYPE: AFK
 :PRIORITY: 2
 :AREA: room
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: room-001
 :END:
 
@@ -112,12 +112,12 @@ Add Join Check before a Host or Guest enters the Room. A person types a Display 
 
 *** Acceptance criteria
 
-- [ ] Join Check requires a Display Name before entering the Room.
-- [ ] Display Name is treated as plain text and limited to 50 characters.
-- [ ] Join Check requests camera and microphone access and shows a local preview when granted.
-- [ ] A person can choose initial microphone muted/unmuted state and camera on/off state.
-- [ ] Permission denied and no-device states show inline recovery or retry copy.
-- [ ] Unsupported browsers show a compatibility message before device prompts where detectable.
+- [X] Join Check requires a Display Name before entering the Room.
+- [X] Display Name is treated as plain text and limited to 50 characters.
+- [X] Join Check requests camera and microphone access and shows a local preview when granted.
+- [X] A person can choose initial microphone muted/unmuted state and camera on/off state.
+- [X] Permission denied and no-device states show inline recovery or retry copy.
+- [X] Unsupported browsers show a compatibility message before device prompts where detectable.
 
 *** Verification
 
@@ -129,7 +129,15 @@ Add Join Check before a Host or Guest enters the Room. A person types a Display 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Implemented Join Check via TDD vertical slices.
+  - Host Join Check URL: /room/[roomId]/join (example: /room/demo/join)
+  - Guest Join Check URL: /room/[roomId]/invite/[token]/join (example: /room/demo/invite/demo/join)
+  - Shared UI: ~/code/inilive-studio/src/lib/room/JoinCheckPanel.svelte
+  - Display Name validation: ~/code/inilive-studio/src/lib/room/display-name.ts
+  - Media helpers: ~/code/inilive-studio/src/lib/room/join-check-media.ts
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/join-check.e2e.ts (10 tests)
+  - Vitest unit: ~/code/inilive-studio/src/lib/room/display-name.spec.ts (2 tests)
+  - ./init.sh passed after implementation (Vitest 4, Playwright 14).
 
 *** Notes
 
