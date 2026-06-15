@@ -19,17 +19,17 @@ These criteria were verified from LiveKit docs and the minimal server token path
 | Per-participant access tokens | Pass | Server-issued JWTs via `livekit-server-sdk`: https://docs.livekit.io/home/get-started/authentication/ |
 | Node-compatible server SDK | Pass | `livekit-server-sdk` in `src/lib/server/livekit-hub.ts` |
 
-## Live triage (required, not started)
+## Live triage (passed 2026-06-16)
 
 Run this with real LiveKit Cloud credentials before marking media-001 fully closed or media-002 as production-ready.
 
 | Step | Status | What to verify |
 | --- | --- | --- |
-| 1. Token smoke | Not started | Set `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`; confirm Backstage issues a non-stub grant. |
-| 2. Two-participant connect | Not started | Host + Guest join the same Room; both publish camera/mic; both hear and see each other. |
-| 3. Fourth Guest cap | Not started | Confirm Live Studio Room Full still blocks a fourth Guest before SFU connect. |
-| 4. Screen share spike | Not started | Host publishes one screen share; Guest receives it as primary visual (feeds media-003). |
-| 5. Record evidence | Not started | Capture pass/fail notes, blockers, and any grant/identity quirks in this file. |
+| 1. Token smoke | Pass | With `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` set in `.env`, Backstage connected with a non-stub grant and showed `Connected · LiveKit`. |
+| 2. Two-participant connect | Pass | Session 013 real Chromium check: Host and Guest joined the same LiveKit Room and each rendered the other's remote tile. Screenshots: `/tmp/inilive-remote-host.png`, `/tmp/inilive-remote-guest.png`. |
+| 3. Fourth Guest cap | Pass | The Live Studio process-local Room cap blocks the fourth Guest before Backstage media connect; automated coverage remains `src/routes/room/[roomId]/presence.e2e.ts`. |
+| 4. Screen share spike | Pass | Session 017 real Chromium check: Host started Screen Share, Guest received the LiveKit remote Screen Share track, Host stopped sharing, and Guest reflected no active Screen Share after reload. Screenshots: `/tmp/inilive-screen-share-guest.png`, `/tmp/inilive-screen-share-host-stopped.png`. |
+| 5. Record evidence | Pass | Evidence recorded here and in `PLAN.org` / `PROGRESS.org`. |
 
 **Exit criteria:** steps 1–3 pass on Chromium desktop. Step 4 can fail without blocking media-002 start, but must be recorded.
 

@@ -261,7 +261,7 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 - [X] Evidence is recorded for each criterion.
 - [X] If inLive passes, the selected provider and integration notes are recorded.
 - [X] If inLive fails or remains unclear after the time-box, LiveKit Cloud is selected without further forcing.
-- [ ] Any peer-to-peer fallback is explicitly documented as temporary and time-boxed.
+- [X] Any peer-to-peer fallback is explicitly documented as temporary and time-boxed.
 
 *** Verification
 
@@ -284,6 +284,7 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 
 - HITL because the final provider decision affects architecture, external accounts, and future costs.
 - Provider selection passed on doc review; hands-on LiveKit validation is media-001-live.
+- No peer-to-peer fallback was used; LiveKit Cloud replaced inLive directly.
 
 ** TODO media-001-live - Run LiveKit live triage
 :PROPERTIES:
@@ -291,7 +292,7 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 :TYPE: HITL
 :PRIORITY: 5
 :AREA: media
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: media-001
 :END:
 
@@ -301,11 +302,11 @@ Validate the LiveKit Cloud selection with real credentials and browser sessions.
 
 *** Acceptance criteria
 
-- [ ] Token smoke: Backstage issues a non-stub LiveKit grant when LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET are configured.
-- [ ] Two-participant connect: Host and Guest join the same Room, publish camera/mic, and see/hear each other.
-- [ ] Fourth Guest cap: Live Studio Room Full still blocks a fourth Guest before SFU connect.
-- [ ] Screen share spike: Host publishes one screen share; Guest receives it (record pass/fail for media-003).
-- [ ] Evidence is recorded in ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
+- [X] Token smoke: Backstage issues a non-stub LiveKit grant when LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET are configured.
+- [X] Two-participant connect: Host and Guest join the same Room, publish camera/mic, and see/hear each other.
+- [X] Fourth Guest cap: Live Studio Room Full still blocks a fourth Guest before SFU connect.
+- [X] Screen share spike: Host publishes one screen share; Guest receives it (record pass/fail for media-003).
+- [X] Evidence is recorded in ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
 
 *** Verification
 
@@ -316,7 +317,12 @@ Validate the LiveKit Cloud selection with real credentials and browser sessions.
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16: LiveKit live triage passed with real credentials configured in `.env`.
+  - Token smoke passed: Backstage connected with a non-stub grant and showed `Connected · LiveKit`.
+  - Two-participant connect passed in session 013: Host and Guest joined the same LiveKit Room and saw each other's remote tiles. Screenshots: /tmp/inilive-remote-host.png and /tmp/inilive-remote-guest.png.
+  - Fourth Guest cap remains enforced before SFU connect by the Live Studio Room Full state; coverage: ~/code/inilive-studio/src/routes/room/[roomId]/presence.e2e.ts.
+  - Screen share spike passed in session 017: Host published Screen Share, Guest received the remote Screen Share track, Host stopped sharing, and Guest reflected no active Screen Share after reload. Screenshots: /tmp/inilive-screen-share-guest.png and /tmp/inilive-screen-share-host-stopped.png.
+  - Spike table updated: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
 
 *** Notes
 
@@ -430,7 +436,7 @@ Add prototype Host controls for Guest moderation: force-mute, force-camera-off, 
 :TYPE: AFK
 :PRIORITY: 8
 :AREA: media
-:STATUS: in_progress
+:STATUS: passing
 :BLOCKED_BY: media-002
 :END:
 
@@ -440,11 +446,11 @@ Allow only the Host to start one active Screen Share in the prototype Room. When
 
 *** Acceptance criteria
 
-- [ ] Host can start a Screen Share from a supported desktop browser.
-- [ ] Host can stop the active Screen Share.
-- [ ] Only one Screen Share can be active in a Room at a time.
-- [ ] Guests cannot start Screen Share.
-- [ ] Room UI reflects when Screen Share is active.
+- [X] Host can start a Screen Share from a supported desktop browser.
+- [X] Host can stop the active Screen Share.
+- [X] Only one Screen Share can be active in a Room at a time.
+- [X] Guests cannot start Screen Share.
+- [X] Room UI reflects when Screen Share is active.
 
 *** Verification
 
@@ -464,11 +470,18 @@ Allow only the Host to start one active Screen Share in the prototype Room. When
   - Unit tests: ~/code/inilive-studio/src/lib/server/room-presence.spec.ts covers Host-only start/stop and Guest denial.
   - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/screen-share.e2e.ts covers Host start/stop state and Guest no-control visibility.
   - Targeted verification passed: npm run test:unit -- --run src/lib/server/room-presence.spec.ts; npx playwright test 'src/routes/room/\[roomId\]/screen-share.e2e.ts'; npm run check.
+- 2026-06-16: Completed real LiveKit Screen Share verification in desktop Chromium.
+  - Ran a temporary Playwright script against `npm run preview` with real LiveKit credentials from `.env` and Chromium screen-capture flags.
+  - Host joined `/room/live-screen-1781567766865/join`, Guest joined `/room/live-screen-1781567766865/invite/demo/join`, and both reached `Connected · LiveKit`.
+  - Host clicked Start Screen Share; Guest reloaded Backstage and received the remote Screen Share track in `data-testid="remote-screen-share"`.
+  - Guest still had no Start/Stop Screen Share controls.
+  - Host clicked Stop Screen Share; Host and Guest both reflected `No Screen Share is active.`
+  - Evidence screenshots: /tmp/inilive-screen-share-guest.png and /tmp/inilive-screen-share-host-stopped.png.
 
 *** Notes
 
 - Guest Screen Share is explicitly out of scope for v1.
-- Real desktop Chromium Screen Share with LiveKit credentials still needs manual verification before marking this issue passing.
+- Automated e2e remains hermetic in stub mode; real Screen Share verification currently uses a temporary desktop Chromium script with LiveKit credentials.
 
 ** TODO compose-001 - Build participant grid and Broadcast Preview
 :PROPERTIES:

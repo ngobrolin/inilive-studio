@@ -5,8 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: media-003 "Add Host Screen Share" in PLAN.org.
-- Current HITL follow-up: media-001-live LiveKit live triage still needs evidence in docs/spikes/media-001-managed-sfu-choice.md.
+- Current highest-priority unfinished AFK feature: compose-002 "Produce Composed Room Feed with canvas captureStream" in PLAN.org.
+- Current HITL follow-up: none for Milestone 1; media-001-live passed with evidence in docs/spikes/media-001-managed-sfu-choice.md.
 
 * Session Log
 
@@ -1020,3 +1020,65 @@ Complete compose-001: add the Backstage participant grid and Broadcast Preview f
 *** Next best step
 
 Either finish media-003 with real LiveKit Screen Share verification, or if avoiding HITL/manual media work, prepare qa-001 only after compose-002 is unblocked and complete.
+
+** Session 017
+:PROPERTIES:
+:SESSION_ID: 017
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Complete media-003 by running real LiveKit Screen Share verification in desktop Chromium.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline passed.
+- Confirmed real LiveKit credentials are present in `.env` without exposing values.
+- Ran a temporary Playwright script against `npm run preview` with real LiveKit credentials and Chromium screen-capture flags.
+- Verified Host can start Screen Share, Guest receives the remote LiveKit Screen Share track, Guest cannot see Screen Share controls, Host can stop Screen Share, and Host/Guest UI returns to no active Screen Share.
+- Removed the temporary verification script after the run.
+- Updated docs/spikes/media-001-managed-sfu-choice.md live triage table to passing.
+- Updated PLAN.org media-001-live and media-003 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh: passed before live verification.
+  - Vitest: 24 tests passed.
+  - Playwright: 28 tests passed.
+- Real LiveKit Screen Share check: passed.
+  - Built the app with `npm run build`.
+  - Ran `npm run preview -- --host 127.0.0.1` with real LiveKit env.
+  - Temporary Playwright script launched desktop Chromium with fake media devices and screen-capture flags.
+  - Host and Guest both reached `Connected · LiveKit`.
+  - Guest received `data-testid="remote-screen-share"` after Host started Screen Share.
+
+*** Evidence captured
+
+- Live triage doc: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md
+- PLAN evidence: media-001-live and media-003 entries in PLAN.org
+- Real verification screenshots:
+  - /tmp/inilive-screen-share-guest.png
+  - /tmp/inilive-screen-share-host-stopped.png
+
+*** Commits
+
+- None yet this session.
+
+*** Files or artifacts updated
+
+- docs/spikes/media-001-managed-sfu-choice.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Automated e2e still verifies Screen Share state/UI in hermetic stub mode; real Screen Share media requires credentialed desktop Chromium verification.
+- The verification used Chromium screen-capture flags and fake media devices, not a human-selected macOS screen picker.
+- session-handoff.md and other pre-existing files remain not oxfmt-clean.
+- npm run check still has the missing node type definition warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Start compose-002: render the Composed Room Feed into a 720p canvas, expose captureStream, and measure the Milestone 1 fps gate.
