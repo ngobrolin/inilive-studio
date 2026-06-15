@@ -947,3 +947,76 @@ Start media-003: add Host-only Screen Share state, controls, and LiveKit browser
 *** Next best step
 
 Run real LiveKit Screen Share verification in desktop Chromium: Host starts Screen Share, Guest receives the Screen Share track, Host stops sharing, and the spike/PLAN evidence is updated so media-003 can be marked passing.
+
+** Session 016
+:PROPERTIES:
+:SESSION_ID: 016
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Complete compose-001: add the Backstage participant grid and Broadcast Preview foundation while leaving media-003 in progress.
+
+*** Completed
+
+- Chose compose-001 as the next AFK task because media-003 is already in_progress and compose-001 is unblocked by passing media-002.
+- Added a named Participant grid section to Backstage.
+- Added a Room-visible Broadcast Preview panel with Backstage preview and Not live state copy.
+- Broadcast Preview renders current visible Room participants with Display Name labels and camera-on/camera-off representation.
+- Kept canvas captureStream, fps measurement, WHIP output, and final screen-share-first composition out of scope for compose-002.
+- Updated PLAN.org compose-001 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before implementation: passed.
+  - Vitest: 24 tests passed.
+  - Playwright: 26 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts': failed first as expected, then passed after implementation.
+  - Playwright: 2 tests passed.
+- npm run check: passed with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- npm run lint: passed with 0 errors and 1 existing warning.
+  - Warning: src/lib/index.ts is effectively empty.
+- npm run fmt:check: failed because of existing formatting issues in older files and the new e2e file.
+- npx oxfmt 'src/routes/room/[roomId]/composition-preview.e2e.ts': formatted only the new e2e file.
+- npx oxfmt --check 'src/routes/room/[roomId]/composition-preview.e2e.ts': passed.
+- Adjacent Backstage e2e passed:
+  - npx playwright test presence, room-chat, moderation, screen-share, and composition-preview e2e files.
+  - Playwright: 11 tests passed.
+- Browser visual verification passed at 1280x720.
+  - Screenshot: /tmp/inilive-compose-001-browser.png
+  - Note: in-app browser media permissions were denied, so the visual pass used camera-on participants; the camera-off placeholder path is covered by automated Playwright.
+- ./init.sh after implementation and PLAN update: passed.
+  - Vitest: 24 tests passed.
+  - Playwright: 28 tests passed.
+
+*** Evidence captured
+
+- Backstage UI: src/lib/room/RoomPresencePanel.svelte
+- E2E tests: src/routes/room/[roomId]/composition-preview.e2e.ts
+- PLAN evidence: compose-001 in PLAN.org
+- Visual screenshot: /tmp/inilive-compose-001-browser.png
+
+*** Commits
+
+- Add Backstage broadcast preview
+
+*** Files or artifacts updated
+
+- src/lib/room/RoomPresencePanel.svelte
+- src/routes/room/[roomId]/composition-preview.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- media-003 remains in_progress and still needs real desktop Chromium Screen Share verification.
+- compose-002 remains blocked by compose-001 and media-003 until canvas captureStream and screen-share-first composition can be implemented.
+- session-handoff.md and other pre-existing files remain not oxfmt-clean.
+- npm run check still has the missing node type definition warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Either finish media-003 with real LiveKit Screen Share verification, or if avoiding HITL/manual media work, prepare qa-001 only after compose-002 is unblocked and complete.

@@ -476,7 +476,7 @@ Allow only the Host to start one active Screen Share in the prototype Room. When
 :TYPE: AFK
 :PRIORITY: 9
 :AREA: composition
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: media-002
 :END:
 
@@ -486,12 +486,12 @@ Create the prototype Room layout: participant grid as the primary collaboration 
 
 *** Acceptance criteria
 
-- [ ] Participant grid shows Host and Guests with Display Name labels.
-- [ ] Camera-off participants show neutral name-labeled placeholders.
-- [ ] Broadcast Preview is visible in the Room.
-- [ ] While Backstage, Broadcast Preview copy makes clear it is not live.
-- [ ] Host may hide their own Broadcast Preview panel if that control is in scope for the slice.
-- [ ] Guests always see Broadcast Preview while Broadcasting once Broadcast State exists in later milestones.
+- [X] Participant grid shows Host and Guests with Display Name labels.
+- [X] Camera-off participants show neutral name-labeled placeholders.
+- [X] Broadcast Preview is visible in the Room.
+- [X] While Backstage, Broadcast Preview copy makes clear it is not live.
+- [X] Host may hide their own Broadcast Preview panel if that control is in scope for the slice.
+- [X] Guests always see Broadcast Preview while Broadcasting once Broadcast State exists in later milestones.
 
 *** Verification
 
@@ -503,11 +503,20 @@ Create the prototype Room layout: participant grid as the primary collaboration 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16 06:38 WIB: Implemented the Backstage participant grid and Broadcast Preview foundation.
+  - Participant grid and preview UI: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/composition-preview.e2e.ts (2 tests)
+  - Browser visual evidence: /tmp/inilive-compose-001-browser.png showed the participant grid and Backstage Broadcast Preview at 1280x720.
+  - Targeted verification passed: npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts'
+  - Adjacent Backstage verification passed: npx playwright test presence, room-chat, moderation, screen-share, and composition-preview e2e files (11 tests).
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with 0 errors and the existing empty src/lib/index.ts warning.
+  - npx oxfmt --check for composition-preview.e2e.ts passed.
 
 *** Notes
 
 - This issue creates the UI foundation; canvas capture comes next.
+- Host hide-preview controls and Broadcast State behavior are deferred until a later Broadcast State slice exists.
 
 ** TODO compose-002 - Produce Composed Room Feed with canvas captureStream
 :PROPERTIES:

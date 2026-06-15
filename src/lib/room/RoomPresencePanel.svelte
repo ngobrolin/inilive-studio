@@ -19,6 +19,7 @@
 	);
 	const hosts = $derived(visibleParticipants.filter((participant) => participant.role === 'host'));
 	const guests = $derived(visibleParticipants.filter((participant) => participant.role === 'guest'));
+	const previewParticipants = $derived(visibleParticipants.slice(0, 4));
 	const activeParticipant = $derived(
 		presence.participants.find((participant) => participant.id === activeParticipantId),
 	);
@@ -135,89 +136,177 @@
 		</section>
 	{/if}
 
-	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-		<div class="grid items-start gap-4 md:grid-cols-2">
-			{#each visibleParticipants as participant (participant.id)}
-				<article class="overflow-hidden rounded-md border border-neutral-300 bg-white shadow-sm">
-					<div class="flex aspect-video items-center justify-center bg-neutral-950 text-white">
-						{#if participant.cameraEnabled}
-							<div class="text-center">
-								<p class="text-sm uppercase tracking-[0.18em] text-cyan-200">Camera on</p>
-								<p class="mt-2 text-2xl font-semibold">{participant.displayName}</p>
+	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
+		<section aria-labelledby="participant-grid-title" class="grid content-start gap-4">
+			<div>
+				<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+					Collaboration view
+				</p>
+				<h2 id="participant-grid-title" class="mt-1 text-2xl font-semibold">
+					Participant grid
+				</h2>
+			</div>
+
+			<div class="grid items-start gap-4 md:grid-cols-2" data-testid="participant-grid">
+				{#each visibleParticipants as participant (participant.id)}
+					<article class="overflow-hidden rounded-md border border-neutral-300 bg-white shadow-sm">
+						<div class="flex aspect-video items-center justify-center bg-neutral-950 text-white">
+							{#if participant.cameraEnabled}
+								<div class="text-center">
+									<p class="text-sm uppercase tracking-[0.18em] text-cyan-200">Camera on</p>
+									<p class="mt-2 text-2xl font-semibold">{participant.displayName}</p>
+								</div>
+							{:else}
+								<div class="text-center" data-testid="camera-off-placeholder">
+									<div
+										class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800 text-2xl font-semibold"
+									>
+										{participant.displayName.slice(0, 1).toUpperCase()}
+									</div>
+									<p class="mt-3 text-2xl font-semibold">{participant.displayName}</p>
+									<p class="mt-1 text-sm text-neutral-400">Camera off</p>
+								</div>
+							{/if}
+						</div>
+						<div class="flex items-center justify-between gap-3 p-4">
+							<div>
+								<p class="font-semibold">{participant.displayName}</p>
+								<p class="text-sm text-neutral-600">
+									{participant.role === 'host' ? 'Host' : 'Guest'}
+								</p>
+							</div>
+							<div class="grid justify-items-end gap-2">
+								<p
+									class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700"
+								>
+									{participant.microphoneEnabled ? 'Mic on' : 'Mic muted'}
+								</p>
+								{#if participant.hostMutedMicrophone}
+									<p
+										class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-950"
+									>
+										Host-muted
+									</p>
+								{/if}
+							</div>
+						</div>
+						{#if activeHost && participant.role === 'guest'}
+							<form
+								class="grid grid-cols-2 gap-2 border-t border-neutral-200 p-4"
+								method="POST"
+								action="?/moderate"
+							>
+								<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+								<input name="guestParticipantId" type="hidden" value={participant.id} />
+								<button
+									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									name="moderationAction"
+									type="submit"
+									value="force-mute"
+								>
+									Force mute {participant.displayName}
+								</button>
+								<button
+									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									name="moderationAction"
+									type="submit"
+									value="force-camera-off"
+								>
+									Force camera off {participant.displayName}
+								</button>
+								<button
+									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									name="moderationAction"
+									type="submit"
+									value="request-unmute"
+								>
+									Request unmute from {participant.displayName}
+								</button>
+								<button
+									class="rounded-md bg-rose-700 px-3 py-2 text-sm font-semibold text-white"
+									name="moderationAction"
+									type="submit"
+									value="remove"
+								>
+									Remove {participant.displayName}
+								</button>
+							</form>
+						{/if}
+					</article>
+				{/each}
+			</div>
+		</section>
+
+		<aside class="grid content-start gap-4">
+			<section
+				class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm"
+				data-testid="broadcast-preview"
+			>
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+							Backstage preview
+						</p>
+						<h2 class="mt-1 text-2xl font-semibold">Broadcast Preview</h2>
+					</div>
+					<p class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-950">
+						Not live
+					</p>
+				</div>
+				<div class="mt-4 overflow-hidden rounded-md bg-neutral-950 p-3 text-white">
+					<div class="aspect-video">
+						{#if presence.activeScreenShare}
+							<div class="flex h-full flex-col justify-between bg-cyan-950 p-4">
+								<div>
+									<p class="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">
+										Screen Share source
+									</p>
+									<p class="mt-1 text-lg font-semibold">
+										{presence.activeScreenShare.displayName}
+									</p>
+								</div>
+								<p class="text-xs text-cyan-100">
+									Screen Share becomes primary in the composed feed.
+								</p>
 							</div>
 						{:else}
-							<div class="text-center" data-testid="camera-off-placeholder">
-								<div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-800 text-2xl font-semibold">
-									{participant.displayName.slice(0, 1).toUpperCase()}
-								</div>
-								<p class="mt-3 text-2xl font-semibold">{participant.displayName}</p>
-								<p class="mt-1 text-sm text-neutral-400">Camera off</p>
+							<div class="grid h-full grid-cols-2 gap-2">
+								{#each previewParticipants as participant (participant.id)}
+									<div
+										class="flex min-h-0 flex-col justify-between rounded bg-neutral-800 p-2"
+									>
+										<div class="flex min-h-0 flex-1 items-center justify-center">
+											{#if participant.cameraEnabled}
+												<p class="text-xs font-semibold text-cyan-200">Camera on</p>
+											{:else}
+												<div class="text-center">
+													<div
+														class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 text-sm font-semibold"
+													>
+														{participant.displayName.slice(0, 1).toUpperCase()}
+													</div>
+													<p class="mt-1 text-[0.7rem] text-neutral-300">Camera off</p>
+												</div>
+											{/if}
+										</div>
+										<div class="mt-2 flex items-center justify-between gap-2 text-xs">
+											<p class="truncate font-semibold">{participant.displayName}</p>
+											<p class="shrink-0 text-neutral-300">
+												{participant.role === 'host' ? 'Host' : 'Guest'}
+											</p>
+										</div>
+									</div>
+								{/each}
 							</div>
 						{/if}
 					</div>
-					<div class="flex items-center justify-between gap-3 p-4">
-						<div>
-							<p class="font-semibold">{participant.displayName}</p>
-							<p class="text-sm text-neutral-600">{participant.role === 'host' ? 'Host' : 'Guest'}</p>
-						</div>
-						<div class="grid justify-items-end gap-2">
-							<p class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
-								{participant.microphoneEnabled ? 'Mic on' : 'Mic muted'}
-							</p>
-							{#if participant.hostMutedMicrophone}
-								<p class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-950">
-									Host-muted
-								</p>
-							{/if}
-						</div>
-					</div>
-					{#if activeHost && participant.role === 'guest'}
-						<form
-							class="grid grid-cols-2 gap-2 border-t border-neutral-200 p-4"
-							method="POST"
-							action="?/moderate"
-						>
-							<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-							<input name="guestParticipantId" type="hidden" value={participant.id} />
-							<button
-								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
-								name="moderationAction"
-								type="submit"
-								value="force-mute"
-							>
-								Force mute {participant.displayName}
-							</button>
-							<button
-								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
-								name="moderationAction"
-								type="submit"
-								value="force-camera-off"
-							>
-								Force camera off {participant.displayName}
-							</button>
-							<button
-								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
-								name="moderationAction"
-								type="submit"
-								value="request-unmute"
-							>
-								Request unmute from {participant.displayName}
-							</button>
-							<button
-								class="rounded-md bg-rose-700 px-3 py-2 text-sm font-semibold text-white"
-								name="moderationAction"
-								type="submit"
-								value="remove"
-							>
-								Remove {participant.displayName}
-							</button>
-						</form>
-					{/if}
-				</article>
-			{/each}
-		</div>
+				</div>
+				<p class="mt-3 text-sm leading-6 text-neutral-600">
+					This is the Room-visible Broadcast Preview while Backstage. It is not sent to a
+					Broadcast Destination yet.
+				</p>
+			</section>
 
-		<aside class="grid content-start gap-4">
 			<MediaConnectionPanel
 				canScreenShare={activeParticipant?.role === 'host'}
 				cameraEnabled={activeParticipant?.cameraEnabled ?? true}
