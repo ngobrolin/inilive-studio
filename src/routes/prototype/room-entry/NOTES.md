@@ -4,4 +4,4 @@ Question: what should the first authless Host Room URL and Guest Invite URL feel
 
 Plan: three structurally different variants of the Room entry surface, switchable via `?variant=A|B|C`, on the throwaway `/prototype/room-entry` route.
 
-Verdict: undecided. Pick a winning structure, then delete this route or fold the selected direction into the real Room entry implementation.
+Verdict: variant B ("Join console") promoted to the real Room entry routes at `/room/[roomId]` and `/room/[roomId]/invite/[token]`. This throwaway route remains for comparison until cleanup-001.
