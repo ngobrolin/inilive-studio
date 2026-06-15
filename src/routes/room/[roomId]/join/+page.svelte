@@ -8,4 +8,4 @@
 	<title>Join Check - Host Room - Live Studio</title>
 </svelte:head>
 
-<JoinCheckPanel role="host" roomId={data.roomId} />
+<JoinCheckPanel formAction="" role="host" roomId={data.roomId} />

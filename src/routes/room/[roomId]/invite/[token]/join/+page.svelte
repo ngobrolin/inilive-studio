@@ -8,4 +8,4 @@
 	<title>Join Check - Guest Invite - Live Studio</title>
 </svelte:head>
 
-<JoinCheckPanel role="guest" roomId={data.roomId} />
+<JoinCheckPanel formAction="" role="guest" roomId={data.roomId} />

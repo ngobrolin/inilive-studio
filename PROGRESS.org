@@ -389,3 +389,83 @@ Complete room-002 using TDD: Join Check with Display Name, local media preview, 
 *** Next best step
 
 Start room-003 ephemeral Room presence with TDD: one Host and up to three Guests with Display Names in Backstage.
+
+** Session 008
+:PROPERTIES:
+:SESSION_ID: 008
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete room-003: add ephemeral Room presence after Join Check.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting.
+- Added an in-memory Room presence store for prototype-only state.
+- Wired Host and Guest Join Check forms to register participants with Display Name, role, camera state, and microphone state.
+- Added Backstage Room presence UI showing one Host and up to three Guests.
+- Added camera-off participant placeholders labeled with Display Name.
+- Added Room Full handling when a fourth Guest attempts to enter.
+- Updated PLAN.org room-003 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh: passed before implementation.
+  - Vitest: 6 tests passed.
+  - Playwright: 15 tests passed.
+- npm run check: passed after implementation with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- npm run test:unit -- --run src/lib/server/room-presence.spec.ts: passed.
+  - Vitest: 3 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/presence.e2e.ts': passed.
+  - Playwright: 2 tests passed.
+- ./init.sh: passed after implementation.
+  - Vitest: 9 tests passed.
+  - Playwright: 17 tests passed.
+
+*** Evidence captured
+
+- Backstage Room URL: /room/demo/backstage
+- Room Full URL: /room/demo/full
+- In-memory presence store: src/lib/server/room-presence.ts
+- Presence UI: src/lib/room/RoomPresencePanel.svelte
+- Room Full UI: src/lib/room/RoomFullPanel.svelte
+- E2E tests: src/routes/room/[roomId]/presence.e2e.ts
+- Unit tests: src/lib/server/room-presence.spec.ts
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- src/lib/server/room-presence.ts
+- src/lib/server/room-presence.spec.ts
+- src/lib/room/JoinCheckPanel.svelte
+- src/lib/room/RoomPresencePanel.svelte
+- src/lib/room/RoomFullPanel.svelte
+- src/routes/room/[roomId]/join/+page.server.ts
+- src/routes/room/[roomId]/join/+page.svelte
+- src/routes/room/[roomId]/invite/[token]/join/+page.server.ts
+- src/routes/room/[roomId]/invite/[token]/join/+page.svelte
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/backstage/+page.svelte
+- src/routes/room/[roomId]/full/+page.server.ts
+- src/routes/room/[roomId]/full/+page.svelte
+- src/routes/room/[roomId]/presence.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Presence is process-local memory only and resets on server restart by design.
+- Presence does not remove participants when a browser tab closes; lifecycle cleanup belongs to a later real-time Room slice.
+- session-handoff.md remains not oxfmt-clean from the earlier audit.
+- npm run check still has the missing node type definition warning until the harness hygiene issue is addressed.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Start room-004 ephemeral Room Chat, using the current in-memory Room state as the prototype surface.

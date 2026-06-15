@@ -149,7 +149,7 @@ Add Join Check before a Host or Guest enters the Room. A person types a Display 
 :TYPE: AFK
 :PRIORITY: 3
 :AREA: room
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: room-002
 :END:
 
@@ -159,12 +159,12 @@ Represent who is inside the prototype Room with ephemeral state. The Room suppor
 
 *** Acceptance criteria
 
-- [ ] The Room can show one Host and up to three Guests.
-- [ ] Each participant has a Display Name and role.
-- [ ] Camera-off participants show name-labeled placeholders.
-- [ ] Room Full is shown when a Guest attempts to enter a full Room.
-- [ ] Presence state is ephemeral and is not restored after restart.
-- [ ] Terminology uses Host, Guest, Room, Display Name, and Room Full.
+- [X] The Room can show one Host and up to three Guests.
+- [X] Each participant has a Display Name and role.
+- [X] Camera-off participants show name-labeled placeholders.
+- [X] Room Full is shown when a Guest attempts to enter a full Room.
+- [X] Presence state is ephemeral and is not restored after restart.
+- [X] Terminology uses Host, Guest, Room, Display Name, and Room Full.
 
 *** Verification
 
@@ -176,11 +176,22 @@ Represent who is inside the prototype Room with ephemeral state. The Room suppor
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Implemented ephemeral Room presence after Join Check.
+  - Backstage Room URL: /room/[roomId]/backstage (example: /room/demo/backstage)
+  - Room Full URL: /room/[roomId]/full (example: /room/demo/full)
+  - In-memory presence store: ~/code/inilive-studio/src/lib/server/room-presence.ts
+  - Shared UI: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte and ~/code/inilive-studio/src/lib/room/RoomFullPanel.svelte
+  - Join Check submit actions now register Host or Guest participants and redirect into Backstage or Room Full.
+  - Unit tests: ~/code/inilive-studio/src/lib/server/room-presence.spec.ts (3 tests)
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/presence.e2e.ts (2 tests)
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npx playwright test 'src/routes/room/\[roomId\]/presence.e2e.ts' passed.
+  - ./init.sh passed after implementation (Vitest 9, Playwright 17).
 
 *** Notes
 
 - This issue may use local or in-memory prototype state; durable sessions belong to Milestone 3.
+- Presence is process-local memory and clears on server restart.
 
 ** TODO room-004 - Add ephemeral Room Chat
 :PROPERTIES:

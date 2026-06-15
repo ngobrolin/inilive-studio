@@ -20,9 +20,11 @@
 	let {
 		role,
 		roomId,
+		formAction,
 	}: {
 		role: RoomEntryRole;
 		roomId: string;
+		formAction: string;
 	} = $props();
 
 	let displayName = $state('');
@@ -262,23 +264,27 @@
 			{/if}
 		{/if}
 
-		<label class="mt-6 block text-sm font-semibold" for="display-name">Display Name</label>
-		<input
-			class="mt-2 w-full rounded-md border border-neutral-300 px-4 py-3 text-base"
-			bind:value={displayName}
-			id="display-name"
-			maxlength="50"
-			name="displayName"
-			placeholder="How you appear in the Room"
-			type="text"
-		/>
+		<form action={formAction} method="POST">
+			<label class="mt-6 block text-sm font-semibold" for="display-name">Display Name</label>
+			<input
+				class="mt-2 w-full rounded-md border border-neutral-300 px-4 py-3 text-base"
+				bind:value={displayName}
+				id="display-name"
+				maxlength="50"
+				name="displayName"
+				placeholder="How you appear in the Room"
+				type="text"
+			/>
+			<input name="cameraEnabled" type="hidden" value={cameraEnabled ? 'true' : 'false'} />
+			<input name="microphoneEnabled" type="hidden" value={microphoneEnabled ? 'true' : 'false'} />
 
-		<button
-			class="mt-6 rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
-			disabled={!canEnter}
-			type="button"
-		>
-			Enter Room
-		</button>
+			<button
+				class="mt-6 rounded-md bg-neutral-950 px-5 py-4 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+				disabled={!canEnter}
+				type="submit"
+			>
+				Enter Room
+			</button>
+		</form>
 	</section>
 </main>
