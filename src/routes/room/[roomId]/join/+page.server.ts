@@ -19,7 +19,7 @@ export const actions: Actions = {
       return fail(400, { error });
     }
 
-    registerRoomParticipant({
+    const result = registerRoomParticipant({
       roomId: params.roomId,
       displayName,
       role: "host",
@@ -27,6 +27,6 @@ export const actions: Actions = {
       microphoneEnabled: formData.get("microphoneEnabled") === "true",
     });
 
-    redirect(303, `/room/${params.roomId}/backstage`);
+    redirect(303, `/room/${params.roomId}/backstage?participant=${result.participant?.id ?? ""}`);
   },
 };

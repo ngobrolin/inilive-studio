@@ -1,9 +1,17 @@
 <script lang="ts">
-	import type { RoomPresence } from '$lib/server/room-presence';
+	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
 
-	let { presence }: { presence: RoomPresence } = $props();
+	let {
+		presence,
+		chatMessages,
+		activeParticipantId,
+	}: { presence: RoomPresence; chatMessages: RoomChatMessage[]; activeParticipantId: string } =
+		$props();
 	const hosts = $derived(presence.participants.filter((participant) => participant.role === 'host'));
 	const guests = $derived(presence.participants.filter((participant) => participant.role === 'guest'));
+	const activeParticipant = $derived(
+		presence.participants.find((participant) => participant.id === activeParticipantId),
+	);
 </script>
 
 <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 text-neutral-950">
@@ -18,8 +26,8 @@
 		</p>
 	</header>
 
-	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_18rem]">
-		<div class="grid gap-4 md:grid-cols-2">
+	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+		<div class="grid items-start gap-4 md:grid-cols-2">
 			{#each presence.participants as participant (participant.id)}
 				<article class="overflow-hidden rounded-md border border-neutral-300 bg-white shadow-sm">
 					<div class="flex aspect-video items-center justify-center bg-neutral-950 text-white">
@@ -51,15 +59,72 @@
 			{/each}
 		</div>
 
-		<aside class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">
-			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Capacity</p>
-			<p class="mt-3 text-3xl font-semibold">{hosts.length} Host · {guests.length}/3 Guests</p>
-			<p class="mt-4 text-sm leading-6 text-neutral-600">
-				A fourth Guest sees Room Full instead of entering this Room.
-			</p>
-			<p class="mt-4 rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950">
-				Backstage — not Broadcasting
-			</p>
+		<aside class="grid content-start gap-4">
+			<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">
+				<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Capacity</p>
+				<p class="mt-3 text-3xl font-semibold">{hosts.length} Host · {guests.length}/3 Guests</p>
+				<p class="mt-4 text-sm leading-6 text-neutral-600">
+					A fourth Guest sees Room Full instead of entering this Room.
+				</p>
+				<p class="mt-4 rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950">
+					Backstage — not Broadcasting
+				</p>
+			</section>
+
+			<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">
+				<div class="flex items-center justify-between gap-3">
+					<div>
+						<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+							Room Chat
+						</p>
+						<p class="mt-1 text-sm text-neutral-600">
+							{activeParticipant
+								? `Sending as ${activeParticipant.displayName}`
+								: 'Enter through Join Check to send messages.'}
+						</p>
+					</div>
+				</div>
+
+				<div class="mt-4 grid max-h-72 gap-3 overflow-y-auto" data-testid="room-chat-messages">
+					{#if chatMessages.length === 0}
+						<p class="rounded-md bg-neutral-100 px-3 py-2 text-sm text-neutral-600">
+							No Room Chat messages yet.
+						</p>
+					{:else}
+						{#each chatMessages as message (message.id)}
+							<article class="rounded-md bg-neutral-100 px-3 py-2">
+								<p class="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
+									{message.senderDisplayName} · {message.senderRole === 'host' ? 'Host' : 'Guest'}
+								</p>
+								<p class="mt-1 whitespace-pre-wrap text-sm leading-6 text-neutral-950">
+									{message.text}
+								</p>
+							</article>
+						{/each}
+					{/if}
+				</div>
+
+				<form class="mt-4" method="POST">
+					<input name="participantId" type="hidden" value={activeParticipantId} />
+					<label class="block text-sm font-semibold" for="room-chat-message">
+						Room Chat message
+					</label>
+					<textarea
+						class="mt-2 min-h-24 w-full resize-y rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700 disabled:bg-neutral-100"
+						disabled={!activeParticipant}
+						id="room-chat-message"
+						name="messageText"
+						placeholder="Message everyone in this Room"
+					></textarea>
+					<button
+						class="mt-3 w-full rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+						disabled={!activeParticipant}
+						type="submit"
+					>
+						Send message
+					</button>
+				</form>
+			</section>
 		</aside>
 	</section>
 </main>

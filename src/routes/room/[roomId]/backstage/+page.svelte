@@ -8,4 +8,8 @@
 	<title>Backstage Room - Live Studio</title>
 </svelte:head>
 
-<RoomPresencePanel presence={data} />
+<RoomPresencePanel
+	activeParticipantId={data.activeParticipantId}
+	chatMessages={data.chatMessages}
+	presence={data.presence}
+/>

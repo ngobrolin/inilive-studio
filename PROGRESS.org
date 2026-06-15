@@ -469,3 +469,86 @@ Complete room-003: add ephemeral Room presence after Join Check.
 *** Next best step
 
 Start room-004 ephemeral Room Chat, using the current in-memory Room state as the prototype surface.
+
+** Session 009
+:PROPERTIES:
+:SESSION_ID: 009
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete room-004 using TDD: add ephemeral Room Chat inside Backstage.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline was green.
+- TDD cycle 1: added a failing Playwright test for a Host sending a Room Chat message from Backstage, then implemented the minimal Room Chat path.
+- TDD cycle 2: added Host and Guest message coverage, including plain-text rendering for markup-looking input.
+- Added Room Chat messages to the existing process-local Room state.
+- Updated Host and Guest Join Check redirects to carry the active participant id into Backstage.
+- Added Backstage Room Chat UI beside the Room presence surface.
+- Added unit coverage proving Room Chat history clears with ephemeral Room state.
+- Fixed participant card stretching after visual verification.
+- Updated PLAN.org room-004 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh: passed before implementation.
+  - Vitest: 9 tests passed.
+  - Playwright: 17 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/room-chat.e2e.ts': failed first as expected because Room Chat controls did not exist.
+- npx playwright test 'src/routes/room/\[roomId\]/room-chat.e2e.ts': passed after implementation.
+  - Playwright: 2 tests passed.
+- npm run test:unit -- --run src/lib/server/room-presence.spec.ts: passed.
+  - Vitest: 4 tests passed.
+- npm run check: passed with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- ./init.sh: passed after implementation.
+  - Vitest: 10 tests passed.
+  - Playwright: 19 tests passed.
+- npm run lint: passed with 0 errors and 1 existing warning.
+  - Warning: src/lib/index.ts is effectively empty.
+- Visual check: passed with screenshot /tmp/inilive-studio-room-chat.png.
+  - Confirmed Backstage Room Chat layout and message visibility.
+- npx playwright test 'src/routes/room/\[roomId\]/presence.e2e.ts': passed after the Backstage data/UI changes.
+  - Playwright: 2 tests passed.
+
+*** Evidence captured
+
+- Backstage Room Chat UI: src/lib/room/RoomPresencePanel.svelte
+- In-memory Room Chat state: src/lib/server/room-presence.ts
+- Backstage load/action wiring: src/routes/room/[roomId]/backstage/+page.server.ts
+- E2E tests: src/routes/room/[roomId]/room-chat.e2e.ts
+- Unit tests: src/lib/server/room-presence.spec.ts
+- Visual evidence: /tmp/inilive-studio-room-chat.png
+
+*** Commits
+
+- Add ephemeral room chat
+
+*** Files or artifacts updated
+
+- src/lib/server/room-presence.ts
+- src/lib/server/room-presence.spec.ts
+- src/lib/room/RoomPresencePanel.svelte
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/backstage/+page.svelte
+- src/routes/room/[roomId]/join/+page.server.ts
+- src/routes/room/[roomId]/invite/[token]/join/+page.server.ts
+- src/routes/room/[roomId]/room-chat.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Room Chat is process-local memory only and resets with prototype Room state by design.
+- Room Chat is not real-time; participants see new messages on page reload or after their own form submit until a later realtime Room slice exists.
+- Presence still does not remove participants when a browser tab closes; lifecycle cleanup belongs to a later real-time Room slice.
+- session-handoff.md remains not oxfmt-clean from the earlier audit.
+- npm run check still has the missing node type definition warning until the harness hygiene issue is addressed.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Start media-001 managed SFU choice. This is marked HITL in PLAN.org and needs human/provider decision evidence before implementation can continue into media-002.

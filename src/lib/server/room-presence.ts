@@ -8,6 +8,13 @@ export type RoomParticipant = {
   microphoneEnabled: boolean;
 };
 
+export type RoomChatMessage = {
+  id: string;
+  senderDisplayName: string;
+  senderRole: RoomRole;
+  text: string;
+};
+
 export type RoomPresence = {
   roomId: string;
   participants: RoomParticipant[];
@@ -16,10 +23,15 @@ export type RoomPresence = {
 
 const MAX_GUESTS = 3;
 const rooms = new Map<string, RoomParticipant[]>();
+const roomMessages = new Map<string, RoomChatMessage[]>();
 let participantSequence = 0;
+let messageSequence = 0;
 
 export function clearRoomPresence(): void {
   rooms.clear();
+  roomMessages.clear();
+  participantSequence = 0;
+  messageSequence = 0;
 }
 
 export function getRoomPresence(roomId: string): RoomPresence {
@@ -60,6 +72,41 @@ export function registerRoomParticipant(input: {
   rooms.set(input.roomId, [...participants, participant]);
 
   return { participant, roomFull: false };
+}
+
+export function getRoomChatMessages(roomId: string): RoomChatMessage[] {
+  return roomMessages.get(roomId) ?? [];
+}
+
+export function postRoomChatMessage(input: {
+  roomId: string;
+  participantId: string;
+  text: string;
+}): { message: RoomChatMessage | null; error: string | null } {
+  const participant = findRoomParticipant(input.roomId, input.participantId);
+  const text = input.text.trim();
+
+  if (!participant) {
+    return { message: null, error: "Enter the Room before sending Room Chat messages." };
+  }
+
+  if (!text) {
+    return { message: null, error: "Type a Room Chat message before sending." };
+  }
+
+  const message: RoomChatMessage = {
+    id: `message-${++messageSequence}`,
+    senderDisplayName: participant.displayName,
+    senderRole: participant.role,
+    text,
+  };
+  roomMessages.set(input.roomId, [...getRoomChatMessages(input.roomId), message]);
+
+  return { message, error: null };
+}
+
+function findRoomParticipant(roomId: string, participantId: string): RoomParticipant | undefined {
+  return getRoomPresence(roomId).participants.find((participant) => participant.id === participantId);
 }
 
 function guestCount(participants: RoomParticipant[]): number {

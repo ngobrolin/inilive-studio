@@ -199,7 +199,7 @@ Represent who is inside the prototype Room with ephemeral state. The Room suppor
 :TYPE: AFK
 :PRIORITY: 4
 :AREA: room-chat
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: room-003
 :END:
 
@@ -209,11 +209,11 @@ Add private Room Chat for the Host and Guests inside the prototype Room. Message
 
 *** Acceptance criteria
 
-- [ ] Host and Guests in the Room can send Room Chat messages.
-- [ ] Room Chat messages show sender Display Name and message text.
-- [ ] Room Chat is not visible to the Audience because the product has no Audience page in v1.
-- [ ] Room Chat messages are plain text and not persisted.
-- [ ] Restarting the app or clearing prototype state removes Room Chat history.
+- [X] Host and Guests in the Room can send Room Chat messages.
+- [X] Room Chat messages show sender Display Name and message text.
+- [X] Room Chat is not visible to the Audience because the product has no Audience page in v1.
+- [X] Room Chat messages are plain text and not persisted.
+- [X] Restarting the app or clearing prototype state removes Room Chat history.
 
 *** Verification
 
@@ -225,11 +225,21 @@ Add private Room Chat for the Host and Guests inside the prototype Room. Message
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15 10:28 WIB: Implemented ephemeral Room Chat in Backstage.
+  - Backstage Room Chat UI: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - In-memory Room Chat state: ~/code/inilive-studio/src/lib/server/room-presence.ts
+  - Host and Guest Join Check redirects now carry the active participant id into Backstage.
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/room-chat.e2e.ts (2 tests)
+  - Unit coverage: ~/code/inilive-studio/src/lib/server/room-presence.spec.ts (4 tests)
+  - Visual evidence: /tmp/inilive-studio-room-chat.png confirmed Backstage Room Chat layout and message visibility.
+  - ./init.sh passed after implementation (Vitest 10, Playwright 19).
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with the existing empty src/lib/index.ts warning.
 
 *** Notes
 
 - Audience Chat, moderation tools, and persistence are out of scope.
+- Room Chat is process-local memory and clears with prototype Room state.
 
 ** TODO media-001 - Spike managed SFU choice
 :PROPERTIES:

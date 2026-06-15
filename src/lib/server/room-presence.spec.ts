@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearRoomPresence,
+  getRoomChatMessages,
   getRoomPresence,
+  postRoomChatMessage,
   registerRoomParticipant,
 } from "./room-presence";
 
@@ -89,5 +91,24 @@ describe("room presence", () => {
 
     expect(result.roomFull).toBe(true);
     expect(getRoomPresence("demo").participants).toHaveLength(3);
+  });
+
+  it("clears Room Chat history with ephemeral Room state", () => {
+    const { participant } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Host",
+      role: "host",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+
+    postRoomChatMessage({
+      roomId: "demo",
+      participantId: participant?.id ?? "",
+      text: "This message is not persisted",
+    });
+    clearRoomPresence();
+
+    expect(getRoomChatMessages("demo")).toEqual([]);
   });
 });

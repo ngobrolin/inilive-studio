@@ -32,6 +32,6 @@ export const actions: Actions = {
       redirect(303, `/room/${params.roomId}/full`);
     }
 
-    redirect(303, `/room/${params.roomId}/backstage`);
+    redirect(303, `/room/${params.roomId}/backstage?participant=${result.participant?.id ?? ""}`);
   },
 };
