@@ -6,11 +6,13 @@
 		roomId,
 		hostHref,
 		guestHref,
+		joinHref,
 	}: {
 		role: RoomEntryRole;
 		roomId: string;
 		hostHref: string;
 		guestHref: string;
+		joinHref: string;
 	} = $props();
 
 	const copy = $derived(roomEntryCopy(role));
@@ -55,7 +57,7 @@
 			<div class="grid gap-3 sm:grid-cols-2">
 				<a
 					class="rounded-md bg-neutral-950 px-5 py-4 text-center text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700"
-					href={role === 'host' ? hostHref : guestHref}
+					href={joinHref}
 				>
 					{copy.primaryAction}
 				</a>
@@ -79,7 +81,7 @@
 					<p class="text-xs font-semibold uppercase tracking-[0.14em] text-neutral-500">Step 2</p>
 					<p class="mt-3 font-semibold">Join Check</p>
 					<p class="mt-2 text-sm leading-6 text-neutral-600">
-						Display Name and local media preview later.
+						Display Name, device preview, and initial mic/camera state.
 					</p>
 				</div>
 				<div class="rounded bg-amber-200 p-4">

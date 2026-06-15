@@ -22,7 +22,7 @@ export function roomEntryCopy(role: RoomEntryRole): RoomEntryCopy {
   return {
     eyebrow: "Guest Invite URL",
     title: "Join the Room without creating an Account",
-    body: "Guests arrive through the invite link, confirm their Display Name later, and wait in Backstage without touching Host controls.",
+    body: "Guests arrive through the invite link, complete Join Check, and wait in Backstage without touching Host controls.",
     primaryAction: "Enter as Guest",
     secondaryAction: "View Host Room URL",
   };
@@ -34,4 +34,12 @@ export function guestInvitePath(roomId: string, token = "demo") {
 
 export function hostRoomPath(roomId: string) {
   return `/room/${roomId}`;
+}
+
+export function hostJoinPath(roomId: string) {
+  return `/room/${roomId}/join`;
+}
+
+export function guestJoinPath(roomId: string, token = "demo") {
+  return `/room/${roomId}/invite/${token}/join`;
 }
