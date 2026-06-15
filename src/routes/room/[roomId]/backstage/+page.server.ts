@@ -2,7 +2,9 @@ import { createMediaJoinGrant } from "$lib/server/media-join";
 import {
   getRoomChatMessages,
   getRoomPresence,
+  moderateRoomParticipant,
   postRoomChatMessage,
+  respondToHostUnmuteRequest,
 } from "$lib/server/room-presence";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
@@ -31,11 +33,51 @@ export const load: PageServerLoad = async ({ params, url }) => {
 };
 
 export const actions: Actions = {
-  default: async ({ params, request }) => {
+  chat: async ({ params, request }) => {
     const formData = await request.formData();
     const participantId = String(formData.get("participantId") ?? "");
     const text = String(formData.get("messageText") ?? "");
     const result = postRoomChatMessage({ roomId: params.roomId, participantId, text });
+
+    if (result.error) {
+      return fail(400, { error: result.error });
+    }
+
+    redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
+  },
+  moderate: async ({ params, request }) => {
+    const formData = await request.formData();
+    const hostParticipantId = String(formData.get("hostParticipantId") ?? "");
+    const guestParticipantId = String(formData.get("guestParticipantId") ?? "");
+    const action = String(formData.get("moderationAction") ?? "");
+
+    if (
+      action !== "force-mute" &&
+      action !== "force-camera-off" &&
+      action !== "request-unmute" &&
+      action !== "remove"
+    ) {
+      return fail(400, { error: "Choose a moderation action." });
+    }
+
+    const result = moderateRoomParticipant({
+      roomId: params.roomId,
+      hostParticipantId,
+      guestParticipantId,
+      action,
+    });
+
+    if (result.error) {
+      return fail(400, { error: result.error });
+    }
+
+    redirect(303, `/room/${params.roomId}/backstage?participant=${hostParticipantId}`);
+  },
+  unmute: async ({ params, request }) => {
+    const formData = await request.formData();
+    const participantId = String(formData.get("participantId") ?? "");
+    const accepted = formData.get("unmuteResponse") === "accept";
+    const result = respondToHostUnmuteRequest({ roomId: params.roomId, participantId, accepted });
 
     if (result.error) {
       return fail(400, { error: result.error });

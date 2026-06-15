@@ -382,7 +382,7 @@ Use the selected media path to connect the Host and up to three Guests so they c
 :TYPE: AFK
 :PRIORITY: 7
 :AREA: room
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: media-002
 :END:
 
@@ -392,12 +392,12 @@ Add prototype Host controls for Guest moderation: force-mute, force-camera-off, 
 
 *** Acceptance criteria
 
-- [ ] Host can force-mute a Guest.
-- [ ] Host can force a Guest camera off.
-- [ ] Guest sees clear banners for Host-muted microphone and Host-disabled camera.
-- [ ] Host can request unmute, Guest can accept or dismiss, and Host sees the resulting state.
-- [ ] Host can remove a Guest, and the Guest sees a removed-from-Room screen.
-- [ ] Removal does not imply Guest Invite revocation in the prototype copy.
+- [X] Host can force-mute a Guest.
+- [X] Host can force a Guest camera off.
+- [X] Guest sees clear banners for Host-muted microphone and Host-disabled camera.
+- [X] Host can request unmute, Guest can accept or dismiss, and Host sees the resulting state.
+- [X] Host can remove a Guest, and the Guest sees a removed-from-Room screen.
+- [X] Removal does not imply Guest Invite revocation in the prototype copy.
 
 *** Verification
 
@@ -409,7 +409,16 @@ Add prototype Host controls for Guest moderation: force-mute, force-camera-off, 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Implemented prototype Host moderation controls in Backstage.
+  - In-memory moderation state: ~/code/inilive-studio/src/lib/server/room-presence.ts
+  - Backstage moderation UI and Guest banners: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - Backstage form actions: ~/code/inilive-studio/src/routes/room/[roomId]/backstage/+page.server.ts
+  - Unit tests: ~/code/inilive-studio/src/lib/server/room-presence.spec.ts (7 tests)
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/moderation.e2e.ts (3 tests)
+  - Targeted verification passed: npm run test:unit -- --run src/lib/server/room-presence.spec.ts; npx playwright test 'src/routes/room/\[roomId\]/moderation.e2e.ts'.
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with 0 errors and the existing empty src/lib/index.ts warning.
+  - ./init.sh passed after implementation (23 Vitest tests, 24 Playwright tests).
 
 *** Notes
 

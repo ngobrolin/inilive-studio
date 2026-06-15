@@ -3,8 +3,10 @@ import {
   clearRoomPresence,
   getRoomChatMessages,
   getRoomPresence,
+  moderateRoomParticipant,
   postRoomChatMessage,
   registerRoomParticipant,
+  respondToHostUnmuteRequest,
 } from "./room-presence";
 
 describe("room presence", () => {
@@ -110,5 +112,106 @@ describe("room presence", () => {
     clearRoomPresence();
 
     expect(getRoomChatMessages("demo")).toEqual([]);
+  });
+
+  it("lets the Host force-mute and force-camera-off a Guest", () => {
+    const { participant: host } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Host",
+      role: "host",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+    const { participant: guest } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Guest",
+      role: "guest",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+
+    moderateRoomParticipant({
+      roomId: "demo",
+      hostParticipantId: host?.id ?? "",
+      guestParticipantId: guest?.id ?? "",
+      action: "force-mute",
+    });
+    moderateRoomParticipant({
+      roomId: "demo",
+      hostParticipantId: host?.id ?? "",
+      guestParticipantId: guest?.id ?? "",
+      action: "force-camera-off",
+    });
+
+    expect(getRoomPresence("demo").participants.at(1)).toMatchObject({
+      microphoneEnabled: false,
+      cameraEnabled: false,
+      hostMutedMicrophone: true,
+      hostDisabledCamera: true,
+    });
+  });
+
+  it("lets a Guest accept a Host unmute request", () => {
+    const { participant: host } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Host",
+      role: "host",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+    const { participant: guest } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Guest",
+      role: "guest",
+      cameraEnabled: true,
+      microphoneEnabled: false,
+    });
+
+    moderateRoomParticipant({
+      roomId: "demo",
+      hostParticipantId: host?.id ?? "",
+      guestParticipantId: guest?.id ?? "",
+      action: "request-unmute",
+    });
+    respondToHostUnmuteRequest({
+      roomId: "demo",
+      participantId: guest?.id ?? "",
+      accepted: true,
+    });
+
+    expect(getRoomPresence("demo").participants.at(1)).toMatchObject({
+      microphoneEnabled: true,
+      unmuteRequested: false,
+    });
+  });
+
+  it("lets the Host remove a Guest from the current Room session", () => {
+    const { participant: host } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Host",
+      role: "host",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+    const { participant: guest } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Guest",
+      role: "guest",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+
+    moderateRoomParticipant({
+      roomId: "demo",
+      hostParticipantId: host?.id ?? "",
+      guestParticipantId: guest?.id ?? "",
+      action: "remove",
+    });
+
+    expect(getRoomPresence("demo").participants.at(1)).toMatchObject({
+      removed: true,
+      microphoneEnabled: false,
+      cameraEnabled: false,
+    });
   });
 });

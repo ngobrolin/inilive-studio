@@ -5,8 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: media-002 "Connect participants with Room audio/video" in PLAN.org.
-- Current blocker: real LiveKit Room media requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual browser verification. media-001 is passing on LiveKit Cloud.
+- Current highest-priority unfinished AFK feature: media-003 "Add Host Screen Share" in PLAN.org.
+- Current HITL follow-up: media-001-live LiveKit live triage still needs evidence in docs/spikes/media-001-managed-sfu-choice.md.
 
 * Session Log
 
@@ -804,3 +804,73 @@ Finish media-002: fix the broken baseline introduced by a real .env, then implem
 *** Next best step
 
 Start media-003 screen share, or pick the next highest-priority unblocked Milestone 1 issue (room-005 Host moderation controls) per PLAN.org.
+
+** Session 014
+:PROPERTIES:
+:SESSION_ID: 014
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete room-005: add prototype Host moderation controls for Guests inside Backstage.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline passed.
+- Added in-memory moderation state to Room participants: Host-muted microphone, Host-disabled camera, unmute request, and removed-from-session flags.
+- Added Backstage Host controls for force-mute, force-camera-off, request-unmute, and remove Guest.
+- Added Guest-facing banners for Host-muted microphone, Host-disabled camera, Host unmute request, and removed-from-Room state.
+- Changed Backstage actions from one default chat action to named chat, moderate, and unmute actions.
+- Added unit and Playwright coverage for moderation flows.
+- Updated PLAN.org room-005 to passing with evidence.
+
+*** Verification run
+
+- npm run test:unit -- --run src/lib/server/room-presence.spec.ts: passed.
+  - Vitest: 7 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/moderation.e2e.ts': passed.
+  - Playwright: 3 tests passed.
+- npm run check: passed with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- npm run lint: passed with 0 errors and 1 existing warning.
+  - Warning: src/lib/index.ts is effectively empty.
+- ./init.sh: passed after implementation.
+  - Vitest: 23 tests passed.
+  - Playwright: 24 tests passed.
+
+*** Evidence captured
+
+- In-memory moderation state: src/lib/server/room-presence.ts
+- Backstage moderation UI and Guest banners: src/lib/room/RoomPresencePanel.svelte
+- Backstage form actions: src/routes/room/[roomId]/backstage/+page.server.ts
+- Unit tests: src/lib/server/room-presence.spec.ts
+- E2E tests: src/routes/room/[roomId]/moderation.e2e.ts
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- src/lib/server/room-presence.ts
+- src/lib/server/room-presence.spec.ts
+- src/lib/room/RoomPresencePanel.svelte
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/moderation.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Moderation state is process-local memory only, matching the Milestone 1 prototype.
+- Moderation changes are not pushed real-time to other open tabs; users see changes after navigation, refresh, or form submit until a later realtime slice exists.
+- Media track enforcement for force-mute/camera-off is represented in prototype Room state and UI; deeper LiveKit track mutation may need follow-up in a real-time media control slice.
+- media-001-live remains HITL and still needs the spike doc live triage table updated.
+- session-handoff.md remains not oxfmt-clean from earlier sessions.
+- npm run check still has the missing node type definition warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Start media-003 Host Screen Share with TDD: Host-only screen share control, one active screen share per Room, Guest UI receives or reflects active Screen Share state.

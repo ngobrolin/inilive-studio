@@ -6,6 +6,10 @@ export type RoomParticipant = {
   role: RoomRole;
   cameraEnabled: boolean;
   microphoneEnabled: boolean;
+  hostMutedMicrophone: boolean;
+  hostDisabledCamera: boolean;
+  unmuteRequested: boolean;
+  removed: boolean;
 };
 
 export type RoomChatMessage = {
@@ -67,6 +71,10 @@ export function registerRoomParticipant(input: {
     role: input.role,
     cameraEnabled: input.cameraEnabled,
     microphoneEnabled: input.microphoneEnabled,
+    hostMutedMicrophone: false,
+    hostDisabledCamera: false,
+    unmuteRequested: false,
+    removed: false,
   };
 
   rooms.set(input.roomId, [...participants, participant]);
@@ -105,8 +113,85 @@ export function postRoomChatMessage(input: {
   return { message, error: null };
 }
 
+export function moderateRoomParticipant(input: {
+  roomId: string;
+  hostParticipantId: string;
+  guestParticipantId: string;
+  action: "force-mute" | "force-camera-off" | "request-unmute" | "remove";
+}): { error: string | null } {
+  const participants = getRoomPresence(input.roomId).participants;
+  const host = participants.find(
+    (participant) => participant.id === input.hostParticipantId && participant.role === "host",
+  );
+  const guest = participants.find(
+    (participant) => participant.id === input.guestParticipantId && participant.role === "guest",
+  );
+
+  if (!host) {
+    return { error: "Only the Host can moderate Guests." };
+  }
+
+  if (!guest) {
+    return { error: "Choose a Guest in this Room." };
+  }
+
+  rooms.set(
+    input.roomId,
+    participants.map((participant) => {
+      if (participant.id !== guest.id) return participant;
+
+      if (input.action === "force-mute") {
+        return { ...participant, microphoneEnabled: false, hostMutedMicrophone: true };
+      }
+
+      if (input.action === "force-camera-off") {
+        return { ...participant, cameraEnabled: false, hostDisabledCamera: true };
+      }
+
+      if (input.action === "request-unmute") {
+        return { ...participant, unmuteRequested: true };
+      }
+
+      return { ...participant, removed: true, microphoneEnabled: false, cameraEnabled: false };
+    }),
+  );
+
+  return { error: null };
+}
+
+export function respondToHostUnmuteRequest(input: {
+  roomId: string;
+  participantId: string;
+  accepted: boolean;
+}): { error: string | null } {
+  const participants = getRoomPresence(input.roomId).participants;
+  const participant = participants.find((candidate) => candidate.id === input.participantId);
+
+  if (!participant) {
+    return { error: "Enter the Room before responding to Host requests." };
+  }
+
+  rooms.set(
+    input.roomId,
+    participants.map((candidate) => {
+      if (candidate.id !== participant.id) return candidate;
+
+      return {
+        ...candidate,
+        microphoneEnabled: input.accepted ? true : candidate.microphoneEnabled,
+        hostMutedMicrophone: input.accepted ? false : candidate.hostMutedMicrophone,
+        unmuteRequested: false,
+      };
+    }),
+  );
+
+  return { error: null };
+}
+
 function findRoomParticipant(roomId: string, participantId: string): RoomParticipant | undefined {
-  return getRoomPresence(roomId).participants.find((participant) => participant.id === participantId);
+  return getRoomPresence(roomId).participants.find(
+    (participant) => participant.id === participantId,
+  );
 }
 
 function guestCount(participants: RoomParticipant[]): number {

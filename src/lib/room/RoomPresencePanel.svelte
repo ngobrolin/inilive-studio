@@ -14,11 +14,15 @@
 		activeParticipantId: string;
 		mediaGrant: MediaJoinGrant | null;
 	} = $props();
-	const hosts = $derived(presence.participants.filter((participant) => participant.role === 'host'));
-	const guests = $derived(presence.participants.filter((participant) => participant.role === 'guest'));
+	const visibleParticipants = $derived(
+		presence.participants.filter((participant) => !participant.removed),
+	);
+	const hosts = $derived(visibleParticipants.filter((participant) => participant.role === 'host'));
+	const guests = $derived(visibleParticipants.filter((participant) => participant.role === 'guest'));
 	const activeParticipant = $derived(
 		presence.participants.find((participant) => participant.id === activeParticipantId),
 	);
+	const activeHost = $derived(activeParticipant?.role === 'host' ? activeParticipant : null);
 </script>
 
 <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 text-neutral-950">
@@ -33,9 +37,62 @@
 		</p>
 	</header>
 
+	{#if activeParticipant?.removed}
+		<section class="my-8 rounded-md border border-rose-300 bg-rose-50 p-6 text-rose-950 shadow-sm">
+			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Removed from Room</p>
+			<h2 class="mt-2 text-3xl font-semibold">The Host removed you from this Room session.</h2>
+			<p class="mt-3 max-w-2xl leading-7">
+				This only affects the current prototype Room session. It does not revoke the Guest Invite.
+			</p>
+		</section>
+	{/if}
+
+	{#if activeParticipant && !activeParticipant.removed && activeParticipant.role === 'guest'}
+		<section class="grid gap-3 pt-6">
+			{#if activeParticipant.hostMutedMicrophone}
+				<div class="rounded-md border border-amber-300 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">
+					The Host muted your microphone. You can unmute only after Host approval.
+				</div>
+			{/if}
+			{#if activeParticipant.hostDisabledCamera}
+				<div class="rounded-md border border-amber-300 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">
+					The Host turned your camera off. Turn it back on only when the Host asks.
+				</div>
+			{/if}
+			{#if activeParticipant.unmuteRequested}
+				<form
+					class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-cyan-300 bg-cyan-50 px-4 py-3 text-sm text-cyan-950"
+					method="POST"
+					action="?/unmute"
+				>
+					<input name="participantId" type="hidden" value={activeParticipant.id} />
+					<p class="font-semibold">The Host requested that you unmute your microphone.</p>
+					<div class="flex gap-2">
+						<button
+							class="rounded-md bg-cyan-950 px-3 py-2 font-semibold text-white"
+							name="unmuteResponse"
+							type="submit"
+							value="accept"
+						>
+							Accept unmute request
+						</button>
+						<button
+							class="rounded-md border border-cyan-300 px-3 py-2 font-semibold"
+							name="unmuteResponse"
+							type="submit"
+							value="dismiss"
+						>
+							Dismiss
+						</button>
+					</div>
+				</form>
+			{/if}
+		</section>
+	{/if}
+
 	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
 		<div class="grid items-start gap-4 md:grid-cols-2">
-			{#each presence.participants as participant (participant.id)}
+			{#each visibleParticipants as participant (participant.id)}
 				<article class="overflow-hidden rounded-md border border-neutral-300 bg-white shadow-sm">
 					<div class="flex aspect-video items-center justify-center bg-neutral-950 text-white">
 						{#if participant.cameraEnabled}
@@ -58,10 +115,59 @@
 							<p class="font-semibold">{participant.displayName}</p>
 							<p class="text-sm text-neutral-600">{participant.role === 'host' ? 'Host' : 'Guest'}</p>
 						</div>
-						<p class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
-							{participant.microphoneEnabled ? 'Mic on' : 'Mic muted'}
-						</p>
+						<div class="grid justify-items-end gap-2">
+							<p class="rounded-full bg-neutral-100 px-3 py-1 text-xs font-semibold text-neutral-700">
+								{participant.microphoneEnabled ? 'Mic on' : 'Mic muted'}
+							</p>
+							{#if participant.hostMutedMicrophone}
+								<p class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-950">
+									Host-muted
+								</p>
+							{/if}
+						</div>
 					</div>
+					{#if activeHost && participant.role === 'guest'}
+						<form
+							class="grid grid-cols-2 gap-2 border-t border-neutral-200 p-4"
+							method="POST"
+							action="?/moderate"
+						>
+							<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+							<input name="guestParticipantId" type="hidden" value={participant.id} />
+							<button
+								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+								name="moderationAction"
+								type="submit"
+								value="force-mute"
+							>
+								Force mute {participant.displayName}
+							</button>
+							<button
+								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+								name="moderationAction"
+								type="submit"
+								value="force-camera-off"
+							>
+								Force camera off {participant.displayName}
+							</button>
+							<button
+								class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+								name="moderationAction"
+								type="submit"
+								value="request-unmute"
+							>
+								Request unmute from {participant.displayName}
+							</button>
+							<button
+								class="rounded-md bg-rose-700 px-3 py-2 text-sm font-semibold text-white"
+								name="moderationAction"
+								type="submit"
+								value="remove"
+							>
+								Remove {participant.displayName}
+							</button>
+						</form>
+					{/if}
 				</article>
 			{/each}
 		</div>
@@ -117,7 +223,7 @@
 					{/if}
 				</div>
 
-				<form class="mt-4" method="POST">
+				<form class="mt-4" method="POST" action="?/chat">
 					<input name="participantId" type="hidden" value={activeParticipantId} />
 					<label class="block text-sm font-semibold" for="room-chat-message">
 						Room Chat message
