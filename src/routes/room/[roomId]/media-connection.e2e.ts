@@ -5,7 +5,7 @@ test("Host sees media connection status in Backstage after joining", async ({ pa
 
   await enterRoom(page, `/room/${roomId}/join`, "Host One");
 
-  await expect(page.getByTestId("media-connection-status")).toContainText("Media ready");
+  await expect(page.getByTestId("media-connection-status")).toContainText("Local preview only");
   await expect(page.getByTestId("media-connection-status")).toContainText("LiveKit");
 });
 

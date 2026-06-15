@@ -679,3 +679,58 @@ Pivot managed SFU from inLive to LiveKit Cloud after inLive shutdown.
 *** Next best step
 
 Continue media-002 TDD: wire `livekit-client` with server-issued grants and verify Host plus Guest remote media in Backstage.
+
+** Session 012
+:PROPERTIES:
+:SESSION_ID: 012
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Continue media-002 with TDD and wire the browser LiveKit client path.
+
+*** Completed
+
+- Continued from the existing uncommitted media-002 worktree without reverting prior changes.
+- TDD cycle: changed the Playwright expectation so stub grants must say "Local preview only" instead of claiming Room media is ready; confirmed the test failed; then updated the UI to pass.
+- Added `livekit-client` as a runtime dependency.
+- Updated `LiveKitMediaSession.svelte` so non-stub grants dynamically import `livekit-client`, connect with the server-issued grant, publish the selected camera and microphone state, attach the local camera track when enabled, and disconnect on teardown.
+- Kept stub mode offline and explicit for local development without LiveKit credentials.
+
+*** Verification run
+
+- npx playwright test 'src/routes/room/\[roomId\]/media-connection.e2e.ts': passed (2 tests).
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- ./init.sh: passed.
+  - Vitest: 13 tests passed.
+  - Playwright: 21 tests passed.
+
+*** Evidence captured
+
+- Browser media client: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte
+- E2E test: ~/code/inilive-studio/src/routes/room/[roomId]/media-connection.e2e.ts
+- Dependency added: `livekit-client` in package.json and package-lock.json.
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- package.json
+- package-lock.json
+- src/lib/room/LiveKitMediaSession.svelte
+- src/routes/room/[roomId]/media-connection.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Real two-participant LiveKit audio/video validation still requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual Chromium browser verification.
+- Remote participant tile rendering is not implemented yet; the current browser client publishes local media into LiveKit when real credentials are present.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Continue media-002 TDD: with LiveKit credentials configured, add Host plus Guest browser verification and then implement remote participant media rendering in Backstage.

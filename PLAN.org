@@ -357,9 +357,14 @@ Use the selected media path to connect the Host and up to three Guests so they c
 
 - 2026-06-15: Started media-002 with TDD after LiveKit selection.
 - Backstage issues server-side LiveKit join grants and shows media connection UI.
+- 2026-06-15: Continued media-002 with TDD.
+  - Red: Playwright required stub mode to say "Local preview only" instead of claiming Room media was ready.
+  - Green: Stub mode now reports local preview only; non-stub grants dynamically import `livekit-client`, connect to the server-issued LiveKit Room grant, publish the participant's selected camera and microphone state, attach the local camera track when enabled, and disconnect on component teardown.
+  - Added `livekit-client` runtime dependency.
 - Local preview in Backstage: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte
 - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/media-connection.e2e.ts (2 tests)
-- Real LiveKit audio/video connection still requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual browser verification.
+- Verification: npx playwright test 'src/routes/room/\[roomId\]/media-connection.e2e.ts' passed; npm run check passed with 0 errors and the existing missing @types/node warning; ./init.sh passed with 13 Vitest tests and 21 Playwright tests.
+- Real two-participant LiveKit audio/video validation still requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual browser verification.
 
 *** Notes
 
