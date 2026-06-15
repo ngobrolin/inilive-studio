@@ -247,7 +247,7 @@ Add private Room Chat for the Host and Guests inside the prototype Room. Message
 :TYPE: HITL
 :PRIORITY: 5
 :AREA: media
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: room-003
 :END:
 
@@ -257,10 +257,10 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 
 *** Acceptance criteria
 
-- [ ] inLive is evaluated against all four success criteria.
-- [ ] Evidence is recorded for each criterion.
-- [ ] If inLive passes, the selected provider and integration notes are recorded.
-- [ ] If inLive fails or remains unclear after the time-box, LiveKit Cloud is selected without further forcing.
+- [X] inLive is evaluated against all four success criteria.
+- [X] Evidence is recorded for each criterion.
+- [X] If inLive passes, the selected provider and integration notes are recorded.
+- [X] If inLive fails or remains unclear after the time-box, LiveKit Cloud is selected without further forcing.
 - [ ] Any peer-to-peer fallback is explicitly documented as temporary and time-boxed.
 
 *** Verification
@@ -271,11 +271,57 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Selected inLive Hub after initial HITL evaluation, then switched to LiveKit Cloud after inLive shutdown.
+- Spike document: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md
+- LiveKit meets all four criteria with `livekit-server-sdk` and room-scoped participant JWTs.
+- Server-side join grant module: ~/code/inilive-studio/src/lib/server/livekit-hub.ts
+- Stub/real grant wrapper: ~/code/inilive-studio/src/lib/server/media-join.ts
+- Unit tests: ~/code/inilive-studio/src/lib/server/livekit-hub.spec.ts and ~/code/inilive-studio/src/lib/server/media-join.spec.ts
+- Configure real Room media with LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET in .env (see .env.example).
+- Doc review is complete; live triage is tracked separately as media-001-live.
 
 *** Notes
 
 - HITL because the final provider decision affects architecture, external accounts, and future costs.
+- Provider selection passed on doc review; hands-on LiveKit validation is media-001-live.
+
+** TODO media-001-live - Run LiveKit live triage
+:PROPERTIES:
+:FEATURE_ID: media-001-live
+:TYPE: HITL
+:PRIORITY: 5
+:AREA: media
+:STATUS: not_started
+:BLOCKED_BY: media-001
+:END:
+
+*** What to build
+
+Validate the LiveKit Cloud selection with real credentials and browser sessions. Doc review chose LiveKit after inLive shutdown; this issue records the hands-on triage before treating media-002 as production-ready.
+
+*** Acceptance criteria
+
+- [ ] Token smoke: Backstage issues a non-stub LiveKit grant when LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET are configured.
+- [ ] Two-participant connect: Host and Guest join the same Room, publish camera/mic, and see/hear each other.
+- [ ] Fourth Guest cap: Live Studio Room Full still blocks a fourth Guest before SFU connect.
+- [ ] Screen share spike: Host publishes one screen share; Guest receives it (record pass/fail for media-003).
+- [ ] Evidence is recorded in ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
+
+*** Verification
+
+1. Configure LiveKit Cloud credentials in .env.
+2. Run live triage steps 1–3 from the spike doc on Chromium desktop.
+3. Attempt step 4 and record outcome without blocking media-002 if it fails.
+4. Update the spike doc live triage table with pass/fail notes and blockers.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Overlaps media-002 browser connect work; wire `livekit-client` as the vehicle for steps 2–4.
+- Exit criteria: steps 1–3 pass on Chromium desktop.
 
 ** TODO media-002 - Connect participants with Room audio/video
 :PROPERTIES:
@@ -283,8 +329,8 @@ Time-box the managed SFU provider decision. Evaluate inLive first for up to thre
 :TYPE: AFK
 :PRIORITY: 6
 :AREA: media
-:STATUS: not_started
-:BLOCKED_BY: media-001
+:STATUS: in_progress
+:BLOCKED_BY: media-001 media-001-live
 :END:
 
 *** What to build
@@ -309,11 +355,16 @@ Use the selected media path to connect the Host and up to three Guests so they c
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Started media-002 with TDD after LiveKit selection.
+- Backstage issues server-side LiveKit join grants and shows media connection UI.
+- Local preview in Backstage: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte
+- Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/media-connection.e2e.ts (2 tests)
+- Real LiveKit audio/video connection still requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual browser verification.
 
 *** Notes
 
 - Manual verification is expected because browser media behavior is hard to fully automate.
+- Start with media-001-live token smoke and two-participant connect before broader media-002 acceptance work.
 
 ** TODO room-005 - Add Host moderation controls
 :PROPERTIES:

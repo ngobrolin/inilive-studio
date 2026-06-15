@@ -5,8 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: room-003 "Add ephemeral Room presence" in PLAN.org.
-- Current blocker: none for room-003. room-002 is passing.
+- Current highest-priority unfinished feature: media-002 "Connect participants with Room audio/video" in PLAN.org.
+- Current blocker: real LiveKit Room media requires LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET plus manual browser verification. media-001 is passing on LiveKit Cloud.
 
 * Session Log
 
@@ -552,3 +552,130 @@ Complete room-004 using TDD: add ephemeral Room Chat inside Backstage.
 *** Next best step
 
 Start media-001 managed SFU choice. This is marked HITL in PLAN.org and needs human/provider decision evidence before implementation can continue into media-002.
+
+** Session 010
+:PROPERTIES:
+:SESSION_ID: 010
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete media-001 inLive SFU spike and start media-002 with TDD using the selected provider.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting.
+- Confirmed HITL provider decision: inLive Hub.
+- Documented media-001 evaluation in docs/spikes/media-001-managed-sfu-choice.md.
+- TDD cycle 1: unit test for server-side inLive hub room + client registration grants.
+- TDD cycle 2: Playwright test for Backstage media connection status after Join Check.
+- TDD cycle 3: Playwright test for local media preview in Backstage.
+- Wired Backstage load to issue stub or real inLive join grants via createMediaJoinGrant().
+- Added InliveMediaSession local preview UI and @inlivedev/inlive-js-sdk dependency for upcoming Hub connect work.
+- Updated PLAN.org: media-001 passing, media-002 in_progress.
+
+*** Verification run
+
+- ./init.sh: passed before and after implementation.
+  - Vitest: 13 tests passed.
+  - Playwright: 21 tests passed.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+
+*** Evidence captured
+
+- Spike doc: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md
+- Server modules: ~/code/inilive-studio/src/lib/server/inlive-hub.ts, ~/code/inilive-studio/src/lib/server/media-join.ts
+- Backstage media UI: ~/code/inilive-studio/src/lib/room/InliveMediaSession.svelte
+- E2E tests: ~/code/inilive-studio/src/routes/room/[roomId]/media-connection.e2e.ts
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- docs/spikes/media-001-managed-sfu-choice.md
+- .env.example
+- package.json
+- package-lock.json
+- src/lib/server/inlive-hub.ts
+- src/lib/server/inlive-hub.spec.ts
+- src/lib/server/media-join.ts
+- src/lib/server/media-join.spec.ts
+- src/lib/room/InliveMediaSession.svelte
+- src/lib/room/MediaConnectionPanel.svelte
+- src/lib/room/RoomPresencePanel.svelte
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/backstage/+page.svelte
+- src/routes/room/[roomId]/media-connection.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Real inLive Hub connect is not wired in the browser yet; local preview only until INLIVE_API_KEY is configured and SDK connect slice lands.
+- Hub OpenAPI was unavailable (502) during doc review; integration follows published tutorials only.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Continue media-002 TDD: wire `livekit-client` Room connect with server-issued grants, then add e2e coverage for remote participant tiles when two sessions join the same Room.
+
+** Session 011
+:PROPERTIES:
+:SESSION_ID: 011
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Pivot managed SFU from inLive to LiveKit Cloud after inLive shutdown.
+
+*** Completed
+
+- Removed `@inlivedev/inlive-js-sdk` and added `livekit-server-sdk`.
+- Replaced inLive hub grant module with LiveKit JWT grant issuance in `livekit-hub.ts`.
+- Updated media join wrapper, Backstage UI copy, tests, `.env.example`, and spike documentation for LiveKit Cloud.
+- Updated PLAN.org media-001 evidence to record the LiveKit fallback decision.
+
+*** Verification run
+
+- npm run test:unit -- --run: passed (13 tests).
+- npx playwright test 'src/routes/room/\[roomId\]/media-connection.e2e.ts': passed (2 tests).
+- ./init.sh: passed (13 Vitest, 21 Playwright).
+
+*** Evidence captured
+
+- Spike doc: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md
+- LiveKit server module: ~/code/inilive-studio/src/lib/server/livekit-hub.ts
+- Backstage media UI: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- docs/spikes/media-001-managed-sfu-choice.md
+- .env.example
+- package.json
+- package-lock.json
+- src/lib/server/livekit-hub.ts
+- src/lib/server/livekit-hub.spec.ts
+- src/lib/server/media-join.ts
+- src/lib/server/media-join.spec.ts
+- src/lib/room/LiveKitMediaSession.svelte
+- src/lib/room/MediaConnectionPanel.svelte
+- src/routes/room/[roomId]/media-connection.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Browser-side LiveKit connect is not wired yet; local preview only until the next media-002 slice.
+- LiveKit credentials are required for real multi-participant audio/video validation.
+
+*** Next best step
+
+Continue media-002 TDD: wire `livekit-client` with server-issued grants and verify Host plus Guest remote media in Backstage.
