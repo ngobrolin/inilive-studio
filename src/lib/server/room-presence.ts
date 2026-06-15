@@ -23,17 +23,25 @@ export type RoomPresence = {
   roomId: string;
   participants: RoomParticipant[];
   full: boolean;
+  activeScreenShare: RoomScreenShare | null;
+};
+
+export type RoomScreenShare = {
+  participantId: string;
+  displayName: string;
 };
 
 const MAX_GUESTS = 3;
 const rooms = new Map<string, RoomParticipant[]>();
 const roomMessages = new Map<string, RoomChatMessage[]>();
+const roomScreenShares = new Map<string, RoomScreenShare>();
 let participantSequence = 0;
 let messageSequence = 0;
 
 export function clearRoomPresence(): void {
   rooms.clear();
   roomMessages.clear();
+  roomScreenShares.clear();
   participantSequence = 0;
   messageSequence = 0;
 }
@@ -45,6 +53,7 @@ export function getRoomPresence(roomId: string): RoomPresence {
     roomId,
     participants,
     full: guestCount(participants) >= MAX_GUESTS,
+    activeScreenShare: roomScreenShares.get(roomId) ?? null,
   };
 }
 
@@ -184,6 +193,48 @@ export function respondToHostUnmuteRequest(input: {
       };
     }),
   );
+
+  return { error: null };
+}
+
+export function startRoomScreenShare(input: {
+  roomId: string;
+  participantId: string;
+}): { error: string | null } {
+  const participant = findRoomParticipant(input.roomId, input.participantId);
+
+  if (!participant || participant.role !== "host") {
+    return { error: "Only the Host can start Screen Share." };
+  }
+
+  const activeScreenShare = roomScreenShares.get(input.roomId);
+  if (activeScreenShare && activeScreenShare.participantId !== participant.id) {
+    return { error: "A Screen Share is already active in this Room." };
+  }
+
+  roomScreenShares.set(input.roomId, {
+    participantId: participant.id,
+    displayName: participant.displayName,
+  });
+
+  return { error: null };
+}
+
+export function stopRoomScreenShare(input: {
+  roomId: string;
+  participantId: string;
+}): { error: string | null } {
+  const activeScreenShare = roomScreenShares.get(input.roomId);
+
+  if (!activeScreenShare) {
+    return { error: null };
+  }
+
+  if (activeScreenShare.participantId !== input.participantId) {
+    return { error: "Only the active Screen Share Host can stop Screen Share." };
+  }
+
+  roomScreenShares.delete(input.roomId);
 
   return { error: null };
 }

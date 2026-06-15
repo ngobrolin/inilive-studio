@@ -7,6 +7,8 @@ import {
   postRoomChatMessage,
   registerRoomParticipant,
   respondToHostUnmuteRequest,
+  startRoomScreenShare,
+  stopRoomScreenShare,
 } from "./room-presence";
 
 describe("room presence", () => {
@@ -213,5 +215,42 @@ describe("room presence", () => {
       microphoneEnabled: false,
       cameraEnabled: false,
     });
+  });
+
+  it("lets only the Host start and stop one active Screen Share", () => {
+    const { participant: host } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Host",
+      role: "host",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+    const { participant: guest } = registerRoomParticipant({
+      roomId: "demo",
+      displayName: "Guest",
+      role: "guest",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    });
+
+    expect(
+      startRoomScreenShare({ roomId: "demo", participantId: guest?.id ?? "" }).error,
+    ).toBe("Only the Host can start Screen Share.");
+
+    startRoomScreenShare({ roomId: "demo", participantId: host?.id ?? "" });
+    startRoomScreenShare({ roomId: "demo", participantId: host?.id ?? "" });
+
+    expect(getRoomPresence("demo").activeScreenShare).toEqual({
+      participantId: host?.id,
+      displayName: "Host",
+    });
+
+    expect(
+      stopRoomScreenShare({ roomId: "demo", participantId: guest?.id ?? "" }).error,
+    ).toBe("Only the active Screen Share Host can stop Screen Share.");
+
+    stopRoomScreenShare({ roomId: "demo", participantId: host?.id ?? "" });
+
+    expect(getRoomPresence("demo").activeScreenShare).toBeNull();
   });
 });

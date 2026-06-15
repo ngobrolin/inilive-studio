@@ -6,13 +6,17 @@
 		grant,
 		cameraEnabled = true,
 		microphoneEnabled = true,
+		screenShareActive = false,
+		canScreenShare = false,
 	}: {
 		grant: MediaJoinGrant | null;
 		cameraEnabled?: boolean;
 		microphoneEnabled?: boolean;
+		screenShareActive?: boolean;
+		canScreenShare?: boolean;
 	} = $props();
 </script>
 
 {#if grant}
-	<LiveKitMediaSession {cameraEnabled} {grant} {microphoneEnabled} />
+	<LiveKitMediaSession {cameraEnabled} {canScreenShare} {grant} {microphoneEnabled} {screenShareActive} />
 {/if}

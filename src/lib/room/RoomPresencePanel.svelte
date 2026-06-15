@@ -37,6 +37,51 @@
 		</p>
 	</header>
 
+	<section
+		class="mt-6 rounded-md border border-cyan-300 bg-cyan-50 p-5 text-cyan-950 shadow-sm"
+		data-testid="screen-share-status"
+	>
+		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Screen Share</p>
+		{#if presence.activeScreenShare}
+			<h2 class="mt-2 text-2xl font-semibold">
+				{presence.activeScreenShare.displayName} is sharing their screen.
+			</h2>
+			<p class="mt-2 text-sm leading-6">
+				Screen Share is active and becomes the primary source for later Composed Room Feed work.
+			</p>
+		{:else}
+			<h2 class="mt-2 text-2xl font-semibold">No Screen Share is active.</h2>
+			<p class="mt-2 text-sm leading-6">
+				Only the Host can start Screen Share in this prototype Room.
+			</p>
+		{/if}
+
+		{#if activeHost}
+			<form class="mt-4" method="POST" action="?/screenShare">
+				<input name="participantId" type="hidden" value={activeHost.id} />
+				{#if presence.activeScreenShare}
+					<button
+						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white"
+						name="screenShareAction"
+						type="submit"
+						value="stop"
+					>
+						Stop Screen Share
+					</button>
+				{:else}
+					<button
+						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white"
+						name="screenShareAction"
+						type="submit"
+						value="start"
+					>
+						Start Screen Share
+					</button>
+				{/if}
+			</form>
+		{/if}
+	</section>
+
 	{#if activeParticipant?.removed}
 		<section class="my-8 rounded-md border border-rose-300 bg-rose-50 p-6 text-rose-950 shadow-sm">
 			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Removed from Room</p>
@@ -174,9 +219,11 @@
 
 		<aside class="grid content-start gap-4">
 			<MediaConnectionPanel
+				canScreenShare={activeParticipant?.role === 'host'}
 				cameraEnabled={activeParticipant?.cameraEnabled ?? true}
 				grant={mediaGrant}
 				microphoneEnabled={activeParticipant?.microphoneEnabled ?? true}
+				screenShareActive={presence.activeScreenShare?.participantId === activeParticipant?.id}
 			/>
 
 			<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">

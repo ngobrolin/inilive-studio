@@ -19,16 +19,23 @@
 		grant,
 		cameraEnabled,
 		microphoneEnabled,
+		screenShareActive,
+		canScreenShare,
 	}: {
 		grant: MediaJoinGrant;
 		cameraEnabled: boolean;
 		microphoneEnabled: boolean;
+		screenShareActive: boolean;
+		canScreenShare: boolean;
 	} = $props();
 
 	let localVideo = $state<HTMLVideoElement | null>(null);
+	let screenShareVideo = $state<HTMLVideoElement | null>(null);
 	let connectionLabel = $state('Starting local media preview');
 	let localStream = $state<MediaStream | null>(null);
 	let connectionStatus = $state('Starting · LiveKit');
+	let screenShareLabel = $state('Screen Share inactive');
+	let remoteScreenShare = $state<{ identity: string; name: string; active: boolean } | null>(null);
 	let remoteParticipants = $state(emptyRemoteParticipants());
 
 	const remoteTiles = $derived(listRemoteTiles(remoteParticipants));
@@ -39,6 +46,7 @@
 	const remoteAudioElements = new Map<string, HTMLAudioElement>();
 	const pendingVideoTracks = new Map<string, RemoteTrack>();
 	const pendingAudioTracks = new Map<string, RemoteTrack>();
+	let pendingScreenShareTrack: RemoteTrack | null = null;
 
 	function registerRemoteVideo(element: HTMLVideoElement, identity: string) {
 		remoteVideoElements.set(identity, element);
@@ -78,6 +86,19 @@
 		}
 		return null;
 	}
+
+	function isScreenShare(publication: RemoteTrackPublication): boolean {
+		return String(publication.source) === 'screen_share';
+	}
+
+	$effect(() => {
+		if (!screenShareVideo || !pendingScreenShareTrack) {
+			return;
+		}
+
+		pendingScreenShareTrack.attach(screenShareVideo);
+		pendingScreenShareTrack = null;
+	});
 
 	$effect(() => {
 		if (!localVideo || !localStream) {
@@ -129,6 +150,14 @@
 
 					const cameraPublication = await room.localParticipant.setCameraEnabled(cameraEnabled);
 					await room.localParticipant.setMicrophoneEnabled(microphoneEnabled);
+					if (canScreenShare && screenShareActive) {
+						await room.localParticipant.setScreenShareEnabled(true);
+						screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
+					} else {
+						screenShareLabel = grant.stub
+							? 'Screen Share state is reflected locally in stub mode'
+							: 'Screen Share inactive';
+					}
 
 					if (cancelled) {
 						room.disconnect();
@@ -198,6 +227,20 @@
 			publication: RemoteTrackPublication,
 			participant: Participant,
 		) {
+			if (isScreenShare(publication)) {
+				remoteScreenShare = {
+					identity: participant.identity,
+					name: participant.name || participant.identity,
+					active: true,
+				};
+				if (screenShareVideo) {
+					track.attach(screenShareVideo);
+				} else {
+					pendingScreenShareTrack = track;
+				}
+				return;
+			}
+
 			const kind = trackKind(publication);
 			if (!kind) {
 				return;
@@ -232,6 +275,15 @@
 			publication: RemoteTrackPublication,
 			participant: Participant,
 		) {
+			if (isScreenShare(publication)) {
+				track.detach();
+				pendingScreenShareTrack = null;
+				if (remoteScreenShare?.identity === participant.identity) {
+					remoteScreenShare = null;
+				}
+				return;
+			}
+
 			const kind = trackKind(publication);
 			if (!kind) {
 				return;
@@ -249,11 +301,13 @@
 
 		return () => {
 			cancelled = true;
+			void room?.localParticipant.setScreenShareEnabled(false);
 			room?.disconnect();
 			remoteVideoElements.clear();
 			remoteAudioElements.clear();
 			pendingVideoTracks.clear();
 			pendingAudioTracks.clear();
+			pendingScreenShareTrack = null;
 		};
 	});
 
@@ -274,6 +328,9 @@
 		{connectionStatus}
 	</p>
 	<p class="mt-2 text-sm leading-6 text-neutral-600">{connectionLabel}</p>
+	{#if canScreenShare || remoteScreenShare}
+		<p class="mt-2 text-sm font-semibold text-cyan-950">{screenShareLabel}</p>
+	{/if}
 
 	<div class="mt-4 overflow-hidden rounded-md border border-neutral-200 bg-neutral-950">
 		<video
@@ -285,6 +342,23 @@
 			playsinline
 		></video>
 	</div>
+
+	{#if remoteScreenShare}
+		<div
+			class="mt-4 overflow-hidden rounded-md border border-cyan-300 bg-neutral-950"
+			data-testid="remote-screen-share"
+		>
+			<div class="border-b border-cyan-900 bg-cyan-950 px-3 py-2 text-sm font-semibold text-cyan-50">
+				{remoteScreenShare.name} Screen Share
+			</div>
+			<video
+				bind:this={screenShareVideo}
+				autoplay
+				class="aspect-video w-full object-contain"
+				playsinline
+			></video>
+		</div>
+	{/if}
 
 	{#if remoteTiles.length > 0}
 		<p class="mt-5 text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">

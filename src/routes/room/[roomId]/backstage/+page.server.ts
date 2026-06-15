@@ -5,6 +5,8 @@ import {
   moderateRoomParticipant,
   postRoomChatMessage,
   respondToHostUnmuteRequest,
+  startRoomScreenShare,
+  stopRoomScreenShare,
 } from "$lib/server/room-presence";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
@@ -78,6 +80,21 @@ export const actions: Actions = {
     const participantId = String(formData.get("participantId") ?? "");
     const accepted = formData.get("unmuteResponse") === "accept";
     const result = respondToHostUnmuteRequest({ roomId: params.roomId, participantId, accepted });
+
+    if (result.error) {
+      return fail(400, { error: result.error });
+    }
+
+    redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
+  },
+  screenShare: async ({ params, request }) => {
+    const formData = await request.formData();
+    const participantId = String(formData.get("participantId") ?? "");
+    const action = String(formData.get("screenShareAction") ?? "");
+    const result =
+      action === "start"
+        ? startRoomScreenShare({ roomId: params.roomId, participantId })
+        : stopRoomScreenShare({ roomId: params.roomId, participantId });
 
     if (result.error) {
       return fail(400, { error: result.error });

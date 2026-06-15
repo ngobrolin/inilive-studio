@@ -874,3 +874,76 @@ Complete room-005: add prototype Host moderation controls for Guests inside Back
 *** Next best step
 
 Start media-003 Host Screen Share with TDD: Host-only screen share control, one active screen share per Room, Guest UI receives or reflects active Screen Share state.
+
+** Session 015
+:PROPERTIES:
+:SESSION_ID: 015
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Start media-003: add Host-only Screen Share state, controls, and LiveKit browser wiring.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline passed.
+- Added in-memory Screen Share state for one active Screen Share per Room.
+- Added Host-only Backstage Screen Share start/stop controls.
+- Added Room-visible Screen Share active/inactive status for Host and Guests.
+- Guests cannot see start or stop Screen Share controls.
+- Wired non-stub LiveKit sessions so the active Host calls `setScreenShareEnabled(true)` and remote subscribed Screen Share tracks render in the media panel.
+- Updated PLAN.org media-003 to in_progress with evidence.
+
+*** Verification run
+
+- ./init.sh baseline: passed before implementation.
+  - Vitest: 23 tests passed.
+  - Playwright: 24 tests passed.
+- npm run test:unit -- --run src/lib/server/room-presence.spec.ts: passed.
+  - Vitest: 8 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/screen-share.e2e.ts': passed.
+  - Playwright: 2 tests passed.
+- npm run check: passed with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- ./init.sh after implementation: passed.
+  - Vitest: 24 tests passed.
+  - Playwright: 26 tests passed.
+- npm run lint: passed with 0 errors and 1 existing warning.
+  - Warning: src/lib/index.ts is effectively empty.
+
+*** Evidence captured
+
+- In-memory Screen Share state: src/lib/server/room-presence.ts
+- Backstage Screen Share controls/status: src/lib/room/RoomPresencePanel.svelte
+- Backstage action wiring: src/routes/room/[roomId]/backstage/+page.server.ts
+- LiveKit Screen Share publish/receive wiring: src/lib/room/LiveKitMediaSession.svelte
+- E2E tests: src/routes/room/[roomId]/screen-share.e2e.ts
+
+*** Commits
+
+- None yet this session.
+
+*** Files or artifacts updated
+
+- src/lib/server/room-presence.ts
+- src/lib/server/room-presence.spec.ts
+- src/lib/room/MediaConnectionPanel.svelte
+- src/lib/room/LiveKitMediaSession.svelte
+- src/lib/room/RoomPresencePanel.svelte
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/screen-share.e2e.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- media-003 is not yet passing because real desktop Chromium Screen Share with LiveKit credentials still needs manual verification.
+- Automated e2e verifies Screen Share state/UI in hermetic stub mode, not the native browser picker or real remote Screen Share media.
+- session-handoff.md remains not oxfmt-clean from earlier sessions.
+- npm run check still has the missing node type definition warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Run real LiveKit Screen Share verification in desktop Chromium: Host starts Screen Share, Guest receives the Screen Share track, Host stops sharing, and the spike/PLAN evidence is updated so media-003 can be marked passing.

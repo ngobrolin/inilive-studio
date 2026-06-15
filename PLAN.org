@@ -430,7 +430,7 @@ Add prototype Host controls for Guest moderation: force-mute, force-camera-off, 
 :TYPE: AFK
 :PRIORITY: 8
 :AREA: media
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: media-002
 :END:
 
@@ -456,11 +456,19 @@ Allow only the Host to start one active Screen Share in the prototype Room. When
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15: Added the first Host Screen Share prototype slice.
+  - In-memory Screen Share state: ~/code/inilive-studio/src/lib/server/room-presence.ts
+  - Backstage Host-only Screen Share controls and Room-visible active state: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - Backstage action wiring: ~/code/inilive-studio/src/routes/room/[roomId]/backstage/+page.server.ts
+  - LiveKit browser wiring: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte calls `setScreenShareEnabled(true)` for the active Host in non-stub mode and renders subscribed remote Screen Share tracks.
+  - Unit tests: ~/code/inilive-studio/src/lib/server/room-presence.spec.ts covers Host-only start/stop and Guest denial.
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/screen-share.e2e.ts covers Host start/stop state and Guest no-control visibility.
+  - Targeted verification passed: npm run test:unit -- --run src/lib/server/room-presence.spec.ts; npx playwright test 'src/routes/room/\[roomId\]/screen-share.e2e.ts'; npm run check.
 
 *** Notes
 
 - Guest Screen Share is explicitly out of scope for v1.
+- Real desktop Chromium Screen Share with LiveKit credentials still needs manual verification before marking this issue passing.
 
 ** TODO compose-001 - Build participant grid and Broadcast Preview
 :PROPERTIES:
