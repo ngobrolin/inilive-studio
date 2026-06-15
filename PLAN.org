@@ -45,7 +45,7 @@ Goal: prove the Room experience and Composed Room Feed before product infrastruc
 :TYPE: AFK
 :PRIORITY: 1
 :AREA: room
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: none
 :END:
 
@@ -71,11 +71,23 @@ Create the first demoable Room prototype entry path. A Host can open an authless
 
 *** Evidence
 
-- None recorded.
+- 2026-06-15 08:00 WIB: Added a throwaway UI prototype route at ~/code/inilive-studio/src/routes/prototype/room-entry/+page.svelte.
+- Prototype URLs:
+  - Host: /prototype/room-entry?role=host&variant=A
+  - Guest: /prototype/room-entry?role=guest&variant=B
+  - Variants: A "Control desk", B "Join console", C "Preview first"
+- Captured the prototype question and undecided verdict in ~/code/inilive-studio/src/routes/prototype/room-entry/NOTES.md.
+- Verification run while developing:
+  - ./init.sh passed before code changes.
+  - ./init.sh passed again after prototype and progress artifact updates.
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run build passed; Vite emitted existing file-descriptor warnings but produced the SvelteKit build.
+  - Playwright visual smoke opened desktop and mobile versions of variants A, B, and C; Backstage state, Prototype state, and the dev-only variant switcher were visible.
 
 *** Notes
 
 - This is the first active implementation issue after the plan conversion.
+- This prototype is intentionally not the final room-001 implementation. Choose a winning structure, then delete the throwaway route or fold the selected direction into the real Room entry path.
 
 ** TODO room-002 - Build Join Check with local media preview
 :PROPERTIES:

@@ -175,3 +175,88 @@ Convert docs/SPEC.md into PLAN.org issues, using PLAN.org as the issue tracker i
 *** Next best step
 
 Start room-001: add the authless Room prototype entry path for Host and Guest, after running the standard startup path.
+
+** Session 005
+:PROPERTIES:
+:SESSION_ID: 005
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Prototype the first authless Room entry experience for room-001 before committing to the real Host and Guest entry implementation.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Read the prototype, frontend-design, and git workflow skill instructions.
+- Reviewed PROGRESS.org, PLAN.org, CONTEXT.md, docs/SPEC.md, recent commits, package scripts, current SvelteKit routes, and init.sh.
+- Confirmed RTK.md is referenced by AGENTS.md but is not present in this checkout.
+- Created branch codex/prototype-room-entry.
+- Added a throwaway UI prototype at /prototype/room-entry.
+- Added three structurally different variants:
+  - A "Control desk"
+  - B "Join console"
+  - C "Preview first"
+- Added role-aware prototype URLs through ?role=host and ?role=guest.
+- Added a dev-only floating variant switcher through ?variant=A|B|C with button and keyboard arrow navigation.
+- Added visible Prototype state on each variant showing role, variant, Backstage state, no auth, no persistence, and participant limit.
+- Added ~/code/inilive-studio/src/routes/prototype/room-entry/NOTES.md with the prototype question and undecided verdict.
+
+*** Verification run
+
+- ./init.sh: passed before code changes.
+  - npm install completed.
+  - npm test passed.
+  - Vitest: 2 files passed, 2 tests passed.
+  - Playwright: 1 test passed.
+- ./init.sh: passed again after prototype and progress artifact updates.
+  - npm install was up to date.
+  - npm test passed.
+  - Vitest: 2 files passed, 2 tests passed.
+  - Playwright: 1 test passed.
+- npm run check: passed after implementation with 0 errors and 1 existing warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- npm run build: passed after implementation.
+  - Vite/SvelteKit produced the production build.
+  - Existing file-descriptor warnings still appear during build output.
+- npm run lint: passed with 0 errors and 1 existing warning.
+  - Warning: src/lib/index.ts is effectively empty except for the generated comment.
+- Playwright visual smoke: passed for desktop and mobile variants A, B, and C.
+  - Verified Prototype state is visible.
+  - Verified Backstage state is visible.
+  - Verified the dev-only variant switcher is visible.
+  - Final screenshot path for variant B: /tmp/inilive-studio-prototype-screens/desktop-variant-B.png.
+
+*** Evidence captured
+
+- Prototype route: /prototype/room-entry
+- Host example: /prototype/room-entry?role=host&variant=A
+- Guest example: /prototype/room-entry?role=guest&variant=B
+- Prototype notes: ~/code/inilive-studio/src/routes/prototype/room-entry/NOTES.md
+- PLAN.org room-001 status updated to in_progress with evidence.
+
+*** Commits
+
+- Committed before handoff on branch codex/prototype-room-entry.
+
+*** Files or artifacts updated
+
+- src/lib/prototype/PrototypeSwitcher.svelte
+- src/routes/prototype/room-entry/+page.svelte
+- src/routes/prototype/room-entry/NOTES.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- This is throwaway prototype code, not the final room-001 implementation.
+- room-001 remains in_progress until a variant is selected and folded into the real Room entry path or the prototype is intentionally promoted.
+- RTK.md is referenced by AGENTS.md but is missing from the checkout.
+- session-handoff.md remains not oxfmt-clean from earlier sessions.
+- npm run check still has the missing @types/node warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Choose a prototype direction. The likely path is to promote variant B if the goal is fastest onboarding into Join Check, or variant C if the Composed Room Feed should be the first mental model.
