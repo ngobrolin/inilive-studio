@@ -7,19 +7,34 @@ export type MediaJoinGrant = LiveKitMediaJoinGrant & {
   stub: boolean;
 };
 
-export async function createMediaJoinGrant(input: {
-  roomId: string;
-  participantId: string;
-  displayName: string;
-  role: "host" | "guest";
-}): Promise<MediaJoinGrant | null> {
+export type LiveKitCredentials = {
+  apiKey: string | undefined;
+  apiSecret: string | undefined;
+  serverUrl: string | undefined;
+};
+
+export function readLiveKitCredentials(): LiveKitCredentials {
+  return {
+    apiKey: env.LIVEKIT_API_KEY,
+    apiSecret: env.LIVEKIT_API_SECRET,
+    serverUrl: env.LIVEKIT_URL,
+  };
+}
+
+export async function createMediaJoinGrant(
+  input: {
+    roomId: string;
+    participantId: string;
+    displayName: string;
+    role: "host" | "guest";
+  },
+  credentials: LiveKitCredentials = readLiveKitCredentials(),
+): Promise<MediaJoinGrant | null> {
   if (!input.participantId) {
     return null;
   }
 
-  const apiKey = env.LIVEKIT_API_KEY;
-  const apiSecret = env.LIVEKIT_API_SECRET;
-  const serverUrl = env.LIVEKIT_URL;
+  const { apiKey, apiSecret, serverUrl } = credentials;
 
   if (!apiKey || !apiSecret || !serverUrl) {
     return {
