@@ -1,7 +1,17 @@
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
-  webServer: { command: "npm run build && npm run preview", port: 4173 },
+  webServer: {
+    command: "npm run build && npm run preview",
+    port: 4173,
+    // Keep e2e deterministic in stub mode. Real LiveKit credential
+    // verification is the manual HITL step (media-001-live).
+    env: {
+      LIVEKIT_URL: "",
+      LIVEKIT_API_KEY: "",
+      LIVEKIT_API_SECRET: "",
+    },
+  },
   testMatch: "**/*.e2e.{ts,js}",
   use: {
     permissions: ["camera", "microphone"],
