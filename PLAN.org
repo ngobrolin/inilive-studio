@@ -1,14 +1,17 @@
 #+TITLE: PLAN
-#+LAST_UPDATED: YYYY-MM-DD
+#+LAST_UPDATED: 2026-06-15
 
 * Project
   :PROPERTIES:
-  :PROJECT: replace-with-project-name
-  :LAST_UPDATED: YYYY-MM-DD
+  :PROJECT: Live Studio
+  :LAST_UPDATED: 2026-06-15
   :END:
+
+Live Studio is a browser-based production Room where a signed-in Host brings up to three Guests into a private Room and broadcasts one Composed Room Feed to YouTube.
 
 * Rules
   :PROPERTIES:
+  :SINGLE_ACTIVE_MILESTONE: Milestone 1
   :SINGLE_ACTIVE_FEATURE: true
   :PASSING_REQUIRES_EVIDENCE: true
   :DO_NOT_SKIP_VERIFICATION: true
@@ -17,89 +20,956 @@
 * Status Legend
 
 - not_started :: Work has not begun.
-- in_progress :: The feature is the current active task.
+- active :: The milestone is the current implementation focus.
+- in_progress :: The issue is the current active task.
 - blocked :: Work cannot continue until a documented blocker is resolved.
 - passing :: Required verification has passed and evidence is recorded.
+- done :: The issue is complete and evidence is recorded.
 
-* Features
+* Issue Types
 
-** TODO chat-001 - Create a new conversation
+- AFK :: An agent can implement and verify the issue without human interaction once blockers are complete.
+- HITL :: Human input, credentials, product judgment, or external account access is expected before completion.
+
+* Milestone 1 - Local Room Prototype
 :PROPERTIES:
-:FEATURE_ID: chat-001
+:MILESTONE_ID: m1-local-room-prototype
+:STATUS: active
+:END:
+
+Goal: prove the Room experience and Composed Room Feed before product infrastructure, auth, durable storage, or the Broadcast Bridge.
+
+** TODO room-001 - Add authless Room prototype entry
+:PROPERTIES:
+:FEATURE_ID: room-001
+:TYPE: AFK
 :PRIORITY: 1
-:AREA: chat
+:AREA: room
 :STATUS: not_started
+:BLOCKED_BY: none
 :END:
 
-*** User-visible behavior
+*** What to build
 
-A user can click New Chat and see a fresh empty conversation.
+Create the first demoable Room prototype entry path. A Host can open an authless Host Room URL, and a Guest can open an authless Guest Invite URL for the same ephemeral Room. This slice should establish the prototype navigation and role distinction without adding real auth, accounts, database records, or production invite security.
+
+*** Acceptance criteria
+
+- [ ] A Host can open a prototype Room URL without signing in.
+- [ ] A Guest can open a prototype Guest Invite URL without an Account.
+- [ ] The UI clearly distinguishes Host and Guest roles using Live Studio vocabulary.
+- [ ] The Room starts in Backstage or equivalent prototype state; nothing implies it is Broadcasting.
+- [ ] The implementation does not add persistence, magic-link auth, or product-backed Room records.
 
 *** Verification
 
-1. Open the app.
-2. Click New Chat.
-3. Verify a new conversation appears in the sidebar.
-4. Verify the main panel shows an empty conversation state.
+1. Run the standard startup path.
+2. Open the Host prototype URL.
+3. Open the Guest prototype URL.
+4. Verify both pages load and show role-appropriate copy.
+5. Run the narrowest relevant automated check for the changed files.
 
 *** Evidence
 
-* None recorded.
+- None recorded.
 
 *** Notes
 
-* None.
+- This is the first active implementation issue after the plan conversion.
 
-** TODO chat-002 - Send a message in the current conversation
+** TODO room-002 - Build Join Check with local media preview
 :PROPERTIES:
-:FEATURE_ID: chat-002
+:FEATURE_ID: room-002
+:TYPE: AFK
 :PRIORITY: 2
-:AREA: chat
+:AREA: room
 :STATUS: not_started
+:BLOCKED_BY: room-001
 :END:
 
-*** User-visible behavior
+*** What to build
 
-A user can submit a message and see it appear in the active thread.
+Add Join Check before a Host or Guest enters the Room. A person types a Display Name, grants camera and microphone permissions, chooses devices where available, chooses initial camera and microphone state, and previews themselves before entering.
+
+*** Acceptance criteria
+
+- [ ] Join Check requires a Display Name before entering the Room.
+- [ ] Display Name is treated as plain text and limited to 50 characters.
+- [ ] Join Check requests camera and microphone access and shows a local preview when granted.
+- [ ] A person can choose initial microphone muted/unmuted state and camera on/off state.
+- [ ] Permission denied and no-device states show inline recovery or retry copy.
+- [ ] Unsupported browsers show a compatibility message before device prompts where detectable.
 
 *** Verification
 
-1. Open an existing conversation.
-2. Type a message into the input.
-3. Submit the message.
-4. Verify the new message appears in the thread.
+1. Open the Host and Guest prototype entry paths.
+2. Complete Join Check with camera and microphone allowed.
+3. Repeat with permission denied or unavailable devices where practical.
+4. Verify Display Name validation and character limit.
+5. Run targeted automated checks and record any manual browser evidence.
 
 *** Evidence
 
-* None recorded.
+- None recorded.
 
 *** Notes
 
-* None.
+- Supported Host browser for v1 is Chromium-based desktop. Guest support includes Chromium desktop and Chrome on Android.
 
-** TODO chat-003 - Persist the active conversation list
+** TODO room-003 - Add ephemeral Room presence
 :PROPERTIES:
-:FEATURE_ID: chat-003
+:FEATURE_ID: room-003
+:TYPE: AFK
 :PRIORITY: 3
-:AREA: chat
+:AREA: room
 :STATUS: not_started
+:BLOCKED_BY: room-002
 :END:
 
-*** User-visible behavior
+*** What to build
 
-A user sees previously created conversations after restarting the app.
+Represent who is inside the prototype Room with ephemeral state. The Room supports one Host and up to three Guests. Participants appear with Display Names and basic camera/microphone state. A fourth Guest sees Room Full instead of entering.
+
+*** Acceptance criteria
+
+- [ ] The Room can show one Host and up to three Guests.
+- [ ] Each participant has a Display Name and role.
+- [ ] Camera-off participants show name-labeled placeholders.
+- [ ] Room Full is shown when a Guest attempts to enter a full Room.
+- [ ] Presence state is ephemeral and is not restored after restart.
+- [ ] Terminology uses Host, Guest, Room, Display Name, and Room Full.
 
 *** Verification
 
-1. Create two conversations.
-2. Restart the app.
-3. Verify both conversations still appear in the sidebar.
+1. Open one Host and three Guest sessions for the same prototype Room.
+2. Verify all four participants are represented.
+3. Attempt to enter as a fourth Guest and verify Room Full.
+4. Toggle camera-off state where available and verify placeholders.
+5. Run focused automated checks if state logic is covered by tests.
 
 *** Evidence
 
-* None recorded.
+- None recorded.
 
 *** Notes
 
-* None.
+- This issue may use local or in-memory prototype state; durable sessions belong to Milestone 3.
 
+** TODO room-004 - Add ephemeral Room Chat
+:PROPERTIES:
+:FEATURE_ID: room-004
+:TYPE: AFK
+:PRIORITY: 4
+:AREA: room-chat
+:STATUS: not_started
+:BLOCKED_BY: room-003
+:END:
+
+*** What to build
+
+Add private Room Chat for the Host and Guests inside the prototype Room. Messages are visible only inside the Room and are not persisted.
+
+*** Acceptance criteria
+
+- [ ] Host and Guests in the Room can send Room Chat messages.
+- [ ] Room Chat messages show sender Display Name and message text.
+- [ ] Room Chat is not visible to the Audience because the product has no Audience page in v1.
+- [ ] Room Chat messages are plain text and not persisted.
+- [ ] Restarting the app or clearing prototype state removes Room Chat history.
+
+*** Verification
+
+1. Open a Host and Guest in the same prototype Room.
+2. Send messages from both roles.
+3. Verify messages appear to Room participants.
+4. Restart or reset prototype state and verify messages are gone.
+5. Run targeted automated checks for message rendering and escaping.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Audience Chat, moderation tools, and persistence are out of scope.
+
+** TODO media-001 - Spike managed SFU choice
+:PROPERTIES:
+:FEATURE_ID: media-001
+:TYPE: HITL
+:PRIORITY: 5
+:AREA: media
+:STATUS: not_started
+:BLOCKED_BY: room-003
+:END:
+
+*** What to build
+
+Time-box the managed SFU provider decision. Evaluate inLive first for up to three working days. Success requires a multi-participant Room API, Screen Share support, per-participant access tokens, and a Node-compatible server SDK. If inLive fails the criteria within the time-box, switch to LiveKit Cloud. Peer-to-peer mesh may only be used as a temporary two-day UI unblock fallback.
+
+*** Acceptance criteria
+
+- [ ] inLive is evaluated against all four success criteria.
+- [ ] Evidence is recorded for each criterion.
+- [ ] If inLive passes, the selected provider and integration notes are recorded.
+- [ ] If inLive fails or remains unclear after the time-box, LiveKit Cloud is selected without further forcing.
+- [ ] Any peer-to-peer fallback is explicitly documented as temporary and time-boxed.
+
+*** Verification
+
+1. Review provider docs and prototype the minimum viable join/token/media flow needed to assess the criteria.
+2. Record links, code notes, or experimental results for each criterion.
+3. Ask for human confirmation of the provider decision before marking passing.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- HITL because the final provider decision affects architecture, external accounts, and future costs.
+
+** TODO media-002 - Connect participants with Room audio/video
+:PROPERTIES:
+:FEATURE_ID: media-002
+:TYPE: AFK
+:PRIORITY: 6
+:AREA: media
+:STATUS: not_started
+:BLOCKED_BY: media-001
+:END:
+
+*** What to build
+
+Use the selected media path to connect the Host and up to three Guests so they can see and hear each other inside the prototype Room.
+
+*** Acceptance criteria
+
+- [ ] Host and Guests publish their chosen camera and microphone state into the Room.
+- [ ] Participants can see and hear each other through the selected media path.
+- [ ] Camera-off participants remain represented by name-labeled placeholders.
+- [ ] Guest entry during a Room session attaches media without requiring a Room reload.
+- [ ] Media state remains prototype-only and does not introduce Milestone 3 product persistence.
+
+*** Verification
+
+1. Open one Host and at least one Guest in supported Chromium browsers.
+2. Verify two-way audio/video.
+3. Add up to three Guests and verify media continues to work.
+4. Toggle camera and microphone states and verify Room representation.
+5. Record manual media evidence and run any available automated checks for non-media state.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Manual verification is expected because browser media behavior is hard to fully automate.
+
+** TODO room-005 - Add Host moderation controls
+:PROPERTIES:
+:FEATURE_ID: room-005
+:TYPE: AFK
+:PRIORITY: 7
+:AREA: room
+:STATUS: not_started
+:BLOCKED_BY: media-002
+:END:
+
+*** What to build
+
+Add prototype Host controls for Guest moderation: force-mute, force-camera-off, request-unmute, and remove Guest. Guest unmute/camera re-enable must require Guest confirmation after Host action where specified by the v1 design.
+
+*** Acceptance criteria
+
+- [ ] Host can force-mute a Guest.
+- [ ] Host can force a Guest camera off.
+- [ ] Guest sees clear banners for Host-muted microphone and Host-disabled camera.
+- [ ] Host can request unmute, Guest can accept or dismiss, and Host sees the resulting state.
+- [ ] Host can remove a Guest, and the Guest sees a removed-from-Room screen.
+- [ ] Removal does not imply Guest Invite revocation in the prototype copy.
+
+*** Verification
+
+1. Open Host and Guest sessions with media connected.
+2. Exercise each moderation action from the Host UI.
+3. Verify Guest-facing copy and resulting media state.
+4. Verify removed Guest can no longer participate in the current Room session.
+5. Run targeted automated checks for moderation state transitions where practical.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Guest Ban and separate moderation tooling are v1 non-goals.
+
+** TODO media-003 - Add Host Screen Share
+:PROPERTIES:
+:FEATURE_ID: media-003
+:TYPE: AFK
+:PRIORITY: 8
+:AREA: media
+:STATUS: not_started
+:BLOCKED_BY: media-002
+:END:
+
+*** What to build
+
+Allow only the Host to start one active Screen Share in the prototype Room. When active, Screen Share becomes the primary visual source for later composition work.
+
+*** Acceptance criteria
+
+- [ ] Host can start a Screen Share from a supported desktop browser.
+- [ ] Host can stop the active Screen Share.
+- [ ] Only one Screen Share can be active in a Room at a time.
+- [ ] Guests cannot start Screen Share.
+- [ ] Room UI reflects when Screen Share is active.
+
+*** Verification
+
+1. Open a Host Room in a supported desktop Chromium browser.
+2. Start and stop Screen Share.
+3. Verify Guest UI receives or reflects the Screen Share state.
+4. Verify no Guest Screen Share control is available.
+5. Record manual browser evidence and run relevant non-media automated checks.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Guest Screen Share is explicitly out of scope for v1.
+
+** TODO compose-001 - Build participant grid and Broadcast Preview
+:PROPERTIES:
+:FEATURE_ID: compose-001
+:TYPE: AFK
+:PRIORITY: 9
+:AREA: composition
+:STATUS: not_started
+:BLOCKED_BY: media-002
+:END:
+
+*** What to build
+
+Create the prototype Room layout: participant grid as the primary collaboration view and Broadcast Preview as the Room-visible preview of what would go to the Broadcast Destination.
+
+*** Acceptance criteria
+
+- [ ] Participant grid shows Host and Guests with Display Name labels.
+- [ ] Camera-off participants show neutral name-labeled placeholders.
+- [ ] Broadcast Preview is visible in the Room.
+- [ ] While Backstage, Broadcast Preview copy makes clear it is not live.
+- [ ] Host may hide their own Broadcast Preview panel if that control is in scope for the slice.
+- [ ] Guests always see Broadcast Preview while Broadcasting once Broadcast State exists in later milestones.
+
+*** Verification
+
+1. Open a Room with Host and at least one Guest.
+2. Verify participant grid and labels.
+3. Toggle camera-off state and verify placeholders.
+4. Verify Broadcast Preview renders a sensible Backstage preview.
+5. Run component or browser checks for layout where practical.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- This issue creates the UI foundation; canvas capture comes next.
+
+** TODO compose-002 - Produce Composed Room Feed with canvas captureStream
+:PROPERTIES:
+:FEATURE_ID: compose-002
+:TYPE: AFK
+:PRIORITY: 10
+:AREA: composition
+:STATUS: not_started
+:BLOCKED_BY: compose-001 media-003
+:END:
+
+*** What to build
+
+Render the final Composed Room Feed into a browser canvas and produce a MediaStream with canvas captureStream. This stream is the path Milestone 2 will send to WHIP. The prototype should target 720p and meet the Milestone 1 minimum performance gate.
+
+*** Acceptance criteria
+
+- [ ] The Composed Room Feed includes participant video or placeholders and Display Name labels.
+- [ ] Host Screen Share becomes the primary visual when active, with participant cameras as smaller tiles.
+- [ ] The composition canvas targets 720p output.
+- [ ] The canvas produces a MediaStream via captureStream.
+- [ ] On the reference machine class, the composed output sustains at least 28fps with Host plus three Guests or documented simulated equivalents.
+- [ ] OBS can capture the composed output as supplementary validation.
+
+*** Verification
+
+1. Open a Room with Host and Guests or documented media simulators.
+2. Verify canvas composition visually.
+3. Verify captureStream returns the MediaStream intended for WHIP ingest.
+4. Measure and record fps evidence against the M1 gate.
+5. Verify OBS capture if practical and record constraints.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- M1 requires at least 28fps. The product target of 720p30 is validated end-to-end in Milestone 2.
+
+** TODO qa-001 - Write manual media test script
+:PROPERTIES:
+:FEATURE_ID: qa-001
+:TYPE: AFK
+:PRIORITY: 11
+:AREA: qa
+:STATUS: not_started
+:BLOCKED_BY: compose-002
+:END:
+
+*** What to build
+
+Document the manual media test script for Milestone 1 so future agents and humans can reproduce browser/device constraints and validate the Local Room Prototype.
+
+*** Acceptance criteria
+
+- [ ] The script covers Host on supported desktop Chromium browsers.
+- [ ] The script covers Guest on supported desktop Chromium browsers.
+- [ ] The script covers Guest on Chrome on Android.
+- [ ] The script covers Join Check, media permissions, Room Full, Room Chat, moderation controls, Screen Share, Broadcast Preview, and canvas captureStream.
+- [ ] Known browser/device constraints are recorded.
+- [ ] The script records the expected evidence needed to mark M1 passing.
+
+*** Verification
+
+1. Read the script from a cold start and confirm it is executable by a future tester.
+2. Run at least the desktop subset if hardware is available.
+3. Record skipped device coverage honestly.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- This issue completes the Milestone 1 verification harness.
+
+* Milestone 2 - Broadcast Bridge Spike
+:PROPERTIES:
+:MILESTONE_ID: m2-broadcast-bridge-spike
+:STATUS: not_started
+:END:
+
+Goal: prove the path from the Composed Room Feed to YouTube through a server-side Broadcast Bridge.
+
+** TODO bridge-001 - Add Broadcast credential entry and in-memory Broadcast state
+:PROPERTIES:
+:FEATURE_ID: bridge-001
+:TYPE: AFK
+:PRIORITY: 12
+:AREA: broadcast-bridge
+:STATUS: not_started
+:BLOCKED_BY: compose-002
+:END:
+
+*** What to build
+
+Add the simplified Milestone 2 Broadcast flow to the prototype. The Host can paste YouTube RTMP server URL and stream key, start Broadcasting, end Broadcasting, and see Failed when the bridge reports failure. Credentials must stay ephemeral and must not be persisted or logged.
+
+*** Acceptance criteria
+
+- [ ] Host can enter RTMP server URL and stream key for a Broadcast.
+- [ ] Stream credentials are held only for the active attempt and are not persisted.
+- [ ] The prototype exposes Broadcasting, Ended, and Failed states.
+- [ ] Host can end a Broadcast attempt cleanly.
+- [ ] UI copy makes clear that YouTube archive is the recording in v1.
+
+*** Verification
+
+1. Open the Host prototype Room with a Composed Room Feed available.
+2. Enter placeholder and valid-looking credential values.
+3. Verify state transitions without logging or storing the stream key.
+4. Run targeted checks for credential handling and state transitions.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Countdown and durable Broadcast records belong to Milestone 3.
+
+** TODO bridge-002 - Implement WHIP ingest authentication
+:PROPERTIES:
+:FEATURE_ID: bridge-002
+:TYPE: AFK
+:PRIORITY: 13
+:AREA: broadcast-bridge
+:STATUS: not_started
+:BLOCKED_BY: bridge-001
+:END:
+
+*** What to build
+
+Add short-lived per-Broadcast bearer-token authentication for WHIP ingest. Invalid tokens must return 401 before ingest starts.
+
+*** Acceptance criteria
+
+- [ ] SvelteKit or the prototype control layer issues a per-Broadcast bearer token.
+- [ ] WHIP POST requires Authorization: Bearer token.
+- [ ] Invalid or missing tokens return 401 before ingest starts.
+- [ ] Tokens are scoped to the current Broadcast attempt.
+- [ ] Token values are not logged.
+
+*** Verification
+
+1. Start a Broadcast attempt and capture the expected ingest path.
+2. POST without a token and verify 401.
+3. POST with an invalid token and verify 401.
+4. POST with a valid token and verify ingest can proceed to the next bridge step.
+5. Inspect logs for secret redaction.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Production session security comes later; this issue is bridge ingest protection.
+
+** TODO bridge-003 - Spike GStreamer WHIP-to-RTMP bridge
+:PROPERTIES:
+:FEATURE_ID: bridge-003
+:TYPE: AFK
+:PRIORITY: 14
+:AREA: broadcast-bridge
+:STATUS: not_started
+:BLOCKED_BY: bridge-002
+:END:
+
+*** What to build
+
+Build and validate the server-side Broadcast Bridge pipeline using GStreamer in a pinned container image. The bridge accepts WHIP ingest, transcodes browser output to H.264/AAC, and pushes RTMP to YouTube or a test RTMP endpoint.
+
+*** Acceptance criteria
+
+- [ ] GStreamer version is at least 1.22 in the pinned container image.
+- [ ] Bridge accepts WHIP ingest from the Composed Room Feed path.
+- [ ] Bridge outputs H.264 video and AAC audio suitable for YouTube RTMP.
+- [ ] Target is 720p30, 4 Mbps, keyframe every 2s, AAC 44.1kHz stereo.
+- [ ] RTMP URLs and stream keys are redacted from logs.
+- [ ] Bridge can be run as a separate process or service from SvelteKit.
+
+*** Verification
+
+1. Run the pinned bridge container locally or in the intended development environment.
+2. Send a test WHIP ingest stream.
+3. Verify RTMP output to a safe test endpoint or YouTube test stream.
+4. Inspect output codec settings and logs.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- OBS remains a testing aid only, not part of the v1 product flow.
+
+** TODO bridge-004 - Add Host-visible Broadcast Health callbacks
+:PROPERTIES:
+:FEATURE_ID: bridge-004
+:TYPE: AFK
+:PRIORITY: 15
+:AREA: broadcast-health
+:STATUS: not_started
+:BLOCKED_BY: bridge-003
+:END:
+
+*** What to build
+
+Have the bridge report Broadcast Health and terminal states back to the SvelteKit prototype. The Host sees actionable connecting, broadcasting, degraded, failed, and ended feedback while Guests see only Broadcast State.
+
+*** Acceptance criteria
+
+- [ ] Bridge reports Failed and Ended state to SvelteKit within 10 seconds of RTMP disconnect.
+- [ ] Wrong credentials produce a visible Host failure state within 30 seconds.
+- [ ] Host can distinguish connected, degraded, failed, and ended health states.
+- [ ] Guests do not see detailed Broadcast Health metrics.
+- [ ] Bridge event payloads are authenticated or signed according to the current milestone's chosen mechanism.
+- [ ] Stream keys and tokens are redacted from logs and UI.
+
+*** Verification
+
+1. Start a Broadcast with bad credentials and verify Host failure copy within 30 seconds.
+2. Disconnect RTMP or bridge output and verify Failed/Ended callback timing.
+3. Verify Guest UI only shows Broadcast State.
+4. Inspect logs for redaction.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Durable Broadcast Health event storage is Milestone 3.
+
+** TODO bridge-005 - Verify YouTube 720p30 end-to-end broadcast
+:PROPERTIES:
+:FEATURE_ID: bridge-005
+:TYPE: HITL
+:PRIORITY: 16
+:AREA: broadcast-bridge
+:STATUS: not_started
+:BLOCKED_BY: bridge-004
+:END:
+
+*** What to build
+
+Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Composed Room Feed from the browser, WHIP ingest into the Broadcast Bridge, H.264/AAC RTMP output, visible YouTube reception, and clean end behavior.
+
+*** Acceptance criteria
+
+- [ ] Host can paste valid YouTube stream credentials.
+- [ ] YouTube receives a 720p30 H.264 feed from the bridge.
+- [ ] Broadcast can be ended cleanly.
+- [ ] Wrong credentials show actionable Host failure copy.
+- [ ] Bridge reports terminal state to SvelteKit within the required timing.
+- [ ] Evidence includes YouTube-side confirmation and bridge/SvelteKit logs with secrets redacted.
+
+*** Verification
+
+1. Use a human-provided YouTube account/channel that is live-enabled.
+2. Start a real Broadcast with valid ephemeral stream credentials.
+3. Confirm YouTube receives the feed at the expected format.
+4. End the Broadcast and verify all Room participants return to Backstage.
+5. Record evidence without exposing stream keys.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- HITL because real YouTube credentials and account readiness are required.
+
+* Milestone 3 - Product Shell
+:PROPERTIES:
+:MILESTONE_ID: m3-product-shell
+:STATUS: not_started
+:END:
+
+Goal: turn the proven prototype and media path into a usable v1 product with Host Accounts, reusable Rooms, Guest Invites, Broadcast records, and durable Broadcast Health events.
+
+** TODO data-001 - Add Postgres, Kysely, and plain SQL migrations
+:PROPERTIES:
+:FEATURE_ID: data-001
+:TYPE: AFK
+:PRIORITY: 17
+:AREA: data
+:STATUS: not_started
+:BLOCKED_BY: bridge-005
+:END:
+
+*** What to build
+
+Add the v1 data foundation: Postgres, Kysely with pg, plain SQL migrations, and local Podman Compose support appropriate for later Host Accounts, sessions, Rooms, Guest Invites, Broadcasts, and Broadcast Health events.
+
+*** Acceptance criteria
+
+- [ ] Postgres runs locally through the documented development path.
+- [ ] Kysely and pg are configured for server-side database access.
+- [ ] Plain SQL migrations can be applied from a clean database.
+- [ ] Initial schema supports the planned product entities without storing YouTube stream keys or Room Chat messages.
+- [ ] Startup and verification documentation reflects database setup.
+
+*** Verification
+
+1. Start the local database from scratch.
+2. Apply migrations.
+3. Run a smoke query through the app's database access path.
+4. Run standard verification and any database-specific checks.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Direct database inspection is acceptable for early support.
+
+** TODO auth-001 - Add Host magic-link auth and sessions
+:PROPERTIES:
+:FEATURE_ID: auth-001
+:TYPE: AFK
+:PRIORITY: 18
+:AREA: auth
+:STATUS: not_started
+:BLOCKED_BY: data-001
+:END:
+
+*** What to build
+
+Implement custom email magic-link auth for Host Accounts with server-side sessions stored in Postgres. Guests still do not need Accounts.
+
+*** Acceptance criteria
+
+- [ ] Host can request a magic link by email.
+- [ ] Magic-link tokens have at least 128 bits of entropy, expire after 15 minutes, and are single-use.
+- [ ] Login endpoint returns identical response regardless of email existence.
+- [ ] Sessions use HttpOnly, Secure, SameSite=Lax cookies with at least 128-bit session tokens.
+- [ ] Sessions have a 30-day absolute expiry with sliding activity window.
+- [ ] Re-auth invalidates prior magic-link session as specified.
+
+*** Verification
+
+1. Request a magic link for a Host email.
+2. Complete sign-in and verify a server-side session exists.
+3. Attempt token reuse and expired-token flows.
+4. Inspect cookie flags in a browser.
+5. Run auth tests and standard verification.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Transactional email provider is Resend or Postmark; self-hosted SMTP is out of scope.
+
+** TODO rooms-001 - Add reusable Host Rooms
+:PROPERTIES:
+:FEATURE_ID: rooms-001
+:TYPE: AFK
+:PRIORITY: 19
+:AREA: rooms
+:STATUS: not_started
+:BLOCKED_BY: auth-001
+:END:
+
+*** What to build
+
+Allow a signed-in Host to create, view, and return to reusable Rooms. Each Room belongs to exactly one Host Account and has a Host-facing Room Title.
+
+*** Acceptance criteria
+
+- [ ] Signed-in Host can create a Room.
+- [ ] Host can set and see a Room Title.
+- [ ] Host can return to previously created Rooms after restarting the app.
+- [ ] Room dashboard shows the Host's Rooms only.
+- [ ] Room Title is used for Host organization and not treated as public broadcast metadata.
+- [ ] Guest access remains invite-based and separate from Host auth.
+
+*** Verification
+
+1. Sign in as a Host.
+2. Create two Rooms with distinct Room Titles.
+3. Restart the app and verify both Rooms remain visible to the same Host.
+4. Sign in as another Host and verify isolation.
+5. Run relevant tests and standard verification.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Workspaces and Teams are out of scope for v1.
+
+** TODO invites-001 - Add product-backed Guest Invites
+:PROPERTIES:
+:FEATURE_ID: invites-001
+:TYPE: AFK
+:PRIORITY: 20
+:AREA: guest-invites
+:STATUS: not_started
+:BLOCKED_BY: rooms-001
+:END:
+
+*** What to build
+
+Create product-backed Guest Invites for each Room. A Host can copy, revoke, or regenerate the Guest Invite. Guests can enter through a valid Guest Invite without an Account.
+
+*** Acceptance criteria
+
+- [ ] Each Room has a hard-to-guess Guest Invite token with at least 128 bits of entropy.
+- [ ] Host can copy the Guest Invite link.
+- [ ] Host can revoke or regenerate the Guest Invite.
+- [ ] Revoked Guest Invites no longer allow Guest entry.
+- [ ] Guests can enter through a valid Guest Invite without an Account.
+- [ ] Join attempts are rate-limited per IP or have a documented placeholder if rate limiting is sliced separately.
+
+*** Verification
+
+1. Create a Room as Host.
+2. Copy and open the Guest Invite link while signed out.
+3. Revoke or regenerate the invite and verify the old link fails.
+4. Verify the new valid link works.
+5. Run invite token and access tests.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Removing a Guest does not itself revoke the Guest Invite.
+
+** TODO broadcasts-001 - Add product-backed Broadcast records
+:PROPERTIES:
+:FEATURE_ID: broadcasts-001
+:TYPE: AFK
+:PRIORITY: 21
+:AREA: broadcasts
+:STATUS: not_started
+:BLOCKED_BY: rooms-001 bridge-004
+:END:
+
+*** What to build
+
+Persist one Broadcast record per live run of a reusable Room. Add the product Broadcast State model: Countdown, Broadcasting, Ended, and Failed. Backstage remains the default Room state and is not stored as a Broadcast record.
+
+*** Acceptance criteria
+
+- [ ] Starting Countdown creates a Broadcast record.
+- [ ] Countdown lasts 5 seconds and is visible to Host and Guests.
+- [ ] Host can cancel Countdown before it completes; canceled record handling matches the spec.
+- [ ] Broadcasting, Ended, and Failed states are persisted.
+- [ ] Ending a Broadcast returns current participants to Backstage.
+- [ ] Failed Broadcast allows starting a new Broadcast rather than in-place resume.
+
+*** Verification
+
+1. Start Countdown from a reusable Room.
+2. Verify Broadcast record creation and state transitions.
+3. Cancel Countdown and verify specified cleanup behavior.
+4. Start and end a Broadcast and verify Backstage return.
+5. Simulate failure and verify Failed state.
+6. Run state-machine and integration tests.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- Public Broadcast Title and polished Broadcast History UI are out of scope.
+
+** TODO health-001 - Persist Broadcast Health events
+:PROPERTIES:
+:FEATURE_ID: health-001
+:TYPE: AFK
+:PRIORITY: 22
+:AREA: broadcast-health
+:STATUS: not_started
+:BLOCKED_BY: broadcasts-001
+:END:
+
+*** What to build
+
+Persist Broadcast Health events reported by the Broadcast Bridge and expose Host-visible operational details for active or recent Broadcast attempts.
+
+*** Acceptance criteria
+
+- [ ] Bridge reports health events to SvelteKit with HMAC-SHA256 signed payloads.
+- [ ] SvelteKit verifies bridge event signatures.
+- [ ] Broadcast Health events are persisted in Postgres.
+- [ ] Host sees connected, degraded, failed, and ended health details.
+- [ ] Guests see Broadcast State only, not detailed Broadcast Health metrics.
+- [ ] Secrets are redacted from structured logs.
+
+*** Verification
+
+1. Send a valid signed bridge event and verify persistence.
+2. Send an invalid signed bridge event and verify rejection.
+3. Open Host UI and verify health details.
+4. Open Guest UI and verify details are hidden.
+5. Inspect logs for secret redaction.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- No full tracing or metrics stack is required for v1.
+
+** TODO shell-001 - Wire Room prototype into authenticated product shell
+:PROPERTIES:
+:FEATURE_ID: shell-001
+:TYPE: AFK
+:PRIORITY: 23
+:AREA: product-shell
+:STATUS: not_started
+:BLOCKED_BY: invites-001 broadcasts-001 health-001
+:END:
+
+*** What to build
+
+Turn the proven prototype Room into the authenticated product shell. Hosts enter Rooms through their Account and dashboard. Guests enter through Guest Invites. Room sessions, Broadcast State, Host controls, and Broadcast Health integrate with product-backed records where required.
+
+*** Acceptance criteria
+
+- [ ] Host Room entry requires a valid Host session.
+- [ ] Guest Room entry works through a valid Guest Invite without an Account.
+- [ ] Host moderation controls work in the product-backed Room flow.
+- [ ] Broadcast controls use product-backed Broadcast records and bridge integration.
+- [ ] Room Chat remains ephemeral and is not persisted.
+- [ ] No v1 non-goals appear in the product surface.
+
+*** Verification
+
+1. Sign in as Host and enter a reusable Room.
+2. Enter as Guest through Guest Invite.
+3. Exercise Join Check, presence, media, moderation, chat, Broadcast State, and Broadcast Health.
+4. Verify Room Chat is not persisted.
+5. Run end-to-end product checks and standard verification.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- This is the major integration slice after individual product foundations are in place.
+
+** TODO cleanup-001 - Remove or protect Milestone 1 authless prototype routes
+:PROPERTIES:
+:FEATURE_ID: cleanup-001
+:TYPE: AFK
+:PRIORITY: 24
+:AREA: cleanup
+:STATUS: not_started
+:BLOCKED_BY: shell-001
+:END:
+
+*** What to build
+
+Remove or protect every authless Milestone 1 prototype route so the production product surface does not expose unmanaged Room access.
+
+*** Acceptance criteria
+
+- [ ] All authless Host prototype routes are removed or protected by Host session middleware.
+- [ ] Guest access remains available only through valid Guest Invites.
+- [ ] Prototype-only state paths are removed or clearly development-only.
+- [ ] Tests and documentation no longer point users at unprotected prototype routes.
+- [ ] Standard startup and verification still work after cleanup.
+
+*** Verification
+
+1. Search for prototype routes and authless Room entry paths.
+2. Attempt to open old Host prototype URLs while signed out and verify denial or absence.
+3. Verify valid Guest Invite entry still works.
+4. Run full standard verification.
+
+*** Evidence
+
+- None recorded.
+
+*** Notes
+
+- This is required before considering the Product Shell milestone complete.

@@ -2,11 +2,11 @@
 
 * Current Verified State
 
-- Repository root:
-- Standard startup path:
-- Standard verification path:
-- Current highest-priority unfinished feature:
-- Current blocker:
+- Repository root: ~/code/inilive-studio
+- Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
+- Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
+- Current highest-priority unfinished feature: room-001 "Add authless Room prototype entry" in PLAN.org.
+- Current blocker: none for room-001. Milestone 1 is active; later HITL items are media-001 and bridge-005.
 
 * Session Log
 
@@ -53,3 +53,125 @@
 *** Known risk or unresolved issue
 
 *** Next best step
+
+** Session 003
+:PROPERTIES:
+:SESSION_ID: 003
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Audit the current project state and update this progress log with verified evidence.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Reviewed PLAN.org, PROGRESS.org, recent git history, package scripts, README.md, CONTEXT.md, docs/SPEC.md, session-handoff.md, and the current SvelteKit source files.
+- Confirmed the repository is a fresh SvelteKit/TypeScript app with Tailwind, Vitest, Playwright, adapter-node, oxlint, and oxfmt installed.
+- Confirmed app implementation is still the generated starter surface: src/routes/+page.svelte renders "Welcome to SvelteKit" and no Live Studio Room prototype exists yet.
+- Confirmed documentation is substantially ahead of implementation: CONTEXT.md and docs/SPEC.md describe Live Studio v1 and Milestone 1, while PLAN.org still lists placeholder chat features that do not match the product domain.
+
+*** Verification run
+
+- ./init.sh: passed.
+  - npm install completed.
+  - npm test passed.
+  - Vitest: 2 files passed, 2 tests passed.
+  - Playwright: 1 test passed.
+- npm run check: completed with 0 errors and 1 warning.
+  - Warning: tsconfig.json references the node type definition, but @types/node is not installed.
+- npm run lint: completed with 0 errors and 1 warning.
+  - Warning: src/lib/index.ts is effectively empty except for the generated comment.
+- npm run fmt:check: failed.
+  - oxfmt reported formatting issues in session-handoff.md.
+- npm run build: passed.
+- npm audit --audit-level=low: failed with 3 low severity vulnerabilities.
+  - Source: @sveltejs/kit depends on cookie <0.7.0.
+  - npm reports the available fix requires npm audit fix --force and would install @sveltejs/kit@0.0.30, a breaking downgrade, so this should not be applied blindly.
+
+*** Evidence captured
+
+- Recent commits:
+  - 43826f4 chore: add harness docs
+  - e87a8a5 chore: setup learning docs
+  - e31c226 chore: setup svelte
+  - bfec241 chore: update docs naming
+  - 20106c6 chore: learning docs
+- Current app entry point:
+  - src/routes/+page.svelte contains only the generated SvelteKit welcome heading and documentation link.
+- Current plan mismatch:
+  - PLAN.org highest-priority feature is chat-001, "Create a new conversation".
+  - docs/SPEC.md first implementation tasks are Live Studio Milestone 1 tasks beginning with the SvelteKit skeleton and a Room prototype route.
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- PROGRESS.org updated with the audit and verification evidence.
+
+*** Known risk or unresolved issue
+
+- PLAN.org must be updated before feature work starts; otherwise agents may implement chat features unrelated to Live Studio.
+- session-handoff.md is not oxfmt-clean.
+- npm run check has a TypeScript environment warning for missing node type definitions.
+- npm audit reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix from npm audit.
+- README.md is still the generated sv/SvelteKit README rather than a project-specific Live Studio README.
+
+*** Next best step
+
+1. Update PLAN.org so the active backlog matches docs/SPEC.md Milestone 1.
+2. Fix the small harness hygiene issues: format session-handoff.md, decide whether to add @types/node or adjust tsconfig.json, and remove or populate the generated src/lib/index.ts file.
+3. Start the first real product implementation slice: add a Room prototype route for Host and Guest entry, with verification defined before coding.
+
+** Session 004
+:PROPERTIES:
+:SESSION_ID: 004
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Convert docs/SPEC.md into PLAN.org issues, using PLAN.org as the issue tracker instead of GitHub Issues.
+
+*** Completed
+
+- Replaced placeholder chat issues with a Live Studio backlog.
+- Added all three milestones to PLAN.org.
+- Marked Milestone 1 - Local Room Prototype as active.
+- Used domain-based issue IDs such as room-001, media-001, compose-001, bridge-001, data-001, and auth-001.
+- Marked media-001 "Spike managed SFU choice" as HITL per user direction.
+- Added full issue bodies with What to build, Acceptance criteria, Verification, Evidence, and Notes sections.
+- Preserved dependency ordering through BLOCKED_BY properties.
+
+*** Verification run
+
+- Documentation-only change; no code tests run.
+- Ran rg checks against PLAN.org to confirm placeholder chat IDs were removed, Milestone 1 is active, issue IDs are present, and HITL issue markings exist.
+
+*** Evidence captured
+
+- PLAN.org now contains 24 Live Studio issues across Milestone 1, Milestone 2, and Milestone 3.
+- Milestone 1 status is active.
+- Placeholder chat issue IDs chat-001, chat-002, and chat-003 are no longer present.
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- session-handoff.md remains not oxfmt-clean from the previous audit.
+- npm run check still has the missing node type definition warning until the harness hygiene issue is addressed.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Start room-001: add the authless Room prototype entry path for Host and Guest, after running the standard startup path.
