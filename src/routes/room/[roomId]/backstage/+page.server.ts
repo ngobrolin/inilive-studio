@@ -1,3 +1,4 @@
+import { createMediaJoinGrant } from "$lib/server/media-join";
 import {
   getRoomChatMessages,
   getRoomPresence,
@@ -6,13 +7,26 @@ import {
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
-export const load: PageServerLoad = ({ params, url }) => {
+export const load: PageServerLoad = async ({ params, url }) => {
   const activeParticipantId = url.searchParams.get("participant") ?? "";
+  const presence = getRoomPresence(params.roomId);
+  const activeParticipant = presence.participants.find(
+    (participant) => participant.id === activeParticipantId,
+  );
+  const mediaGrant = activeParticipant
+    ? await createMediaJoinGrant({
+        roomId: params.roomId,
+        participantId: activeParticipant.id,
+        displayName: activeParticipant.displayName,
+        role: activeParticipant.role,
+      })
+    : null;
 
   return {
-    presence: getRoomPresence(params.roomId),
+    presence,
     chatMessages: getRoomChatMessages(params.roomId),
     activeParticipantId,
+    mediaGrant,
   };
 };
 

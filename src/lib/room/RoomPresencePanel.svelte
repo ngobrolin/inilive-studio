@@ -1,12 +1,19 @@
 <script lang="ts">
+	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
+	import type { MediaJoinGrant } from '$lib/server/media-join';
 	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
 
 	let {
 		presence,
 		chatMessages,
 		activeParticipantId,
-	}: { presence: RoomPresence; chatMessages: RoomChatMessage[]; activeParticipantId: string } =
-		$props();
+		mediaGrant,
+	}: {
+		presence: RoomPresence;
+		chatMessages: RoomChatMessage[];
+		activeParticipantId: string;
+		mediaGrant: MediaJoinGrant | null;
+	} = $props();
 	const hosts = $derived(presence.participants.filter((participant) => participant.role === 'host'));
 	const guests = $derived(presence.participants.filter((participant) => participant.role === 'guest'));
 	const activeParticipant = $derived(
@@ -60,6 +67,12 @@
 		</div>
 
 		<aside class="grid content-start gap-4">
+			<MediaConnectionPanel
+				cameraEnabled={activeParticipant?.cameraEnabled ?? true}
+				grant={mediaGrant}
+				microphoneEnabled={activeParticipant?.microphoneEnabled ?? true}
+			/>
+
 			<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">
 				<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Capacity</p>
 				<p class="mt-3 text-3xl font-semibold">{hosts.length} Host · {guests.length}/3 Guests</p>

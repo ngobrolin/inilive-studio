@@ -11,5 +11,6 @@
 <RoomPresencePanel
 	activeParticipantId={data.activeParticipantId}
 	chatMessages={data.chatMessages}
+	mediaGrant={data.mediaGrant}
 	presence={data.presence}
 />
