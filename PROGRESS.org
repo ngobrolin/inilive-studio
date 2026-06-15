@@ -734,3 +734,73 @@ Continue media-002 with TDD and wire the browser LiveKit client path.
 *** Next best step
 
 Continue media-002 TDD: with LiveKit credentials configured, add Host plus Guest browser verification and then implement remote participant media rendering in Backstage.
+
+** Session 013
+:PROPERTIES:
+:SESSION_ID: 013
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Finish media-002: fix the broken baseline introduced by a real .env, then implement and verify remote participant media rendering in Backstage.
+
+*** Completed
+
+- Ran ./init.sh baseline first; it FAILED because a real .env (LIVEKIT_URL/API_KEY/API_SECRET) was added after session 012, so the stub unit test and stub e2e no longer held.
+- Fixed the baseline:
+  - Made LiveKit credentials injectable in createMediaJoinGrant (readLiveKitCredentials default); the stub test now passes explicit empty credentials and a new test covers the non-stub path. $env/dynamic/private snapshots at load and ignores vi.stubEnv, so injection is the deterministic fix.
+  - Forced empty LiveKit creds in the Playwright webServer env so e2e stays hermetic in stub mode; real-credential verification is the media-001-live HITL step.
+- Implemented remote participant rendering (media-002):
+  - Added a pure reducer src/lib/room/remote-participants.ts with 6 unit tests (TDD: tests first).
+  - Wired livekit-client RoomEvents in LiveKitMediaSession.svelte to render remote video/audio tiles, name-labeled camera-off placeholders, mic-state badges, attach tracks per identity via Svelte actions, and render pre-existing participants on join.
+- Ran a one-off real two-participant verification against LiveKit Cloud, captured evidence, then removed the temp script.
+- Updated PLAN.org media-002 to passing (DONE) with all acceptance criteria checked.
+
+*** Verification run
+
+- ./init.sh: FAILED at start (1 Vitest test), then PASSED after fixes (20 Vitest, 21 Playwright).
+- npm run test:unit -- --run: 20 passed (8 files), including remote-participants.spec.ts (6) and media-join.spec.ts (3).
+- npm run check: 0 errors, 1 existing @types/node warning.
+- npm run lint: 0 errors, 1 existing empty src/lib/index.ts warning.
+- npm run build: passed.
+- Real LiveKit two-participant check (temp playwright script against wss://inilive-studio-r7hmqrsb.livekit.cloud): PASSED. Host saw Guest One tile; Guest saw Host One tile with correct camera/mic state.
+
+*** Evidence captured
+
+- Reducer: src/lib/room/remote-participants.ts, src/lib/room/remote-participants.spec.ts
+- Media session: src/lib/room/LiveKitMediaSession.svelte
+- Grant injection: src/lib/server/media-join.ts, src/lib/server/media-join.spec.ts
+- Hermetic e2e: playwright.config.ts
+- Real verification screenshots: /tmp/inilive-remote-host.png, /tmp/inilive-remote-guest.png
+
+*** Commits
+
+- Inject LiveKit credentials into media join grants
+- Force empty LiveKit env in Playwright web server
+- Add pure reducer for remote participant tiles
+- Render remote participants in LiveKit media session
+- Mark media-002 passing in plan and progress
+
+*** Files or artifacts updated
+
+- src/lib/room/remote-participants.ts
+- src/lib/room/remote-participants.spec.ts
+- src/lib/room/LiveKitMediaSession.svelte
+- src/lib/server/media-join.ts
+- src/lib/server/media-join.spec.ts
+- playwright.config.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Remote rendering is exercised by real LiveKit only; automated e2e stays in stub mode by design, so regressions in the live path require manual re-verification.
+- Three-Guest (4-tile) and live camera/mic toggle propagation were not exhaustively re-driven this session; single Host+Guest two-way media was verified.
+- session-handoff.md remains not oxfmt-clean from earlier sessions.
+- npm run check still has the missing @types/node warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic npm audit fix.
+
+*** Next best step
+
+Start media-003 screen share, or pick the next highest-priority unblocked Milestone 1 issue (room-005 Host moderation controls) per PLAN.org.
