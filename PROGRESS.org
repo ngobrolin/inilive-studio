@@ -5,8 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: room-001 "Add authless Room prototype entry" in PLAN.org.
-- Current blocker: none for room-001. Milestone 1 is active; later HITL items are media-001 and bridge-005.
+- Current highest-priority unfinished feature: room-002 "Build Join Check with local media preview" in PLAN.org.
+- Current blocker: none for room-002. room-001 is passing.
 
 * Session Log
 
@@ -260,3 +260,62 @@ Prototype the first authless Room entry experience for room-001 before committin
 *** Next best step
 
 Choose a prototype direction. The likely path is to promote variant B if the goal is fastest onboarding into Join Check, or variant C if the Composed Room Feed should be the first mental model.
+
+** Session 006
+:PROPERTIES:
+:SESSION_ID: 006
+:DATE: 2026-06-15
+:END:
+
+*** Goal
+
+Complete room-001 using TDD: promote prototype variant B into real authless Host and Guest Room entry routes.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting.
+- TDD cycle 1: Playwright test for Host Room URL → implemented /room/[roomId].
+- TDD cycle 2: Playwright test for Guest Invite URL → implemented /room/[roomId]/invite/[token].
+- TDD cycle 3: Playwright test for active role navigation on Host and Guest pages.
+- Extracted shared RoomEntryPanel.svelte and entry-copy.ts from variant B structure.
+- Updated PLAN.org room-001 to passing with evidence.
+- Updated prototype NOTES.md verdict.
+
+*** Verification run
+
+- ./init.sh: passed.
+  - Vitest: 2 files, 2 tests passed.
+  - Playwright: 4 tests passed (3 room entry + 1 demo).
+- npm run check: 0 errors, 1 existing @types/node warning.
+
+*** Evidence captured
+
+- Host Room URL: /room/demo
+- Guest Invite URL: /room/demo/invite/demo
+- E2E tests: src/routes/room/[roomId]/page.e2e.ts
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- src/lib/room/entry-copy.ts
+- src/lib/room/RoomEntryPanel.svelte
+- src/routes/room/[roomId]/+page.svelte
+- src/routes/room/[roomId]/+page.server.ts
+- src/routes/room/[roomId]/invite/[token]/+page.svelte
+- src/routes/room/[roomId]/invite/[token]/+page.server.ts
+- src/routes/room/[roomId]/page.e2e.ts
+- src/routes/prototype/room-entry/NOTES.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Throwaway /prototype/room-entry route still exists; cleanup-001 removes it after shell-001.
+- Enter as Host/Guest buttons are placeholders until room-002 Join Check exists.
+
+*** Next best step
+
+Start room-002 Join Check with TDD: Display Name entry and local media preview before entering the Room.

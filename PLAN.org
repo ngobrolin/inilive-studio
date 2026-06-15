@@ -45,7 +45,7 @@ Goal: prove the Room experience and Composed Room Feed before product infrastruc
 :TYPE: AFK
 :PRIORITY: 1
 :AREA: room
-:STATUS: in_progress
+:STATUS: passing
 :BLOCKED_BY: none
 :END:
 
@@ -55,11 +55,11 @@ Create the first demoable Room prototype entry path. A Host can open an authless
 
 *** Acceptance criteria
 
-- [ ] A Host can open a prototype Room URL without signing in.
-- [ ] A Guest can open a prototype Guest Invite URL without an Account.
-- [ ] The UI clearly distinguishes Host and Guest roles using Live Studio vocabulary.
-- [ ] The Room starts in Backstage or equivalent prototype state; nothing implies it is Broadcasting.
-- [ ] The implementation does not add persistence, magic-link auth, or product-backed Room records.
+- [X] A Host can open a prototype Room URL without signing in.
+- [X] A Guest can open a prototype Guest Invite URL without an Account.
+- [X] The UI clearly distinguishes Host and Guest roles using Live Studio vocabulary.
+- [X] The Room starts in Backstage or equivalent prototype state; nothing implies it is Broadcasting.
+- [X] The implementation does not add persistence, magic-link auth, or product-backed Room records.
 
 *** Verification
 
@@ -83,11 +83,18 @@ Create the first demoable Room prototype entry path. A Host can open an authless
   - npm run check passed with 0 errors and the existing missing @types/node warning.
   - npm run build passed; Vite emitted existing file-descriptor warnings but produced the SvelteKit build.
   - Playwright visual smoke opened desktop and mobile versions of variants A, B, and C; Backstage state, Prototype state, and the dev-only variant switcher were visible.
+- 2026-06-15: Promoted variant B to real authless Room entry routes via TDD.
+  - Host Room URL: /room/[roomId] (example: /room/demo)
+  - Guest Invite URL: /room/[roomId]/invite/[token] (example: /room/demo/invite/demo)
+  - Shared UI: ~/code/inilive-studio/src/lib/room/RoomEntryPanel.svelte
+  - Role copy helper: ~/code/inilive-studio/src/lib/room/entry-copy.ts
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/page.e2e.ts (3 tests)
+  - ./init.sh passed after implementation (Vitest 2, Playwright 4).
 
 *** Notes
 
 - This is the first active implementation issue after the plan conversion.
-- This prototype is intentionally not the final room-001 implementation. Choose a winning structure, then delete the throwaway route or fold the selected direction into the real Room entry path.
+- Variant B was promoted into the real Room entry path. The throwaway /prototype/room-entry route remains for comparison until cleanup-001.
 
 ** TODO room-002 - Build Join Check with local media preview
 :PROPERTIES:
