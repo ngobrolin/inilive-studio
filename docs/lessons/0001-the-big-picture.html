@@ -1,298 +1,342 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lesson 1 — The Big Picture</title>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400&display=swap');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lesson 1 — The Big Picture</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Source+Sans+3:wght@400;600&family=Source+Code+Pro:wght@400&display=swap");
 
-    :root {
-      --bg: #fffcf7;
-      --text: #2c2c2c;
-      --muted: #6b6b6b;
-      --accent: #d64000;
-      --accent-light: #fff0ea;
-      --border: #e0dcd4;
-      --code-bg: #f5f0e8;
-      --section-heading: #1a1a1a;
-      --success: #2e7d32;
-      --success-bg: #e8f5e9;
-      --warn: #e65100;
-      --warn-bg: #fff3e0;
-      --font-serif: 'Source Serif 4', Georgia, serif;
-      --font-sans: 'Source Sans 3', system-ui, sans-serif;
-      --font-mono: 'Source Code Pro', monospace;
-    }
-
-    @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1a1a1a;
-        --text: #e0dcd4;
-        --muted: #9a9a9a;
-        --accent: #ff6b35;
-        --accent-light: #2a1f1a;
-        --border: #3a3a3a;
-        --code-bg: #252520;
-        --section-heading: #f0ece4;
-        --success: #66bb6a;
-        --success-bg: #1b2e1b;
-        --warn: #ff9800;
-        --warn-bg: #2a2010;
+        --bg: #fffcf7;
+        --text: #2c2c2c;
+        --muted: #6b6b6b;
+        --accent: #d64000;
+        --accent-light: #fff0ea;
+        --border: #e0dcd4;
+        --code-bg: #f5f0e8;
+        --section-heading: #1a1a1a;
+        --success: #2e7d32;
+        --success-bg: #e8f5e9;
+        --warn: #e65100;
+        --warn-bg: #fff3e0;
+        --font-serif: "Source Serif 4", Georgia, serif;
+        --font-sans: "Source Sans 3", system-ui, sans-serif;
+        --font-mono: "Source Code Pro", monospace;
       }
-    }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #1a1a1a;
+          --text: #e0dcd4;
+          --muted: #9a9a9a;
+          --accent: #ff6b35;
+          --accent-light: #2a1f1a;
+          --border: #3a3a3a;
+          --code-bg: #252520;
+          --section-heading: #f0ece4;
+          --success: #66bb6a;
+          --success-bg: #1b2e1b;
+          --warn: #ff9800;
+          --warn-bg: #2a2010;
+        }
+      }
 
-    body {
-      font-family: var(--font-serif);
-      font-size: 17px;
-      line-height: 1.72;
-      color: var(--text);
-      background: var(--bg);
-      max-width: 700px;
-      margin: 0 auto;
-      padding: 3rem 1.5rem;
-    }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    h1 {
-      font-family: var(--font-sans);
-      font-size: 2rem;
-      font-weight: 600;
-      color: var(--section-heading);
-      letter-spacing: -0.03em;
-      margin-bottom: 0.3rem;
-    }
+      body {
+        font-family: var(--font-serif);
+        font-size: 17px;
+        line-height: 1.72;
+        color: var(--text);
+        background: var(--bg);
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 3rem 1.5rem;
+      }
 
-    .lesson-meta {
-      font-family: var(--font-sans);
-      font-size: 0.85rem;
-      color: var(--muted);
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--border);
-    }
+      h1 {
+        font-family: var(--font-sans);
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--section-heading);
+        letter-spacing: -0.03em;
+        margin-bottom: 0.3rem;
+      }
 
-    h2 {
-      font-family: var(--font-sans);
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--section-heading);
-      margin-top: 2.5rem;
-      margin-bottom: 0.8rem;
-    }
+      .lesson-meta {
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        color: var(--muted);
+        margin-bottom: 2rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+      }
 
-    h3 {
-      font-family: var(--font-sans);
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--accent);
-      margin-top: 1.5rem;
-      margin-bottom: 0.5rem;
-    }
+      h2 {
+        font-family: var(--font-sans);
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: var(--section-heading);
+        margin-top: 2.5rem;
+        margin-bottom: 0.8rem;
+      }
 
-    p { margin-bottom: 1rem; }
+      h3 {
+        font-family: var(--font-sans);
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
 
-    strong { font-weight: 600; }
+      p {
+        margin-bottom: 1rem;
+      }
 
-    code {
-      font-family: var(--font-mono);
-      font-size: 0.88em;
-      background: var(--code-bg);
-      padding: 0.15em 0.35em;
-      border-radius: 3px;
-    }
+      strong {
+        font-weight: 600;
+      }
 
-    pre {
-      background: var(--code-bg);
-      padding: 1.2rem 1.5rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      margin: 1rem 0 1.5rem;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      line-height: 1.5;
-    }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--code-bg);
+        padding: 0.15em 0.35em;
+        border-radius: 3px;
+      }
 
-    .callout {
-      border-left: 3px solid var(--accent);
-      background: var(--accent-light);
-      padding: 1rem 1.25rem;
-      margin: 1.5rem 0;
-      border-radius: 0 4px 4px 0;
-      font-size: 0.95rem;
-    }
+      pre {
+        background: var(--code-bg);
+        padding: 1.2rem 1.5rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 1rem 0 1.5rem;
+        font-family: var(--font-mono);
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
 
-    .callout-success {
-      border-left-color: var(--success);
-      background: var(--success-bg);
-    }
+      .callout {
+        border-left: 3px solid var(--accent);
+        background: var(--accent-light);
+        padding: 1rem 1.25rem;
+        margin: 1.5rem 0;
+        border-radius: 0 4px 4px 0;
+        font-size: 0.95rem;
+      }
 
-    .callout-warn {
-      border-left-color: var(--warn);
-      background: var(--warn-bg);
-    }
+      .callout-success {
+        border-left-color: var(--success);
+        background: var(--success-bg);
+      }
 
-    .callout strong {
-      font-family: var(--font-sans);
-      display: block;
-      margin-bottom: 0.3rem;
-    }
+      .callout-warn {
+        border-left-color: var(--warn);
+        background: var(--warn-bg);
+      }
 
-    ol, ul {
-      margin: 0.5rem 0 1rem 1.5rem;
-    }
+      .callout strong {
+        font-family: var(--font-sans);
+        display: block;
+        margin-bottom: 0.3rem;
+      }
 
-    li { margin-bottom: 0.4rem; }
+      ol,
+      ul {
+        margin: 0.5rem 0 1rem 1.5rem;
+      }
 
-    .diagram-container {
-      margin: 1.5rem 0;
-    }
+      li {
+        margin-bottom: 0.4rem;
+      }
 
-    .diagram-label {
-      font-family: var(--font-sans);
-      font-size: 0.82rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 0.3rem;
-    }
+      .diagram-container {
+        margin: 1.5rem 0;
+      }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0 1.5rem;
-      font-size: 0.92rem;
-    }
+      .diagram-label {
+        font-family: var(--font-sans);
+        font-size: 0.82rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        margin-bottom: 0.3rem;
+      }
 
-    th {
-      font-family: var(--font-sans);
-      text-align: left;
-      padding: 0.6rem 0.8rem;
-      border-bottom: 2px solid var(--border);
-      font-weight: 600;
-      color: var(--section-heading);
-    }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+      }
 
-    td {
-      padding: 0.5rem 0.8rem;
-      border-bottom: 1px solid var(--border);
-    }
+      th {
+        font-family: var(--font-sans);
+        text-align: left;
+        padding: 0.6rem 0.8rem;
+        border-bottom: 2px solid var(--border);
+        font-weight: 600;
+        color: var(--section-heading);
+      }
 
-    .quiz {
-      background: var(--accent-light);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin: 2rem 0;
-    }
+      td {
+        padding: 0.5rem 0.8rem;
+        border-bottom: 1px solid var(--border);
+      }
 
-    .quiz h3 {
-      margin-top: 0;
-      color: var(--accent);
-    }
+      .quiz {
+        background: var(--accent-light);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+      }
 
-    .quiz-option {
-      display: block;
-      font-family: var(--font-sans);
-      font-size: 0.95rem;
-      padding: 0.6rem 1rem;
-      margin: 0.4rem 0;
-      border: 1px solid var(--border);
-      border-radius: 5px;
-      cursor: pointer;
-      background: var(--bg);
-      transition: all 0.15s;
-    }
+      .quiz h3 {
+        margin-top: 0;
+        color: var(--accent);
+      }
 
-    .quiz-option:hover {
-      border-color: var(--accent);
-    }
+      .quiz-option {
+        display: block;
+        font-family: var(--font-sans);
+        font-size: 0.95rem;
+        padding: 0.6rem 1rem;
+        margin: 0.4rem 0;
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        cursor: pointer;
+        background: var(--bg);
+        transition: all 0.15s;
+      }
 
-    .quiz-option.correct {
-      border-color: var(--success);
-      background: var(--success-bg);
-    }
+      .quiz-option:hover {
+        border-color: var(--accent);
+      }
 
-    .quiz-option.incorrect {
-      border-color: #c62828;
-      background: #fce4ec;
-    }
+      .quiz-option.correct {
+        border-color: var(--success);
+        background: var(--success-bg);
+      }
 
-    .quiz-feedback {
-      display: none;
-      margin-top: 0.8rem;
-      padding: 0.8rem 1rem;
-      border-radius: 5px;
-      font-family: var(--font-sans);
-      font-size: 0.9rem;
-    }
+      .quiz-option.incorrect {
+        border-color: #c62828;
+        background: #fce4ec;
+      }
 
-    .quiz-feedback.show { display: block; }
-    .quiz-feedback.correct-fb { background: var(--success-bg); color: var(--success); }
-    .quiz-feedback.incorrect-fb { background: #fce4ec; color: #c62828; }
+      .quiz-feedback {
+        display: none;
+        margin-top: 0.8rem;
+        padding: 0.8rem 1rem;
+        border-radius: 5px;
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+      }
 
-    hr {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 2.5rem 0;
-    }
+      .quiz-feedback.show {
+        display: block;
+      }
+      .quiz-feedback.correct-fb {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .quiz-feedback.incorrect-fb {
+        background: #fce4ec;
+        color: #c62828;
+      }
 
-    footer {
-      margin-top: 3rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-      font-family: var(--font-sans);
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
+      hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2.5rem 0;
+      }
 
-    footer a { color: var(--accent); text-decoration: none; }
-    footer a:hover { text-decoration: underline; }
+      footer {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-family: var(--font-sans);
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
 
-    .nav-links {
-      display: flex;
-      gap: 1.5rem;
-      margin-top: 0.5rem;
-    }
+      footer a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      footer a:hover {
+        text-decoration: underline;
+      }
 
-    @media print {
-      body { max-width: 100%; padding: 1rem; font-size: 11pt; }
-      .quiz { break-inside: avoid; }
-    }
-  </style>
-</head>
-<body>
+      .nav-links {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 0.5rem;
+      }
 
-  <h1>Lesson 1: The Big Picture</h1>
-  <p class="lesson-meta">
-    What Live Studio is, how it works end-to-end, and why the milestones are ordered the way they are.
-    <br>Estimated time: 10 minutes reading + quiz
-  </p>
+      @media print {
+        body {
+          max-width: 100%;
+          padding: 1rem;
+          font-size: 11pt;
+        }
+        .quiz {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Lesson 1: The Big Picture</h1>
+    <p class="lesson-meta">
+      What Live Studio is, how it works end-to-end, and why the milestones are ordered the way they
+      are.
+      <br />Estimated time: 10 minutes reading + quiz
+    </p>
 
-  <h2>What you'll learn</h2>
-  <p>By the end of this lesson, you'll be able to trace a live broadcast from a Host's browser all the way to a viewer on YouTube — naming every major system component along the way. You'll also understand why the plan proves the risky parts first.</p>
+    <h2>What you'll learn</h2>
+    <p>
+      By the end of this lesson, you'll be able to trace a live broadcast from a Host's browser all
+      the way to a viewer on YouTube — naming every major system component along the way. You'll
+      also understand why the plan proves the risky parts first.
+    </p>
 
-  <hr>
+    <hr />
 
-  <h2>The Product in One Paragraph</h2>
+    <h2>The Product in One Paragraph</h2>
 
-  <p>Live Studio is a browser-based production room for streaming a small group conversation to YouTube. A signed-in <strong>Host</strong> creates a reusable <strong>Room</strong>, invites up to three <strong>Guests</strong> by sharing a link, and controls when the Room is <strong>broadcast</strong>. Guests join without accounts. The <strong>Audience</strong> watches on YouTube — they never enter the product itself.</p>
+    <p>
+      Live Studio is a browser-based production room for streaming a small group conversation to
+      YouTube. A signed-in <strong>Host</strong> creates a reusable <strong>Room</strong>, invites
+      up to three <strong>Guests</strong> by sharing a link, and controls when the Room is
+      <strong>broadcast</strong>. Guests join without accounts. The
+      <strong>Audience</strong> watches on YouTube — they never enter the product itself.
+    </p>
 
-  <div class="callout">
-    <strong>Key mental model</strong>
-    Think of it as a private backstage (the Room) with a one-way window to YouTube (the Broadcast). The Host decides when to open and close that window.
-  </div>
+    <div class="callout">
+      <strong>Key mental model</strong>
+      Think of it as a private backstage (the Room) with a one-way window to YouTube (the
+      Broadcast). The Host decides when to open and close that window.
+    </div>
 
-  <hr>
+    <hr />
 
-  <h2>The End-to-End Flow</h2>
+    <h2>The End-to-End Flow</h2>
 
-  <p>Here's what happens when a Host goes live. Each numbered step involves a different system component:</p>
+    <p>
+      Here's what happens when a Host goes live. Each numbered step involves a different system
+      component:
+    </p>
 
-  <div class="diagram-container">
-    <div class="diagram-label">Data flow: Room → YouTube</div>
-    <pre>
+    <div class="diagram-container">
+      <div class="diagram-label">Data flow: Room → YouTube</div>
+      <pre>
   ┌─────────────────────────┐
   │   Host's Browser        │
   │                         │
@@ -332,245 +376,362 @@
   ┌──────────────────────┐
   │  YouTube             │
   │  (Audience watches)  │
-  └──────────────────────┘</pre>
-  </div>
-
-  <p>Let's walk through the five key components:</p>
-
-  <h3>1. WebRTC SFU — The Media Router</h3>
-  <p>Every person in the Room sends their camera/mic feed to a <strong>Selective Forwarding Unit (SFU)</strong>. The SFU doesn't mix or compose anything — it just routes each person's individual media stream to everyone else. Think of it as a smart switchboard: each participant uploads their stream once, and the SFU forwards copies to the other participants.</p>
-
-  <p>Live Studio will use a <strong>managed SFU service</strong> (the plan spike inLive first, then LiveKit Cloud as fallback). This means you don't run the SFU yourself — you use their APIs to create rooms and get tokens.</p>
-
-  <div class="callout">
-    <strong>Why an SFU instead of peer-to-peer?</strong>
-    With 4 people in a peer-to-peer mesh, each person would upload their video 3 times and download 3 streams. An SFU lets each person upload once and download 3, cutting upload bandwidth by 3×. This matters on consumer connections.
-  </div>
-
-  <h3>2. Canvas Composer — Browser-Side Composition</h3>
-  <p>This is a key architectural choice: the Host's browser takes all the individual video streams from the SFU and draws them onto a single HTML <code>&lt;canvas&gt;</code> element at 720p/30fps. This canvas includes the participant grid layout, display name labels, and camera-off placeholders.</p>
-
-  <p>The canvas then exposes its content as a <code>MediaStream</code> via <code>captureStream()</code>. This is the <strong>Composed Room Feed</strong> — one single video representing the entire Room.</p>
-
-  <div class="callout callout-warn">
-    <strong>Risk to watch</strong>
-    Browser composition is CPU-intensive. Drawing 4 video streams + a screen share onto a canvas at 30fps is real work. The plan's exit criteria require ≥28fps on an M1 Mac. If this becomes a bottleneck, it's the hardest thing to change later.
-  </div>
-
-  <h3>3. WHIP Client — Sending Composed Video to the Server</h3>
-  <p><strong>WHIP</strong> (WebRTC-HTTP Ingestion Protocol) is how the browser sends the Composed Room Feed to the server. It's essentially "WebRTC, but for sending media <em>to</em> a server instead of <em>between</em> peers." The Host browser is a WHIP client; the Broadcast Bridge is a WHIP server.</p>
-
-  <p>Authentication uses a per-Broadcast bearer token — each time the Host starts a broadcast, the SvelteKit backend issues a fresh token that the WHIP client includes in its request.</p>
-
-  <h3>4. Broadcast Bridge — Server-Side Transcoding</h3>
-  <p>The Broadcast Bridge is a <strong>GStreamer pipeline</strong> running on the VPS. It receives the Composed Room Feed via WHIP (WebRTC), transcodes from VP8/VP9 to H.264, encodes audio as AAC, and pushes the result to YouTube via RTMP.</p>
-
-  <p>YouTube requires H.264 + AAC over RTMP. Browsers send VP8 or VP9 over WebRTC. The bridge is the translator between these two worlds.</p>
-
-  <h3>5. YouTube — The Audience's Window</h3>
-  <p>The Audience watches on YouTube. There's no watch page in Live Studio itself. The Host pastes their YouTube RTMP URL and stream key each time they broadcast — credentials are ephemeral and never stored.</p>
-
-  <hr>
-
-  <h2>Why This Milestone Order?</h2>
-
-  <p>The plan has three milestones that build on each other in a specific order. The order is deliberate — it proves the riskiest unknowns first:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Milestone</th>
-        <th>What It Proves</th>
-        <th>Key Risk Retired</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>M1</strong>: Local Room Prototype</td>
-        <td>Can 4 people join a browser room, see/hear each other, and produce a composed 720p/30fps output?</td>
-        <td>Browser canvas composition performance; SFU integration viability</td>
-      </tr>
-      <tr>
-        <td><strong>M2</strong>: Broadcast Bridge Spike</td>
-        <td>Can we take that composed output and deliver it to YouTube?</td>
-        <td>WHIP → GStreamer → RTMP pipeline works end-to-end</td>
-      </tr>
-      <tr>
-        <td><strong>M3</strong>: Product Shell</td>
-        <td>Can we wrap the proven media path in a real product (accounts, persistent rooms, broadcast records)?</td>
-        <td>None — product infra is known territory</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="callout callout-success">
-    <strong>The insight</strong>
-    M1 and M2 are <strong>spikes</strong> — experiments to retire risk. If browser composition doesn't hit 28fps, or the WHIP-to-RTMP bridge doesn't work, you'd rather discover that before building auth, a database schema, and email flows. M3 is the "normal" product work that only happens once the hard media questions are answered.
-  </div>
-
-  <p>Notice how M1 is <strong>authless and ephemeral</strong> — no database, no accounts, no persistence. That's deliberate (<a href="file:///Users/riza/Documents/inilive/docs/adr/0020-keep-the-local-room-prototype-authless-and-ephemeral.md">ADR 0020</a>). You want to validate media capabilities without the overhead of product infrastructure slowing you down.</p>
-
-  <hr>
-
-  <h2>The Technology Stack</h2>
-
-  <p>Here's how the pieces map to actual technologies:</p>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Component</th>
-        <th>Technology</th>
-        <th>First Needed In</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>Web framework</td>
-        <td>SvelteKit (Node runtime)</td>
-        <td>M1</td>
-      </tr>
-      <tr>
-        <td>WebRTC SFU</td>
-        <td>inLive (spike) → LiveKit Cloud (fallback)</td>
-        <td>M1</td>
-      </tr>
-      <tr>
-        <td>Browser composition</td>
-        <td>Canvas API + <code>captureStream()</code></td>
-        <td>M1</td>
-      </tr>
-      <tr>
-        <td>Broadcast Bridge</td>
-        <td>GStreamer (WHIP → H.264/AAC → RTMP)</td>
-        <td>M2</td>
-      </tr>
-      <tr>
-        <td>Database</td>
-        <td>PostgreSQL + Kysely + plain SQL migrations</td>
-        <td>M3</td>
-      </tr>
-      <tr>
-        <td>Auth</td>
-        <td>Custom email magic-link</td>
-        <td>M3</td>
-      </tr>
-      <tr>
-        <td>Deployment</td>
-        <td>Podman Compose on a persistent VPS (Caddy for TLS)</td>
-        <td>M2</td>
-      </tr>
-      <tr>
-        <td>Email</td>
-        <td>Resend or Postmark</td>
-        <td>M3</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <hr>
-
-  <h2>Check Your Understanding</h2>
-
-  <div class="quiz" id="quiz-1">
-    <h3>Question 1</h3>
-    <p>Where does video composition (combining multiple participant streams into one output) happen in Live Studio?</p>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">On the managed SFU server</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">On the Broadcast Bridge</button>
-    <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-1')">In the Host's browser</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">On the YouTube server</button>
-    <div class="quiz-feedback" id="quiz-1-fb"></div>
-  </div>
-
-  <div class="quiz" id="quiz-2">
-    <h3>Question 2</h3>
-    <p>Why is Milestone 1 authless and ephemeral — no database, no accounts?</p>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">To save development time for later milestones</button>
-    <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-2')">To retire media risk before building product infrastructure</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">Because the framework doesn't support databases yet</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">Because Guests don't need accounts in any milestone</button>
-    <div class="quiz-feedback" id="quiz-2-fb"></div>
-  </div>
-
-  <div class="quiz" id="quiz-3">
-    <h3>Question 3</h3>
-    <p>What does the Broadcast Bridge do?</p>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">Routes individual streams between Room participants</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">Composes multiple video streams into one canvas feed</button>
-    <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-3')">Receives the composed WebRTC feed and outputs RTMP to YouTube</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">Stores broadcast credentials securely on the server</button>
-    <div class="quiz-feedback" id="quiz-3-fb"></div>
-  </div>
-
-  <div class="quiz" id="quiz-4">
-    <h3>Question 4</h3>
-    <p>What is the role of the SFU in Live Studio?</p>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">It mixes all participant audio and video into a single stream</button>
-    <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-4')">It forwards each participant's individual streams to the others</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">It transcodes video between codecs for browser compatibility</button>
-    <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">It connects the Host's browser directly to the YouTube servers</button>
-    <div class="quiz-feedback" id="quiz-4-fb"></div>
-  </div>
-
-  <hr>
-
-  <h2>Primary Source</h2>
-  <p>Read the full project plan: <a href="file:///Users/riza/Documents/inilive/docs/plan.md">docs/plan.md</a>. Pay special attention to the "Architecture Decisions" and "Milestones" sections. The domain language is defined in <a href="file:///Users/riza/Documents/inilive/CONTEXT.md">CONTEXT.md</a>.</p>
-
-  <hr>
-
-  <h2>What's Next</h2>
-  <p>Now that you have the big picture, the next lesson will zoom into <strong>WebRTC fundamentals</strong> — the technology that makes the Room work. You'll learn how connections are established, what signaling means, and why you need a managed SFU instead of connecting browsers directly.</p>
-
-  <div class="callout callout-success">
-    <strong>Questions? Ask your teacher.</strong>
-    If anything in this lesson is unclear — a term, a connection in the diagram, why a decision was made — ask me. I'm your tutor and can explain further or create follow-up material.
-  </div>
-
-  <footer>
-    <p>Lesson 1 of the Live Studio learning series</p>
-    <div class="nav-links">
-      <span>Reference: <a href="file:///Users/riza/Documents/inilive/reference/glossary.html">Domain Glossary</a></span>
+  └──────────────────────┘</pre
+      >
     </div>
-  </footer>
 
-  <script>
-    function checkAnswer(btn, quizId) {
-      const quiz = document.getElementById(quizId);
-      const options = quiz.querySelectorAll('.quiz-option');
-      const feedback = document.getElementById(quizId + '-fb');
+    <p>Let's walk through the five key components:</p>
 
-      // Reset all options
-      options.forEach(o => {
-        o.classList.remove('correct', 'incorrect');
-        o.disabled = true;
-      });
+    <h3>1. WebRTC SFU — The Media Router</h3>
+    <p>
+      Every person in the Room sends their camera/mic feed to a
+      <strong>Selective Forwarding Unit (SFU)</strong>. The SFU doesn't mix or compose anything — it
+      just routes each person's individual media stream to everyone else. Think of it as a smart
+      switchboard: each participant uploads their stream once, and the SFU forwards copies to the
+      other participants.
+    </p>
 
-      const isCorrect = btn.dataset.correct === 'true';
+    <p>
+      Live Studio will use a <strong>managed SFU service</strong> (the plan spike inLive first, then
+      LiveKit Cloud as fallback). This means you don't run the SFU yourself — you use their APIs to
+      create rooms and get tokens.
+    </p>
 
-      if (isCorrect) {
-        btn.classList.add('correct');
-        feedback.className = 'quiz-feedback show correct-fb';
-        feedback.textContent = '✓ Correct!';
-      } else {
-        btn.classList.add('incorrect');
-        // Highlight the correct answer
-        options.forEach(o => {
-          if (o.dataset.correct === 'true') o.classList.add('correct');
+    <div class="callout">
+      <strong>Why an SFU instead of peer-to-peer?</strong>
+      With 4 people in a peer-to-peer mesh, each person would upload their video 3 times and
+      download 3 streams. An SFU lets each person upload once and download 3, cutting upload
+      bandwidth by 3×. This matters on consumer connections.
+    </div>
+
+    <h3>2. Canvas Composer — Browser-Side Composition</h3>
+    <p>
+      This is a key architectural choice: the Host's browser takes all the individual video streams
+      from the SFU and draws them onto a single HTML <code>&lt;canvas&gt;</code> element at
+      720p/30fps. This canvas includes the participant grid layout, display name labels, and
+      camera-off placeholders.
+    </p>
+
+    <p>
+      The canvas then exposes its content as a <code>MediaStream</code> via
+      <code>captureStream()</code>. This is the <strong>Composed Room Feed</strong> — one single
+      video representing the entire Room.
+    </p>
+
+    <div class="callout callout-warn">
+      <strong>Risk to watch</strong>
+      Browser composition is CPU-intensive. Drawing 4 video streams + a screen share onto a canvas
+      at 30fps is real work. The plan's exit criteria require ≥28fps on an M1 Mac. If this becomes a
+      bottleneck, it's the hardest thing to change later.
+    </div>
+
+    <h3>3. WHIP Client — Sending Composed Video to the Server</h3>
+    <p>
+      <strong>WHIP</strong> (WebRTC-HTTP Ingestion Protocol) is how the browser sends the Composed
+      Room Feed to the server. It's essentially "WebRTC, but for sending media <em>to</em> a server
+      instead of <em>between</em> peers." The Host browser is a WHIP client; the Broadcast Bridge is
+      a WHIP server.
+    </p>
+
+    <p>
+      Authentication uses a per-Broadcast bearer token — each time the Host starts a broadcast, the
+      SvelteKit backend issues a fresh token that the WHIP client includes in its request.
+    </p>
+
+    <h3>4. Broadcast Bridge — Server-Side Transcoding</h3>
+    <p>
+      The Broadcast Bridge is a <strong>GStreamer pipeline</strong> running on the VPS. It receives
+      the Composed Room Feed via WHIP (WebRTC), transcodes from VP8/VP9 to H.264, encodes audio as
+      AAC, and pushes the result to YouTube via RTMP.
+    </p>
+
+    <p>
+      YouTube requires H.264 + AAC over RTMP. Browsers send VP8 or VP9 over WebRTC. The bridge is
+      the translator between these two worlds.
+    </p>
+
+    <h3>5. YouTube — The Audience's Window</h3>
+    <p>
+      The Audience watches on YouTube. There's no watch page in Live Studio itself. The Host pastes
+      their YouTube RTMP URL and stream key each time they broadcast — credentials are ephemeral and
+      never stored.
+    </p>
+
+    <hr />
+
+    <h2>Why This Milestone Order?</h2>
+
+    <p>
+      The plan has three milestones that build on each other in a specific order. The order is
+      deliberate — it proves the riskiest unknowns first:
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Milestone</th>
+          <th>What It Proves</th>
+          <th>Key Risk Retired</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>M1</strong>: Local Room Prototype</td>
+          <td>
+            Can 4 people join a browser room, see/hear each other, and produce a composed 720p/30fps
+            output?
+          </td>
+          <td>Browser canvas composition performance; SFU integration viability</td>
+        </tr>
+        <tr>
+          <td><strong>M2</strong>: Broadcast Bridge Spike</td>
+          <td>Can we take that composed output and deliver it to YouTube?</td>
+          <td>WHIP → GStreamer → RTMP pipeline works end-to-end</td>
+        </tr>
+        <tr>
+          <td><strong>M3</strong>: Product Shell</td>
+          <td>
+            Can we wrap the proven media path in a real product (accounts, persistent rooms,
+            broadcast records)?
+          </td>
+          <td>None — product infra is known territory</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout callout-success">
+      <strong>The insight</strong>
+      M1 and M2 are <strong>spikes</strong> — experiments to retire risk. If browser composition
+      doesn't hit 28fps, or the WHIP-to-RTMP bridge doesn't work, you'd rather discover that before
+      building auth, a database schema, and email flows. M3 is the "normal" product work that only
+      happens once the hard media questions are answered.
+    </div>
+
+    <p>
+      Notice how M1 is <strong>authless and ephemeral</strong> — no database, no accounts, no
+      persistence. That's deliberate (<a
+        href="file:///Users/riza/Documents/inilive/docs/adr/0020-keep-the-local-room-prototype-authless-and-ephemeral.md"
+        >ADR 0020</a
+      >). You want to validate media capabilities without the overhead of product infrastructure
+      slowing you down.
+    </p>
+
+    <hr />
+
+    <h2>The Technology Stack</h2>
+
+    <p>Here's how the pieces map to actual technologies:</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Component</th>
+          <th>Technology</th>
+          <th>First Needed In</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Web framework</td>
+          <td>SvelteKit (Node runtime)</td>
+          <td>M1</td>
+        </tr>
+        <tr>
+          <td>WebRTC SFU</td>
+          <td>inLive (spike) → LiveKit Cloud (fallback)</td>
+          <td>M1</td>
+        </tr>
+        <tr>
+          <td>Browser composition</td>
+          <td>Canvas API + <code>captureStream()</code></td>
+          <td>M1</td>
+        </tr>
+        <tr>
+          <td>Broadcast Bridge</td>
+          <td>GStreamer (WHIP → H.264/AAC → RTMP)</td>
+          <td>M2</td>
+        </tr>
+        <tr>
+          <td>Database</td>
+          <td>PostgreSQL + Kysely + plain SQL migrations</td>
+          <td>M3</td>
+        </tr>
+        <tr>
+          <td>Auth</td>
+          <td>Custom email magic-link</td>
+          <td>M3</td>
+        </tr>
+        <tr>
+          <td>Deployment</td>
+          <td>Podman Compose on a persistent VPS (Caddy for TLS)</td>
+          <td>M2</td>
+        </tr>
+        <tr>
+          <td>Email</td>
+          <td>Resend or Postmark</td>
+          <td>M3</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <hr />
+
+    <h2>Check Your Understanding</h2>
+
+    <div class="quiz" id="quiz-1">
+      <h3>Question 1</h3>
+      <p>
+        Where does video composition (combining multiple participant streams into one output) happen
+        in Live Studio?
+      </p>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">
+        On the managed SFU server
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">
+        On the Broadcast Bridge
+      </button>
+      <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-1')">
+        In the Host's browser
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-1')">
+        On the YouTube server
+      </button>
+      <div class="quiz-feedback" id="quiz-1-fb"></div>
+    </div>
+
+    <div class="quiz" id="quiz-2">
+      <h3>Question 2</h3>
+      <p>Why is Milestone 1 authless and ephemeral — no database, no accounts?</p>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">
+        To save development time for later milestones
+      </button>
+      <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-2')">
+        To retire media risk before building product infrastructure
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">
+        Because the framework doesn't support databases yet
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-2')">
+        Because Guests don't need accounts in any milestone
+      </button>
+      <div class="quiz-feedback" id="quiz-2-fb"></div>
+    </div>
+
+    <div class="quiz" id="quiz-3">
+      <h3>Question 3</h3>
+      <p>What does the Broadcast Bridge do?</p>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">
+        Routes individual streams between Room participants
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">
+        Composes multiple video streams into one canvas feed
+      </button>
+      <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-3')">
+        Receives the composed WebRTC feed and outputs RTMP to YouTube
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-3')">
+        Stores broadcast credentials securely on the server
+      </button>
+      <div class="quiz-feedback" id="quiz-3-fb"></div>
+    </div>
+
+    <div class="quiz" id="quiz-4">
+      <h3>Question 4</h3>
+      <p>What is the role of the SFU in Live Studio?</p>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">
+        It mixes all participant audio and video into a single stream
+      </button>
+      <button class="quiz-option" data-correct="true" onclick="checkAnswer(this, 'quiz-4')">
+        It forwards each participant's individual streams to the others
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">
+        It transcodes video between codecs for browser compatibility
+      </button>
+      <button class="quiz-option" data-correct="false" onclick="checkAnswer(this, 'quiz-4')">
+        It connects the Host's browser directly to the YouTube servers
+      </button>
+      <div class="quiz-feedback" id="quiz-4-fb"></div>
+    </div>
+
+    <hr />
+
+    <h2>Primary Source</h2>
+    <p>
+      Read the full project plan:
+      <a href="file:///Users/riza/Documents/inilive/docs/plan.md">docs/plan.md</a>. Pay special
+      attention to the "Architecture Decisions" and "Milestones" sections. The domain language is
+      defined in <a href="file:///Users/riza/Documents/inilive/CONTEXT.md">CONTEXT.md</a>.
+    </p>
+
+    <hr />
+
+    <h2>What's Next</h2>
+    <p>
+      Now that you have the big picture, the next lesson will zoom into
+      <strong>WebRTC fundamentals</strong> — the technology that makes the Room work. You'll learn
+      how connections are established, what signaling means, and why you need a managed SFU instead
+      of connecting browsers directly.
+    </p>
+
+    <div class="callout callout-success">
+      <strong>Questions? Ask your teacher.</strong>
+      If anything in this lesson is unclear — a term, a connection in the diagram, why a decision
+      was made — ask me. I'm your tutor and can explain further or create follow-up material.
+    </div>
+
+    <footer>
+      <p>Lesson 1 of the Live Studio learning series</p>
+      <div class="nav-links">
+        <span
+          >Reference:
+          <a href="file:///Users/riza/Documents/inilive/reference/glossary.html"
+            >Domain Glossary</a
+          ></span
+        >
+      </div>
+    </footer>
+
+    <script>
+      function checkAnswer(btn, quizId) {
+        const quiz = document.getElementById(quizId);
+        const options = quiz.querySelectorAll(".quiz-option");
+        const feedback = document.getElementById(quizId + "-fb");
+
+        // Reset all options
+        options.forEach((o) => {
+          o.classList.remove("correct", "incorrect");
+          o.disabled = true;
         });
-        feedback.className = 'quiz-feedback show incorrect-fb';
 
-        // Contextual feedback
-        const explanations = {
-          'quiz-1': 'The Host\'s browser uses a canvas to compose all streams into one Composed Room Feed. The SFU only routes individual streams. The Bridge only transcodes and relays.',
-          'quiz-2': 'The milestones are ordered to retire risk. M1 proves the media path works before investing in auth, database, and product infrastructure.',
-          'quiz-3': 'The Bridge receives the already-composed WebRTC feed via WHIP, transcodes to H.264/AAC, and pushes to YouTube via RTMP. Composition happens in the browser.',
-          'quiz-4': 'An SFU (Selective Forwarding Unit) forwards streams without mixing them. That\'s what makes it different from an MCU which would mix. Composition is done in the browser.'
-        };
-        feedback.textContent = '✗ ' + (explanations[quizId] || 'Not quite. Review the section above.');
+        const isCorrect = btn.dataset.correct === "true";
+
+        if (isCorrect) {
+          btn.classList.add("correct");
+          feedback.className = "quiz-feedback show correct-fb";
+          feedback.textContent = "✓ Correct!";
+        } else {
+          btn.classList.add("incorrect");
+          // Highlight the correct answer
+          options.forEach((o) => {
+            if (o.dataset.correct === "true") o.classList.add("correct");
+          });
+          feedback.className = "quiz-feedback show incorrect-fb";
+
+          // Contextual feedback
+          const explanations = {
+            "quiz-1":
+              "The Host's browser uses a canvas to compose all streams into one Composed Room Feed. The SFU only routes individual streams. The Bridge only transcodes and relays.",
+            "quiz-2":
+              "The milestones are ordered to retire risk. M1 proves the media path works before investing in auth, database, and product infrastructure.",
+            "quiz-3":
+              "The Bridge receives the already-composed WebRTC feed via WHIP, transcodes to H.264/AAC, and pushes to YouTube via RTMP. Composition happens in the browser.",
+            "quiz-4":
+              "An SFU (Selective Forwarding Unit) forwards streams without mixing them. That's what makes it different from an MCU which would mix. Composition is done in the browser.",
+          };
+          feedback.textContent =
+            "✗ " + (explanations[quizId] || "Not quite. Review the section above.");
+        }
       }
-    }
-  </script>
-
-</body>
+    </script>
+  </body>
 </html>

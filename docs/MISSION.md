@@ -7,6 +7,7 @@ I'm about to build Live Studio — a browser-based live production studio where 
 ## What does success look like?
 
 I can confidently start Milestone 1 (Local Room Prototype) knowing:
+
 - The full product domain and ubiquitous language
 - How WebRTC, SFUs, and browser media APIs work
 - How canvas composition and `captureStream()` produce the Composed Room Feed

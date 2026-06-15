@@ -77,6 +77,7 @@ Inside the Room:
 **Camera-off placeholders:** Name on a neutral tile in both studio view and Composed Room Feed. Same label text in both.
 
 **Host moderation:**
+
 - Force-mute / force-camera-off: Guest sees a banner ("Host muted your mic" / "Host turned off your camera"). Guest may self-unmute only after Host sends "Request unmute" and Guest accepts.
 - Request unmute: Host clicks request → Guest sees accept/dismiss prompt → Host sees "Waiting for Guest" then "Guest unmuted" or "Guest declined".
 - Remove Guest: Guest is disconnected to a "You were removed from the Room" screen. Removal does not revoke the invite token — Host must separately revoke or regenerate the Guest Invite to block rejoin.
