@@ -1,5 +1,11 @@
 import { createMediaJoinGrant } from "$lib/server/media-join";
 import {
+  endRoomBroadcast,
+  failRoomBroadcast,
+  getRoomBroadcastView,
+  startRoomBroadcast,
+} from "$lib/server/broadcast-state";
+import {
   getRoomChatMessages,
   getRoomPresence,
   moderateRoomParticipant,
@@ -31,6 +37,7 @@ export const load: PageServerLoad = async ({ params, url }) => {
     chatMessages: getRoomChatMessages(params.roomId),
     activeParticipantId,
     mediaGrant,
+    broadcast: getRoomBroadcastView(params.roomId),
   };
 };
 
@@ -101,5 +108,45 @@ export const actions: Actions = {
     }
 
     redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
+  },
+  broadcast: async ({ params, request }) => {
+    const formData = await request.formData();
+    const hostParticipantId = String(formData.get("hostParticipantId") ?? "");
+    const action = String(formData.get("broadcastAction") ?? "");
+
+    if (action === "start") {
+      const result = startRoomBroadcast({
+        roomId: params.roomId,
+        hostParticipantId,
+        rtmpServerUrl: String(formData.get("rtmpServerUrl") ?? ""),
+        streamKey: String(formData.get("streamKey") ?? ""),
+      });
+
+      if (result.error) {
+        return fail(400, { error: result.error });
+      }
+    } else if (action === "end") {
+      const result = endRoomBroadcast({
+        roomId: params.roomId,
+        hostParticipantId,
+      });
+
+      if (result.error) {
+        return fail(400, { error: result.error });
+      }
+    } else if (action === "simulate-fail") {
+      const result = failRoomBroadcast({
+        roomId: params.roomId,
+        failureMessage: "YouTube rejected the stream credentials.",
+      });
+
+      if (result.error) {
+        return fail(400, { error: result.error });
+      }
+    } else {
+      return fail(400, { error: "Choose a Broadcast action." });
+    }
+
+    redirect(303, `/room/${params.roomId}/backstage?participant=${hostParticipantId}`);
   },
 };

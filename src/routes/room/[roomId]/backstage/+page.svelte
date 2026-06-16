@@ -10,6 +10,7 @@
 
 <RoomPresencePanel
 	activeParticipantId={data.activeParticipantId}
+	broadcast={data.broadcast}
 	chatMessages={data.chatMessages}
 	mediaGrant={data.mediaGrant}
 	presence={data.presence}
