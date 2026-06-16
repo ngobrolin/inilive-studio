@@ -54,6 +54,46 @@ test("Composed Room Feed renders a 720p captureStream canvas", async ({ page }) 
     .toBeGreaterThanOrEqual(28);
 });
 
+test("Composed Room Feed captureStream exposes a playable 720p video track", async ({ page }) => {
+  const roomId = `stream-track-${Date.now()}`;
+
+  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+
+  const trackInfo = await page.evaluate(async () => {
+    const canvas = document.querySelector(
+      '[data-testid="composition-canvas"]',
+    ) as HTMLCanvasElement | null;
+    if (!canvas) {
+      return null;
+    }
+
+    const stream = canvas.captureStream(30);
+    const videoTrack = stream.getVideoTracks()[0];
+    if (!videoTrack) {
+      return null;
+    }
+
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.muted = true;
+    await video.play();
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+    });
+
+    return {
+      readyState: videoTrack.readyState,
+      width: video.videoWidth,
+      height: video.videoHeight,
+    };
+  });
+
+  expect(trackInfo).not.toBeNull();
+  expect(trackInfo?.readyState).toBe("live");
+  expect(trackInfo?.width).toBe(1280);
+  expect(trackInfo?.height).toBe(720);
+});
+
 test("Composed Room Feed makes Screen Share the primary source", async ({ page }) => {
   const roomId = `screen-composition-${Date.now()}`;
 
