@@ -16,12 +16,21 @@ type BroadcastCredentials = {
   streamKey: string;
 };
 
+export type BroadcastIngestGrant = {
+  whipUrl: string;
+  bearerToken: string;
+  expiresAt: number;
+};
+
 const broadcasts = new Map<string, RoomBroadcastRecord>();
 const credentials = new Map<string, BroadcastCredentials>();
+const ingestGrants = new Map<string, BroadcastIngestGrant>();
+const INGEST_TOKEN_TTL_MS = 10 * 60 * 1000;
 
 export function clearBroadcastState(): void {
   broadcasts.clear();
   credentials.clear();
+  ingestGrants.clear();
 }
 
 export function getRoomBroadcastView(roomId: string): RoomBroadcastView {
@@ -35,6 +44,34 @@ export function getRoomBroadcastView(roomId: string): RoomBroadcastView {
 
 export function getRoomBroadcastCredentials(roomId: string): BroadcastCredentials | null {
   return credentials.get(roomId) ?? null;
+}
+
+export function getRoomBroadcastIngestGrant(roomId: string): BroadcastIngestGrant | null {
+  return ingestGrants.get(roomId) ?? null;
+}
+
+export function authorizeWhipIngest(input: {
+  roomId: string;
+  authorizationHeader: string | null;
+  now?: number;
+}): { authorized: boolean; status: 202 | 401 } {
+  const token = bearerTokenFrom(input.authorizationHeader);
+  const ingestGrant = ingestGrants.get(input.roomId);
+  const broadcast = broadcasts.get(input.roomId);
+  const now = input.now ?? Date.now();
+
+  if (
+    !token ||
+    !ingestGrant ||
+    !broadcast ||
+    broadcast.state !== "broadcasting" ||
+    ingestGrant.expiresAt <= now ||
+    token !== ingestGrant.bearerToken
+  ) {
+    return { authorized: false, status: 401 };
+  }
+
+  return { authorized: true, status: 202 };
 }
 
 export function startRoomBroadcast(input: {
@@ -65,6 +102,11 @@ export function startRoomBroadcast(input: {
     hostParticipantId: input.hostParticipantId,
   });
   credentials.set(input.roomId, { rtmpServerUrl, streamKey });
+  ingestGrants.set(input.roomId, {
+    whipUrl: `/whip/${encodeURIComponent(input.roomId)}`,
+    bearerToken: `whip_${globalThis.crypto.randomUUID().replaceAll("-", "")}`,
+    expiresAt: Date.now() + INGEST_TOKEN_TTL_MS,
+  });
 
   return { error: null };
 }
@@ -88,6 +130,7 @@ export function endRoomBroadcast(input: { roomId: string; hostParticipantId: str
     failureMessage: null,
   });
   credentials.delete(input.roomId);
+  ingestGrants.delete(input.roomId);
 
   return { error: null };
 }
@@ -112,6 +155,14 @@ export function failRoomBroadcast(input: { roomId: string; failureMessage: strin
     failureMessage,
   });
   credentials.delete(input.roomId);
+  ingestGrants.delete(input.roomId);
 
   return { error: null };
+}
+
+function bearerTokenFrom(authorizationHeader: string | null): string | null {
+  if (!authorizationHeader) return null;
+
+  const match = authorizationHeader.trim().match(/^Bearer\s+(.+)$/i);
+  return match?.[1] ?? null;
 }

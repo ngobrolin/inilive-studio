@@ -687,7 +687,7 @@ Add the simplified Milestone 2 Broadcast flow to the prototype. The Host can pas
 :TYPE: AFK
 :PRIORITY: 13
 :AREA: broadcast-bridge
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: bridge-001
 :END:
 
@@ -697,11 +697,11 @@ Add short-lived per-Broadcast bearer-token authentication for WHIP ingest. Inval
 
 *** Acceptance criteria
 
-- [ ] SvelteKit or the prototype control layer issues a per-Broadcast bearer token.
-- [ ] WHIP POST requires Authorization: Bearer token.
-- [ ] Invalid or missing tokens return 401 before ingest starts.
-- [ ] Tokens are scoped to the current Broadcast attempt.
-- [ ] Token values are not logged.
+- [X] SvelteKit or the prototype control layer issues a per-Broadcast bearer token.
+- [X] WHIP POST requires Authorization: Bearer token.
+- [X] Invalid or missing tokens return 401 before ingest starts.
+- [X] Tokens are scoped to the current Broadcast attempt.
+- [X] Token values are not logged.
 
 *** Verification
 
@@ -713,7 +713,19 @@ Add short-lived per-Broadcast bearer-token authentication for WHIP ingest. Inval
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16 09:47 WIB: Implemented short-lived WHIP ingest authentication for active Broadcast attempts.
+  - Ingest grants: ~/code/inilive-studio/src/lib/server/broadcast-state.ts
+  - WHIP POST endpoint: ~/code/inilive-studio/src/routes/whip/[roomId]/+server.ts
+  - Host Backstage load exposes the current ingest grant only for the active Host participant.
+  - Missing or invalid Authorization returns 401 before ingest can proceed.
+  - Valid Authorization returns 202 as the authenticated handoff point for bridge-003 because the GStreamer WHIP ingest is not wired yet.
+  - Tokens use a `whip_` prefix, expire after 10 minutes, clear on Ended/Failed, and are regenerated for each Broadcast attempt.
+  - Unit tests: ~/code/inilive-studio/src/lib/server/broadcast-state.spec.ts and ~/code/inilive-studio/src/routes/whip/[roomId]/server.spec.ts
+  - Targeted verification passed: npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts 'src/routes/whip/[roomId]/server.spec.ts'
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with the existing empty src/lib/index.ts warning.
+  - ./init.sh passed after implementation (32 Vitest tests, 35 Playwright tests).
+  - Secret log inspection: the new WHIP route and auth helpers do not log request headers or token values.
 
 *** Notes
 

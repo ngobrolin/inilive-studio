@@ -2,6 +2,7 @@ import { createMediaJoinGrant } from "$lib/server/media-join";
 import {
   endRoomBroadcast,
   failRoomBroadcast,
+  getRoomBroadcastIngestGrant,
   getRoomBroadcastView,
   startRoomBroadcast,
 } from "$lib/server/broadcast-state";
@@ -38,6 +39,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
     activeParticipantId,
     mediaGrant,
     broadcast: getRoomBroadcastView(params.roomId),
+    hostWhipIngestGrant:
+      activeParticipant?.role === "host" ? getRoomBroadcastIngestGrant(params.roomId) : null,
   };
 };
 

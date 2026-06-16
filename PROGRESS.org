@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: bridge-002 "Implement WHIP ingest authentication" in PLAN.org (Milestone 2).
+- Current highest-priority unfinished AFK feature: bridge-003 "Spike GStreamer WHIP-to-RTMP bridge" in PLAN.org (Milestone 2).
 - Current HITL follow-up: none for Milestone 1; media-001-live passed with evidence in docs/spikes/media-001-managed-sfu-choice.md.
 
 * Session Log
@@ -1063,7 +1063,7 @@ Complete media-003 by running real LiveKit Screen Share verification in desktop 
 
 *** Commits
 
-- None yet this session.
+- Add WHIP ingest bearer authentication
 
 *** Files or artifacts updated
 
@@ -1287,3 +1287,75 @@ Start compose-002: add the browser Composed Room Feed canvas, captureStream outp
 *** Next best step
 
 Run the interactive OBS supplementary capture check for the Composed Room Feed, then mark compose-002 passing if evidence is captured.
+
+** Session 021
+:PROPERTIES:
+:SESSION_ID: 021
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Complete bridge-002 with TDD: add short-lived per-Broadcast bearer-token authentication for WHIP ingest.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline passed.
+- TDD cycle 1: unit test for per-Broadcast WHIP ingest grant issuance.
+- TDD cycle 2: unit test for Authorization: Bearer validation.
+- TDD cycle 3: route-level unit test for POST /whip/[roomId] missing, invalid, and valid tokens.
+- Added 10-minute `whip_` bearer tokens scoped to the active Broadcast attempt.
+- Cleared ingest grants when a Broadcast ends or fails.
+- Exposed the current ingest grant only to the active Host participant in Backstage load data.
+- Added a WHIP POST endpoint that returns 401 before ingest for missing or invalid tokens and 202 for authenticated handoff to the next bridge step.
+- Updated PLAN.org bridge-002 to passing with evidence.
+
+*** Verification run
+
+- ./init.sh baseline: passed before implementation.
+  - Vitest: 27 tests passed.
+  - Playwright: 35 tests passed.
+- npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts: failed first as expected, then passed after implementation.
+- npm run test:unit -- --run 'src/routes/whip/[roomId]/server.spec.ts': failed first as expected because the route did not exist, then passed after implementation.
+- Targeted final: npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts 'src/routes/whip/[roomId]/server.spec.ts' passed.
+  - Vitest: 8 tests passed across 2 files.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- npm run lint: passed with 0 errors and 1 existing empty src/lib/index.ts warning.
+- ./init.sh after implementation: passed.
+  - Vitest: 32 tests passed.
+  - Playwright: 35 tests passed.
+
+*** Evidence captured
+
+- Ingest grant and auth state: src/lib/server/broadcast-state.ts
+- WHIP POST endpoint: src/routes/whip/[roomId]/+server.ts
+- Host-only Backstage load handoff: src/routes/room/[roomId]/backstage/+page.server.ts
+- Unit tests: src/lib/server/broadcast-state.spec.ts
+- Route tests: src/routes/whip/[roomId]/server.spec.ts
+- PLAN.org bridge-002 evidence updated.
+
+*** Commits
+
+- None yet this session.
+
+*** Files or artifacts updated
+
+- src/lib/server/broadcast-state.ts
+- src/lib/server/broadcast-state.spec.ts
+- src/routes/whip/[roomId]/+server.ts
+- src/routes/whip/[roomId]/server.spec.ts
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Valid WHIP POST currently returns 202 as an authenticated handoff point; the actual GStreamer WHIP ingest path belongs to bridge-003.
+- Broadcast and ingest auth state remain process-local memory for Milestone 2.
+- session-handoff.md and other pre-existing files remain not oxfmt-clean.
+- npm run check still has the missing node type definition warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Start bridge-003 with TDD/spike discipline: validate the GStreamer WHIP-to-RTMP path after the bearer-token gate.
