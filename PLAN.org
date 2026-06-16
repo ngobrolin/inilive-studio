@@ -11,7 +11,7 @@ Live Studio is a browser-based production Room where a signed-in Host brings up 
 
 * Rules
   :PROPERTIES:
-  :SINGLE_ACTIVE_MILESTONE: Milestone 1
+  :SINGLE_ACTIVE_MILESTONE: Milestone 2
   :SINGLE_ACTIVE_FEATURE: true
   :PASSING_REQUIRES_EVIDENCE: true
   :DO_NOT_SKIP_VERIFICATION: true
@@ -34,7 +34,7 @@ Live Studio is a browser-based production Room where a signed-in Host brings up 
 * Milestone 1 - Local Room Prototype
 :PROPERTIES:
 :MILESTONE_ID: m1-local-room-prototype
-:STATUS: active
+:STATUS: done
 :END:
 
 Goal: prove the Room experience and Composed Room Feed before product infrastructure, auth, durable storage, or the Broadcast Bridge.
@@ -631,7 +631,7 @@ Document the manual media test script for Milestone 1 so future agents and human
 * Milestone 2 - Broadcast Bridge Spike
 :PROPERTIES:
 :MILESTONE_ID: m2-broadcast-bridge-spike
-:STATUS: not_started
+:STATUS: active
 :END:
 
 Goal: prove the path from the Composed Room Feed to YouTube through a server-side Broadcast Bridge.
@@ -642,7 +642,7 @@ Goal: prove the path from the Composed Room Feed to YouTube through a server-sid
 :TYPE: AFK
 :PRIORITY: 12
 :AREA: broadcast-bridge
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: compose-002
 :END:
 
@@ -652,11 +652,11 @@ Add the simplified Milestone 2 Broadcast flow to the prototype. The Host can pas
 
 *** Acceptance criteria
 
-- [ ] Host can enter RTMP server URL and stream key for a Broadcast.
-- [ ] Stream credentials are held only for the active attempt and are not persisted.
-- [ ] The prototype exposes Broadcasting, Ended, and Failed states.
-- [ ] Host can end a Broadcast attempt cleanly.
-- [ ] UI copy makes clear that YouTube archive is the recording in v1.
+- [X] Host can enter RTMP server URL and stream key for a Broadcast.
+- [X] Stream credentials are held only for the active attempt and are not persisted.
+- [X] The prototype exposes Broadcasting, Ended, and Failed states.
+- [X] Host can end a Broadcast attempt cleanly.
+- [X] UI copy makes clear that YouTube archive is the recording in v1.
 
 *** Verification
 
@@ -667,7 +667,15 @@ Add the simplified Milestone 2 Broadcast flow to the prototype. The Host can pas
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16: Implemented bridge-001 with TDD vertical slices.
+  - In-memory Broadcast state: ~/code/inilive-studio/src/lib/server/broadcast-state.ts
+  - Backstage Broadcast controls and Broadcast State UI: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - Backstage form actions: ~/code/inilive-studio/src/routes/room/[roomId]/backstage/+page.server.ts
+  - Unit tests: ~/code/inilive-studio/src/lib/server/broadcast-state.spec.ts (3 tests)
+  - Playwright e2e: ~/code/inilive-studio/src/routes/room/[roomId]/broadcast.e2e.ts (4 tests)
+  - Targeted verification passed: npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts; npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts'.
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - ./init.sh passed after implementation (27 Vitest tests, 35 Playwright tests).
 
 *** Notes
 
