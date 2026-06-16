@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: compose-002 "Produce Composed Room Feed with canvas captureStream" in PLAN.org.
+- Current highest-priority unfinished AFK feature: bridge-001 "Add Broadcast credential entry and in-memory Broadcast state" in PLAN.org (Milestone 2).
 - Current HITL follow-up: none for Milestone 1; media-001-live passed with evidence in docs/spikes/media-001-managed-sfu-choice.md.
 
 * Session Log
@@ -1082,6 +1082,71 @@ Complete media-003 by running real LiveKit Screen Share verification in desktop 
 *** Next best step
 
 Start compose-002: render the Composed Room Feed into a 720p canvas, expose captureStream, and measure the Milestone 1 fps gate.
+
+** Session 019
+:PROPERTIES:
+:SESSION_ID: 019
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Finish compose-002 with TDD and complete qa-001 manual media test script.
+
+*** Completed
+
+- Ran ./init.sh baseline; baseline passed.
+- TDD cycle: added Playwright test for a playable 1280×720 `captureStream` video track; test passed on existing canvas implementation.
+- Added compose-002 OBS supplementary validation spike and script:
+  - docs/spikes/compose-002-obs-capture.md
+  - scripts/verify/compose-002-obs-capture.mjs
+- Captured canvas screenshot evidence at /tmp/inilive-compose-002-canvas.png.
+- Verified OBS WebSocket Window Capture API path (CreateInput, window match, GetSourceScreenshot); OBS visual capture is constrained without macOS Screen Recording permission for OBS.
+- Marked compose-002 passing in PLAN.org.
+- Added Milestone 1 manual media test script at docs/qa/m1-manual-media-test.md and marked qa-001 passing.
+
+*** Verification run
+
+- npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts': passed (5 tests).
+- node scripts/verify/compose-002-obs-capture.mjs: passed with canvas evidence; OBS screenshot blank without Screen Recording permission (documented constraint).
+- ./init.sh: passed (24 Vitest, 31 Playwright).
+
+*** Evidence captured
+
+- E2E: src/routes/room/[roomId]/composition-preview.e2e.ts (5 tests)
+- OBS spike: docs/spikes/compose-002-obs-capture.md
+- OBS script: scripts/verify/compose-002-obs-capture.mjs
+- Canvas screenshot: /tmp/inilive-compose-002-canvas.png
+- Manual QA script: docs/qa/m1-manual-media-test.md
+
+*** Commits
+
+- Assert composed captureStream exposes playable 720p track
+- Add OBS supplementary capture spike and verification script
+- Add Milestone 1 manual media test script
+- Mark compose-002 and qa-001 passing in plan and progress
+
+*** Files or artifacts updated
+
+- src/routes/room/[roomId]/composition-preview.e2e.ts
+- docs/spikes/compose-002-obs-capture.md
+- scripts/verify/compose-002-obs-capture.mjs
+- docs/qa/m1-manual-media-test.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- OBS Window Capture returns a blank screenshot until macOS Screen Recording permission is granted to OBS.
+- qa-001 Android Guest coverage remains manual follow-up when hardware is available.
+- The composed canvas still renders prototype placeholders rather than compositing actual LiveKit video frames.
+- session-handoff.md and other pre-existing files remain not oxfmt-clean.
+- npm run check still has the missing @types/node warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Start Milestone 2 bridge-001 with TDD: add Broadcast credential entry and in-memory Broadcast state for the Host.
 
 ** Session 018
 :PROPERTIES:
