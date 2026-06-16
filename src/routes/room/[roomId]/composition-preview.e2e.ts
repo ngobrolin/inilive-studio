@@ -32,6 +32,40 @@ test("Guest Backstage view also includes the Broadcast Preview", async ({ page }
   await expect(page.getByTestId("broadcast-preview")).toContainText("Not live");
 });
 
+test("Composed Room Feed renders a 720p captureStream canvas", async ({ page }) => {
+  const roomId = `canvas-composition-${Date.now()}`;
+
+  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One", {
+    cameraOff: true,
+  });
+
+  const canvas = page.getByTestId("composition-canvas");
+  await expect(page.getByRole("heading", { name: "Canvas output" })).toBeVisible();
+  await expect(page.getByTestId("capture-stream-status")).toContainText(
+    "Composed feed stream ready",
+  );
+  await expect(page.getByTestId("composition-primary-source")).toContainText("Participant grid");
+  await expect(canvas).toHaveJSProperty("width", 1280);
+  await expect(canvas).toHaveJSProperty("height", 720);
+
+  await expect
+    .poll(async () => Number(await page.getByTestId("composition-fps").textContent()))
+    .toBeGreaterThanOrEqual(28);
+});
+
+test("Composed Room Feed makes Screen Share the primary source", async ({ page }) => {
+  const roomId = `screen-composition-${Date.now()}`;
+
+  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await page.getByRole("button", { name: "Start Screen Share" }).click();
+
+  await expect(page.getByTestId("composition-primary-source")).toContainText("Screen Share");
+  await expect(page.getByTestId("capture-stream-status")).toContainText(
+    "Composed feed stream ready",
+  );
+});
+
 async function enterRoom(
   page: Page,
   url: string,

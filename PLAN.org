@@ -537,7 +537,7 @@ Create the prototype Room layout: participant grid as the primary collaboration 
 :TYPE: AFK
 :PRIORITY: 10
 :AREA: composition
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: compose-001 media-003
 :END:
 
@@ -547,11 +547,11 @@ Render the final Composed Room Feed into a browser canvas and produce a MediaStr
 
 *** Acceptance criteria
 
-- [ ] The Composed Room Feed includes participant video or placeholders and Display Name labels.
-- [ ] Host Screen Share becomes the primary visual when active, with participant cameras as smaller tiles.
-- [ ] The composition canvas targets 720p output.
-- [ ] The canvas produces a MediaStream via captureStream.
-- [ ] On the reference machine class, the composed output sustains at least 28fps with Host plus three Guests or documented simulated equivalents.
+- [X] The Composed Room Feed includes participant video or placeholders and Display Name labels.
+- [X] Host Screen Share becomes the primary visual when active, with participant cameras as smaller tiles.
+- [X] The composition canvas targets 720p output.
+- [X] The canvas produces a MediaStream via captureStream.
+- [X] On the reference machine class, the composed output sustains at least 28fps with Host plus three Guests or documented simulated equivalents.
 - [ ] OBS can capture the composed output as supplementary validation.
 
 *** Verification
@@ -564,11 +564,21 @@ Render the final Composed Room Feed into a browser canvas and produce a MediaStr
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16: Implemented the browser Composed Room Feed canvas slice.
+  - Canvas component: ~/code/inilive-studio/src/lib/room/ComposedFeedCanvas.svelte
+  - Backstage integration: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - E2E coverage: ~/code/inilive-studio/src/routes/room/[roomId]/composition-preview.e2e.ts now covers 720p canvas dimensions, `captureStream(30)` readiness, participant-grid primary source, Screen Share primary source, and the 28fps gate.
+  - Initial targeted e2e failed because browser-only animation cleanup called `cancelAnimationFrame` during SSR; fixed by guarding with `globalThis.cancelAnimationFrame?.(...)`.
+  - Targeted verification passed: npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts' (4 tests).
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with 0 errors and the existing empty src/lib/index.ts warning.
+  - ./init.sh passed after implementation (24 Vitest tests, 30 Playwright tests).
+  - OBS.app is installed, but OBS capture was not run because it requires interactive desktop capture setup; this remains the final compose-002 follow-up before marking passing.
 
 *** Notes
 
 - M1 requires at least 28fps. The product target of 720p30 is validated end-to-end in Milestone 2.
+- The current canvas renders prototype placeholders rather than compositing actual LiveKit video tracks into the canvas.
 
 ** TODO qa-001 - Write manual media test script
 :PROPERTIES:

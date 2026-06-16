@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ComposedFeedCanvas from '$lib/room/ComposedFeedCanvas.svelte';
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
 	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
@@ -238,6 +239,11 @@
 		</section>
 
 		<aside class="grid content-start gap-4">
+			<ComposedFeedCanvas
+				activeScreenShare={presence.activeScreenShare}
+				participants={visibleParticipants}
+			/>
+
 			<section
 				class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm"
 				data-testid="broadcast-preview"
