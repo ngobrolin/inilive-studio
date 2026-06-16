@@ -2,6 +2,7 @@
 	import ComposedFeedCanvas from '$lib/room/ComposedFeedCanvas.svelte';
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
+	import type { RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
 
 	let {
@@ -9,11 +10,13 @@
 		chatMessages,
 		activeParticipantId,
 		mediaGrant,
+		broadcast,
 	}: {
 		presence: RoomPresence;
 		chatMessages: RoomChatMessage[];
 		activeParticipantId: string;
 		mediaGrant: MediaJoinGrant | null;
+		broadcast: RoomBroadcastView;
 	} = $props();
 	const visibleParticipants = $derived(
 		presence.participants.filter((participant) => !participant.removed),
@@ -25,6 +28,16 @@
 		presence.participants.find((participant) => participant.id === activeParticipantId),
 	);
 	const activeHost = $derived(activeParticipant?.role === 'host' ? activeParticipant : null);
+	const isBroadcasting = $derived(broadcast.state === 'broadcasting');
+	const broadcastStateLabel = $derived(
+		broadcast.state === 'broadcasting'
+			? 'Broadcasting'
+			: broadcast.state === 'ended'
+				? 'Broadcast ended'
+				: broadcast.state === 'failed'
+					? 'Broadcast failed'
+					: 'Backstage',
+	);
 </script>
 
 <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 text-neutral-950">
@@ -83,6 +96,111 @@
 			</form>
 		{/if}
 	</section>
+
+	<section
+		aria-live="polite"
+		class="mt-6 rounded-md border border-rose-300 bg-rose-50 p-5 text-rose-950 shadow-sm"
+		data-testid="broadcast-state"
+	>
+		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast State</p>
+		<h2 class="mt-2 text-2xl font-semibold">{broadcastStateLabel}</h2>
+		{#if broadcast.state === 'failed' && broadcast.failureMessage}
+			<p class="mt-2 text-sm leading-6">{broadcast.failureMessage}</p>
+		{:else if broadcast.state === 'ended'}
+			<p class="mt-2 text-sm leading-6">
+				The Broadcast ended and this Room returned to Backstage. Start a new Broadcast when you are
+				ready.
+			</p>
+		{:else if broadcast.state === 'backstage'}
+			<p class="mt-2 text-sm leading-6">
+				Nothing is live to YouTube yet. The Host can paste ephemeral stream credentials to start a
+				Broadcast.
+			</p>
+		{:else}
+			<p class="mt-2 text-sm leading-6">
+				The Composed Room Feed is live to the Broadcast Destination. Recording lives on YouTube in
+				v1.
+			</p>
+		{/if}
+	</section>
+
+	{#if activeHost}
+		<section
+			class="mt-6 rounded-md border border-neutral-300 bg-white p-5 shadow-sm"
+			data-testid="broadcast-controls"
+		>
+			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+				Broadcast controls
+			</p>
+			<h2 class="mt-1 text-2xl font-semibold">YouTube stream credentials</h2>
+			<p class="mt-2 text-sm leading-6 text-neutral-600">
+				Paste the RTMP server URL and stream key for this Broadcast attempt only. Credentials stay
+				in memory and are not persisted or logged.
+			</p>
+			<p class="mt-2 text-sm leading-6 text-neutral-600">
+				In v1, the YouTube archive is the recording. Live Studio does not store a separate copy.
+			</p>
+
+			{#if isBroadcasting}
+				<div class="mt-4 flex flex-wrap gap-3">
+					<form method="POST" action="?/broadcast">
+						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+						<button
+							class="rounded-md bg-rose-700 px-4 py-3 text-sm font-semibold text-white"
+							name="broadcastAction"
+							type="submit"
+							value="end"
+						>
+							End Broadcast
+						</button>
+					</form>
+					<form method="POST" action="?/broadcast">
+						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+						<button
+							class="rounded-md border border-rose-300 px-4 py-3 text-sm font-semibold text-rose-950"
+							name="broadcastAction"
+							type="submit"
+							value="simulate-fail"
+						>
+							Simulate bridge failure
+						</button>
+					</form>
+				</div>
+			{:else}
+				<form class="mt-4 grid gap-4" method="POST" action="?/broadcast">
+					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+					<div>
+						<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
+						<input
+							class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+							id="rtmp-server-url"
+							name="rtmpServerUrl"
+							placeholder="rtmp://a.rtmp.youtube.com/live2"
+							type="url"
+						/>
+					</div>
+					<div>
+						<label class="block text-sm font-semibold" for="stream-key">Stream key</label>
+						<input
+							class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+							id="stream-key"
+							name="streamKey"
+							placeholder="Paste the YouTube stream key"
+							type="password"
+						/>
+					</div>
+					<button
+						class="rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
+						name="broadcastAction"
+						type="submit"
+						value="start"
+					>
+						Start Broadcast
+					</button>
+				</form>
+			{/if}
+		</section>
+	{/if}
 
 	{#if activeParticipant?.removed}
 		<section class="my-8 rounded-md border border-rose-300 bg-rose-50 p-6 text-rose-950 shadow-sm">
@@ -255,8 +373,12 @@
 						</p>
 						<h2 class="mt-1 text-2xl font-semibold">Broadcast Preview</h2>
 					</div>
-					<p class="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-950">
-						Not live
+					<p
+						class="rounded-full px-3 py-1 text-xs font-semibold {isBroadcasting
+							? 'bg-rose-100 text-rose-950'
+							: 'bg-amber-100 text-amber-950'}"
+					>
+						{isBroadcasting ? 'Live' : 'Not live'}
 					</p>
 				</div>
 				<div class="mt-4 overflow-hidden rounded-md bg-neutral-950 p-3 text-white">
@@ -308,8 +430,12 @@
 					</div>
 				</div>
 				<p class="mt-3 text-sm leading-6 text-neutral-600">
-					This is the Room-visible Broadcast Preview while Backstage. It is not sent to a
-					Broadcast Destination yet.
+					{#if isBroadcasting}
+						This Broadcast Preview shows what the Audience sees on YouTube while Broadcasting.
+					{:else}
+						This is the Room-visible Broadcast Preview while Backstage. It is not sent to a
+						Broadcast Destination yet.
+					{/if}
 				</p>
 			</section>
 
@@ -328,7 +454,7 @@
 					A fourth Guest sees Room Full instead of entering this Room.
 				</p>
 				<p class="mt-4 rounded-md bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-950">
-					Backstage — not Broadcasting
+					{isBroadcasting ? 'Broadcasting to YouTube' : 'Backstage — not Broadcasting'}
 				</p>
 			</section>
 
