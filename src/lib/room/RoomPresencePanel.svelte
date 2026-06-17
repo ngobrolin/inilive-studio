@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import ComposedFeedCanvas from '$lib/room/ComposedFeedCanvas.svelte';
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
 	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
@@ -30,16 +31,44 @@
 		presence.participants.find((participant) => participant.id === activeParticipantId),
 	);
 	const activeHost = $derived(activeParticipant?.role === 'host' ? activeParticipant : null);
-	const isBroadcasting = $derived(broadcast.state === 'broadcasting');
+	let liveBroadcastOverride = $state<RoomBroadcastView | null>(null);
+	const liveBroadcast = $derived(liveBroadcastOverride ?? broadcast);
+	const isBroadcasting = $derived(liveBroadcast.state === 'broadcasting');
 	const broadcastStateLabel = $derived(
-		broadcast.state === 'broadcasting'
+		liveBroadcast.state === 'broadcasting'
 			? 'Broadcasting'
-			: broadcast.state === 'ended'
+			: liveBroadcast.state === 'ended'
 				? 'Broadcast ended'
-				: broadcast.state === 'failed'
+				: liveBroadcast.state === 'failed'
 					? 'Broadcast failed'
 					: 'Backstage',
 	);
+	const broadcastHealthLabel = $derived(
+		liveBroadcast.health?.status === 'connected'
+			? 'Connected'
+			: liveBroadcast.health?.status === 'degraded'
+				? 'Degraded'
+				: liveBroadcast.health?.status === 'failed'
+					? 'Failed'
+					: liveBroadcast.health?.status === 'ended'
+						? 'Ended'
+						: 'Connecting',
+	);
+	onMount(() => {
+		const refreshBroadcastState = async () => {
+			const response = await fetch(
+				`/room/${encodeURIComponent(presence.roomId)}/broadcast-state?participant=${encodeURIComponent(activeParticipantId)}`,
+			);
+			if (response.ok) {
+				liveBroadcastOverride = (await response.json()) as RoomBroadcastView;
+			}
+		};
+		const interval = window.setInterval(() => {
+			void refreshBroadcastState();
+		}, 2_000);
+
+		return () => window.clearInterval(interval);
+	});
 </script>
 
 <main class="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 text-neutral-950">
@@ -106,14 +135,14 @@
 	>
 		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast State</p>
 		<h2 class="mt-2 text-2xl font-semibold">{broadcastStateLabel}</h2>
-		{#if broadcast.state === 'failed' && broadcast.failureMessage}
-			<p class="mt-2 text-sm leading-6">{broadcast.failureMessage}</p>
-		{:else if broadcast.state === 'ended'}
+		{#if liveBroadcast.state === 'failed' && liveBroadcast.failureMessage}
+			<p class="mt-2 text-sm leading-6">{liveBroadcast.failureMessage}</p>
+		{:else if liveBroadcast.state === 'ended'}
 			<p class="mt-2 text-sm leading-6">
 				The Broadcast ended and this Room returned to Backstage. Start a new Broadcast when you are
 				ready.
 			</p>
-		{:else if broadcast.state === 'backstage'}
+		{:else if liveBroadcast.state === 'backstage'}
 			<p class="mt-2 text-sm leading-6">
 				Nothing is live to YouTube yet. The Host can paste ephemeral stream credentials to start a
 				Broadcast.
@@ -125,6 +154,18 @@
 			</p>
 		{/if}
 	</section>
+
+	{#if activeHost && liveBroadcast.health}
+		<section
+			aria-live="polite"
+			class="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
+			data-testid="broadcast-health"
+		>
+			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast Health</p>
+			<h2 class="mt-2 text-2xl font-semibold">{broadcastHealthLabel}</h2>
+			<p class="mt-2 text-sm leading-6">{liveBroadcast.health.message}</p>
+		</section>
+	{/if}
 
 	{#if activeHost}
 		<section
@@ -361,7 +402,7 @@
 		<aside class="grid content-start gap-4">
 			<ComposedFeedCanvas
 				activeScreenShare={presence.activeScreenShare}
-				{broadcast}
+				broadcast={liveBroadcast}
 				{hostWhipIngestGrant}
 				participants={visibleParticipants}
 			/>

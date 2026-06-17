@@ -32,6 +32,8 @@ export async function startBridgeSession(input: {
   roomId: string;
   rtmpServerUrl: string;
   streamKey: string;
+  callbackUrl: string;
+  callbackBearerToken: string;
 }): Promise<void> {
   if (!config.enabled) {
     return;
@@ -53,9 +55,12 @@ export async function stopBridgeSession(input: { roomId: string }): Promise<void
     return;
   }
 
-  const response = await fetch(`${config.controlBaseUrl}/sessions/${encodeURIComponent(input.roomId)}`, {
-    method: "DELETE",
-  });
+  const response = await fetch(
+    `${config.controlBaseUrl}/sessions/${encodeURIComponent(input.roomId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 
   if (!response.ok && response.status !== 404) {
     throw new Error(`Bridge session stop failed with status ${response.status}`);

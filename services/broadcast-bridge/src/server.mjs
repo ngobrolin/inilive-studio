@@ -1,12 +1,13 @@
 import { spawn } from "node:child_process";
 import { createServer } from "node:http";
+import { sendBroadcastHealthCallback } from "./callbacks.mjs";
 import { buildGstLaunchArgs, buildRtmpSinkLocation, redactRtmpSinkLocation } from "./pipeline.mjs";
 
 const CONTROL_PORT = Number(process.env.BRIDGE_CONTROL_PORT ?? 8787);
 const WHIP_PORT = Number(process.env.BRIDGE_WHIP_PORT ?? 8788);
 const WHIP_SESSION_BASE_PORT = Number(process.env.BRIDGE_WHIP_SESSION_BASE_PORT ?? 8790);
 
-/** @type {Map<string, { whipPort: number, process: import('node:child_process').ChildProcessWithoutNullStreams | null, rtmpLocation: string }>} */
+/** @type {Map<string, { roomId: string, whipPort: number, process: import('node:child_process').ChildProcessWithoutNullStreams | null, rtmpLocation: string, callbackUrl: string, callbackBearerToken: string, terminalReported: boolean }>} */
 const sessions = new Map();
 let nextSessionPortOffset = 0;
 
@@ -30,6 +31,26 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
+function reportBroadcastHealth(session, status, message) {
+  sendBroadcastHealthCallback({
+    callbackUrl: session.callbackUrl,
+    callbackBearerToken: session.callbackBearerToken,
+    status,
+    message,
+  }).catch((error) => {
+    process.stderr.write(`[bridge:${session.whipPort}] health callback failed: ${error.message}\n`);
+  });
+}
+
+function reportTerminalBroadcastHealth(session, status, message) {
+  if (session.terminalReported) {
+    return;
+  }
+
+  session.terminalReported = true;
+  reportBroadcastHealth(session, status, message);
+}
+
 async function readGStreamerVersion() {
   return new Promise((resolve) => {
     const child = spawn("gst-launch-1.0", ["--version"]);
@@ -46,6 +67,11 @@ async function readGStreamerVersion() {
 }
 
 function startPipeline(session) {
+  reportBroadcastHealth(
+    session,
+    "connecting",
+    "Broadcast Bridge is connecting to the Broadcast Destination.",
+  );
   const gstArgs = buildGstLaunchArgs({
     whipPort: session.whipPort,
     rtmpLocation: session.rtmpLocation,
@@ -61,23 +87,40 @@ function startPipeline(session) {
       `[bridge:${session.whipPort}] failed to start pipeline: ${error.message}\n`,
     );
     session.process = null;
+    reportTerminalBroadcastHealth(session, "failed", "Broadcast Bridge failed to start.");
   });
   child.stdout.on("data", (chunk) => {
     process.stdout.write(`[bridge:${session.whipPort}] ${chunk}`);
   });
   child.stderr.on("data", (chunk) => {
-    const text = chunk.toString().replaceAll(session.rtmpLocation, redactRtmpSinkLocation(session.rtmpLocation));
+    const text = chunk
+      .toString()
+      .replaceAll(session.rtmpLocation, redactRtmpSinkLocation(session.rtmpLocation));
     process.stderr.write(`[bridge:${session.whipPort}] ${text}`);
+    if (/warning/i.test(text)) {
+      reportBroadcastHealth(session, "degraded", "Broadcast Bridge reports degraded output.");
+    }
   });
   child.on("exit", (code) => {
-    process.stderr.write(`[bridge:${session.whipPort}] pipeline exited with code ${code ?? "unknown"}\n`);
+    process.stderr.write(
+      `[bridge:${session.whipPort}] pipeline exited with code ${code ?? "unknown"}\n`,
+    );
     session.process = null;
+    if (!session.terminalReported) {
+      reportTerminalBroadcastHealth(
+        session,
+        code === 0 ? "ended" : "failed",
+        code === 0 ? "Broadcast Bridge ended the Broadcast." : "RTMP output disconnected.",
+      );
+    }
   });
 
   session.process = child;
 }
 
 function stopPipeline(session) {
+  reportTerminalBroadcastHealth(session, "ended", "Broadcast Bridge ended the Broadcast.");
+
   if (!session.process || session.process.killed) {
     return;
   }
@@ -114,6 +157,13 @@ async function proxyWhipRequest(roomId, request, response) {
     headers,
     body,
   });
+  if (bridgeResponse.ok) {
+    reportBroadcastHealth(
+      session,
+      "connected",
+      "Broadcast Bridge is connected to the Broadcast Destination.",
+    );
+  }
 
   response.writeHead(bridgeResponse.status, Object.fromEntries(bridgeResponse.headers.entries()));
   response.end(Buffer.from(await bridgeResponse.arrayBuffer()));
@@ -138,9 +188,14 @@ const controlServer = createServer(async (request, response) => {
       const roomId = String(payload.roomId ?? "").trim();
       const rtmpServerUrl = String(payload.rtmpServerUrl ?? "").trim();
       const streamKey = String(payload.streamKey ?? "").trim();
+      const callbackUrl = String(payload.callbackUrl ?? "").trim();
+      const callbackBearerToken = String(payload.callbackBearerToken ?? "").trim();
 
-      if (!roomId || !rtmpServerUrl || !streamKey) {
-        sendJson(response, 400, { error: "roomId, rtmpServerUrl, and streamKey are required." });
+      if (!roomId || !rtmpServerUrl || !streamKey || !callbackUrl || !callbackBearerToken) {
+        sendJson(response, 400, {
+          error:
+            "roomId, rtmpServerUrl, streamKey, callbackUrl, and callbackBearerToken are required.",
+        });
         return;
       }
 
@@ -152,7 +207,15 @@ const controlServer = createServer(async (request, response) => {
       const whipPort = WHIP_SESSION_BASE_PORT + nextSessionPortOffset;
       nextSessionPortOffset += 1;
       const rtmpLocation = buildRtmpSinkLocation({ rtmpServerUrl, streamKey });
-      const session = { whipPort, process: null, rtmpLocation };
+      const session = {
+        roomId,
+        whipPort,
+        process: null,
+        rtmpLocation,
+        callbackUrl,
+        callbackBearerToken,
+        terminalReported: false,
+      };
       sessions.set(roomId, session);
       startPipeline(session);
 
@@ -201,7 +264,9 @@ const whipServer = createServer(async (request, response) => {
 });
 
 controlServer.listen(CONTROL_PORT, "127.0.0.1", () => {
-  process.stdout.write(`Broadcast bridge control API listening on http://127.0.0.1:${CONTROL_PORT}\n`);
+  process.stdout.write(
+    `Broadcast bridge control API listening on http://127.0.0.1:${CONTROL_PORT}\n`,
+  );
 });
 
 whipServer.listen(WHIP_PORT, "127.0.0.1", () => {

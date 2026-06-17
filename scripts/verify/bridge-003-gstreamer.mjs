@@ -6,6 +6,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { evaluateBridgeVerification } from "./bridge-003-gstreamer-lib.mjs";
@@ -54,7 +55,8 @@ function commandExists(command) {
 }
 
 function parseGStreamerVersion(output) {
-  const match = output.match(/version\s+(\d+)\.(\d+)/i) ?? output.match(/(\d+)\.(\d+)(?:\.\d+)?\s*$/);
+  const match =
+    output.match(/version\s+(\d+)\.(\d+)/i) ?? output.match(/(\d+)\.(\d+)(?:\.\d+)?\s*$/);
   const major = Number(match?.[1] ?? 0);
   const minor = Number(match?.[2] ?? 0);
   return {
@@ -111,6 +113,26 @@ async function verifyContainerElements(podmanCommand) {
 }
 
 async function verifyControlApi() {
+  const callbackEvents = [];
+  const callbackServer = createServer((request, response) => {
+    const chunks = [];
+    request.on("data", (chunk) => chunks.push(chunk));
+    request.on("end", () => {
+      const authorization = request.headers.authorization;
+      const body = Buffer.concat(chunks).toString("utf8");
+      if (authorization !== "Bearer bridge-callback-secret") {
+        response.writeHead(401);
+        response.end();
+        return;
+      }
+
+      callbackEvents.push(JSON.parse(body || "{}"));
+      response.writeHead(202);
+      response.end();
+    });
+  });
+  await new Promise((resolve) => callbackServer.listen(9879, "127.0.0.1", resolve));
+
   const bridgeProcess = spawn("node", ["src/server.mjs"], {
     cwd: bridgeDir,
     env: {
@@ -155,6 +177,8 @@ async function verifyControlApi() {
         roomId: "bridge-003",
         rtmpServerUrl: "rtmp://test.example/live",
         streamKey: "secret-stream-key",
+        callbackUrl: "http://127.0.0.1:9879/bridge/bridge-003/events",
+        callbackBearerToken: "bridge-callback-secret",
       }),
     });
 
@@ -170,6 +194,16 @@ async function verifyControlApi() {
       throw new Error("Bridge session response leaked stream key");
     }
 
+    for (let attempt = 0; attempt < 20 && callbackEvents.length === 0; attempt += 1) {
+      await sleep(100);
+    }
+    if (callbackEvents.length === 0) {
+      throw new Error("Bridge did not deliver an authenticated health callback");
+    }
+    if (JSON.stringify(callbackEvents).includes("secret-stream-key")) {
+      throw new Error("Bridge health callback leaked stream key");
+    }
+
     const deleteResponse = await fetch("http://127.0.0.1:9877/sessions/bridge-003", {
       method: "DELETE",
     });
@@ -178,6 +212,7 @@ async function verifyControlApi() {
     }
   } finally {
     bridgeProcess.kill("SIGTERM");
+    await new Promise((resolve) => callbackServer.close(resolve));
     await sleep(200);
   }
 }

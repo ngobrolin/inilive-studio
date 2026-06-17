@@ -806,7 +806,7 @@ Build and validate the server-side Broadcast Bridge pipeline using GStreamer in 
 :TYPE: AFK
 :PRIORITY: 15
 :AREA: broadcast-health
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: bridge-003
 :END:
 
@@ -816,12 +816,12 @@ Have the bridge report Broadcast Health and terminal states back to the SvelteKi
 
 *** Acceptance criteria
 
-- [ ] Bridge reports Failed and Ended state to SvelteKit within 10 seconds of RTMP disconnect.
-- [ ] Wrong credentials produce a visible Host failure state within 30 seconds.
-- [ ] Host can distinguish connected, degraded, failed, and ended health states.
-- [ ] Guests do not see detailed Broadcast Health metrics.
-- [ ] Bridge event payloads are authenticated or signed according to the current milestone's chosen mechanism.
-- [ ] Stream keys and tokens are redacted from logs and UI.
+- [X] Bridge reports Failed and Ended state to SvelteKit within 10 seconds of RTMP disconnect.
+- [X] Wrong credentials produce a visible Host failure state within 30 seconds.
+- [X] Host can distinguish connected, degraded, failed, and ended health states.
+- [X] Guests do not see detailed Broadcast Health metrics.
+- [X] Bridge event payloads are authenticated or signed according to the current milestone's chosen mechanism.
+- [X] Stream keys and tokens are redacted from logs and UI.
 
 *** Verification
 
@@ -832,7 +832,26 @@ Have the bridge report Broadcast Health and terminal states back to the SvelteKi
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17 18:05 WIB: Implemented authenticated Broadcast Health callbacks from the Broadcast Bridge to SvelteKit.
+  - SvelteKit callback endpoint: ~/code/inilive-studio/src/routes/bridge/[roomId]/events/+server.ts
+  - Host/Guest polling endpoint: ~/code/inilive-studio/src/routes/room/[roomId]/broadcast-state/+server.ts
+  - In-memory Broadcast Health state and callback grants: ~/code/inilive-studio/src/lib/server/broadcast-state.ts
+  - Host-visible Broadcast Health panel and 2-second polling: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte
+  - Bridge callback delivery helper: ~/code/inilive-studio/services/broadcast-bridge/src/callbacks.mjs
+  - Bridge server events: connecting on session start, connected after successful WHIP proxy response, degraded on warning output, failed on nonzero pipeline exit, and ended on manual stop or zero exit.
+  - Callback bearer tokens are per Broadcast attempt and are not exposed in Host or Guest page data.
+  - Guest Broadcast State polling strips detailed Broadcast Health.
+  - Callback and verifier payloads use generic messages and redacted RTMP locations; stream keys are not included in callback bodies or UI.
+- Verification:
+  - ./init.sh passed after implementation.
+  - npm run check passed with 0 errors and the existing missing @types/node warning.
+  - npm run lint passed with the existing empty src/lib/index.ts warning.
+  - npx vitest run src/lib/server/broadcast-state.spec.ts src/lib/server/bridge-client.spec.ts services/broadcast-bridge/src/callbacks.spec.mjs 'src/routes/bridge/[roomId]/events/server.spec.ts' 'src/routes/room/[roomId]/broadcast-state/server.spec.ts' passed.
+  - npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts' --workers=1 passed with 6 tests, including callback polling visibility.
+  - node scripts/verify/bridge-003-gstreamer.mjs passed with container GStreamer 1.24, required bridge elements, and authenticated health callback receipt.
+  - Final ./init.sh passed after tracker updates:
+    - Vitest: 16 files passed, 49 tests passed.
+    - Playwright: 37 tests passed.
 
 *** Notes
 

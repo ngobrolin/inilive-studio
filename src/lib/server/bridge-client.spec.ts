@@ -22,6 +22,8 @@ describe("bridge client", () => {
       roomId: "demo",
       rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
       streamKey: "secret-stream-key",
+      callbackUrl: "http://localhost/bridge/demo/events",
+      callbackBearerToken: "bridge_secret",
     });
 
     expect(fetchMock).toHaveBeenCalledWith(
@@ -33,6 +35,8 @@ describe("bridge client", () => {
           roomId: "demo",
           rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
           streamKey: "secret-stream-key",
+          callbackUrl: "http://localhost/bridge/demo/events",
+          callbackBearerToken: "bridge_secret",
         }),
       }),
     );

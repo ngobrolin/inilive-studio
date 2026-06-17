@@ -4,9 +4,11 @@ import {
   clearBroadcastState,
   endRoomBroadcast,
   failRoomBroadcast,
+  getRoomBroadcastCallbackGrant,
   getRoomBroadcastCredentials,
   getRoomBroadcastIngestGrant,
   getRoomBroadcastView,
+  recordBridgeBroadcastHealth,
   startRoomBroadcast,
 } from "./broadcast-state";
 
@@ -50,6 +52,21 @@ describe("broadcast state", () => {
     expect(ingestGrant?.whipUrl).toBe("/whip/demo");
     expect(ingestGrant?.bearerToken).toMatch(/^whip_/);
     expect(ingestGrant?.expiresAt).toBeGreaterThan(Date.now());
+    expect(getRoomBroadcastView("demo")).not.toHaveProperty("bearerToken");
+  });
+
+  it("issues a callback grant without exposing callback tokens in the room view", () => {
+    startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+    });
+    const callbackGrant = getRoomBroadcastCallbackGrant("demo");
+
+    expect(callbackGrant?.callbackUrl).toBe("/bridge/demo/events");
+    expect(callbackGrant?.bearerToken).toMatch(/^bridge_/);
+    expect(callbackGrant?.expiresAt).toBeGreaterThan(Date.now());
     expect(getRoomBroadcastView("demo")).not.toHaveProperty("bearerToken");
   });
 
@@ -190,5 +207,72 @@ describe("broadcast state", () => {
 
     expect(retry.error).toBeNull();
     expect(getRoomBroadcastView("demo").state).toBe("broadcasting");
+  });
+
+  it("records bridge health transitions and hides detailed health from Guest views", () => {
+    startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+    });
+    const callbackGrant = getRoomBroadcastCallbackGrant("demo");
+
+    const connected = recordBridgeBroadcastHealth({
+      roomId: "demo",
+      authorizationHeader: `Bearer ${callbackGrant?.bearerToken}`,
+      status: "connected",
+      message: "Broadcast Bridge is connected.",
+    });
+    const degraded = recordBridgeBroadcastHealth({
+      roomId: "demo",
+      authorizationHeader: `Bearer ${callbackGrant?.bearerToken}`,
+      status: "degraded",
+      message: "RTMP output is degraded.",
+    });
+
+    expect(connected.error).toBeNull();
+    expect(degraded.error).toBeNull();
+    expect(getRoomBroadcastView("demo")).toMatchObject({
+      state: "broadcasting",
+      health: {
+        status: "degraded",
+        message: "RTMP output is degraded.",
+      },
+    });
+    expect(getRoomBroadcastView("demo", { includeHealth: false })).toMatchObject({
+      state: "broadcasting",
+      health: null,
+    });
+    expect(getRoomBroadcastCredentials("demo")).not.toBeNull();
+  });
+
+  it("accepts bridge terminal ended callbacks and clears active secrets", () => {
+    startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+    });
+    const callbackGrant = getRoomBroadcastCallbackGrant("demo");
+
+    const result = recordBridgeBroadcastHealth({
+      roomId: "demo",
+      authorizationHeader: `Bearer ${callbackGrant?.bearerToken}`,
+      status: "ended",
+      message: "Broadcast Bridge ended the Broadcast.",
+    });
+
+    expect(result.error).toBeNull();
+    expect(getRoomBroadcastView("demo")).toMatchObject({
+      state: "ended",
+      health: {
+        status: "ended",
+        message: "Broadcast Bridge ended the Broadcast.",
+      },
+    });
+    expect(getRoomBroadcastCredentials("demo")).toBeNull();
+    expect(getRoomBroadcastIngestGrant("demo")).toBeNull();
+    expect(getRoomBroadcastCallbackGrant("demo")).toBeNull();
   });
 });

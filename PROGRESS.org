@@ -5,9 +5,10 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: bridge-004 "Add Host-visible Broadcast Health callbacks" in PLAN.org (Milestone 2, not_started, unblocked by bridge-003 passing).
+- Current highest-priority unfinished AFK feature: none in Milestone 2 until bridge-005 HITL is completed.
 - bridge-003 "Spike GStreamer WHIP-to-RTMP bridge" is passing. The pinned image builds, container GStreamer 1.24 and required WHIP-to-RTMP elements are verified, the control API lifecycle passes, and the Host browser posts the Composed Room Feed SDP to authenticated WHIP ingest.
-- Current HITL follow-up: none for Milestone 1; media-001-live passed with evidence in docs/spikes/media-001-managed-sfu-choice.md.
+- bridge-004 "Add Host-visible Broadcast Health callbacks" is passing. The bridge sends authenticated Broadcast Health callbacks, SvelteKit records connecting/connected/degraded/failed/ended health, Hosts see the health panel through polling, Guests only see Broadcast State, and callback/log/UI payloads avoid stream-key exposure.
+- Current HITL follow-up: bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials.
 
 * Session Log
 
@@ -1267,7 +1268,7 @@ Start compose-002: add the browser Composed Room Feed canvas, captureStream outp
 
 *** Commits
 
-- None yet this session.
+- Add bridge-004 broadcast health callbacks.
 
 *** Files or artifacts updated
 
@@ -1720,3 +1721,95 @@ Continue bridge-003 with TDD and complete the AFK GStreamer WHIP-to-RTMP bridge 
 *** Next best step
 
 Start bridge-004 with TDD: add Host-visible Broadcast Health callbacks from the bridge to SvelteKit, including failed/ended timing and redacted event payloads.
+
+** Session 027
+:PROPERTIES:
+:SESSION_ID: 027
+:DATE: 2026-06-17
+:END:
+
+*** Goal
+
+Continue with TDD and complete bridge-004: Host-visible Broadcast Health callbacks from the Broadcast Bridge to SvelteKit.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Loaded the TDD workflow and followed PLAN.org/PROGRESS.org routing to start bridge-004 after bridge-003 was already passing.
+- Ran ./init.sh baseline before code changes; baseline passed.
+- Added an authenticated bridge callback endpoint at src/routes/bridge/[roomId]/events/+server.ts.
+- Added per-Broadcast callback grants and Broadcast Health state in src/lib/server/broadcast-state.ts.
+- Passed callback URL and bearer token to the bridge control API when the Host starts a Broadcast.
+- Added bridge-side callback delivery in services/broadcast-bridge/src/callbacks.mjs and wired services/broadcast-bridge/src/server.mjs to report connecting, connected, degraded, failed, and ended events.
+- Added a Host/Guest Broadcast State polling endpoint at src/routes/room/[roomId]/broadcast-state/+server.ts.
+- Updated src/lib/room/RoomPresencePanel.svelte so Hosts see Broadcast Health through 2-second polling while Guests continue to see only Broadcast State.
+- Updated scripts/verify/bridge-003-gstreamer.mjs so the bridge verifier proves authenticated callback receipt and checks callback payload redaction.
+- Marked bridge-004 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline: passed before bridge-004 changes.
+  - Vitest: 42 tests passed.
+  - Playwright: 36 tests passed.
+- npx vitest run src/lib/server/broadcast-state.spec.ts src/lib/server/bridge-client.spec.ts services/broadcast-bridge/src/callbacks.spec.mjs 'src/routes/bridge/[roomId]/events/server.spec.ts' 'src/routes/room/[roomId]/broadcast-state/server.spec.ts': passed.
+  - Vitest: 17 tests passed across 5 files.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- npm run lint: passed with the existing empty src/lib/index.ts warning.
+- npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts' --workers=1: passed.
+  - Playwright: 6 tests passed.
+- node scripts/verify/bridge-003-gstreamer.mjs: passed.
+  - local gstreamer not installed.
+  - container gstreamer 1.24.
+  - container elements: whipserversrc, x264enc, avenc_aac, flvmux, rtmpsink.
+  - control api session lifecycle passed with authenticated health callback receipt.
+- ./init.sh final: passed after code and tracker updates.
+  - Vitest: 16 files passed, 49 tests passed.
+  - Playwright: 37 tests passed.
+  - npm audit still reported 3 low severity vulnerabilities through @sveltejs/kit.
+
+*** Evidence captured
+
+- Callback endpoint: src/routes/bridge/[roomId]/events/+server.ts
+- Host/Guest polling endpoint: src/routes/room/[roomId]/broadcast-state/+server.ts
+- Broadcast Health state and callback grants: src/lib/server/broadcast-state.ts
+- Host health UI and polling: src/lib/room/RoomPresencePanel.svelte
+- Bridge callback helper and server wiring: services/broadcast-bridge/src/callbacks.mjs and services/broadcast-bridge/src/server.mjs
+- Browser coverage: src/routes/room/[roomId]/broadcast.e2e.ts
+- Verifier coverage: scripts/verify/bridge-003-gstreamer.mjs
+- Plan evidence: PLAN.org bridge-004 Evidence section
+
+*** Commits
+
+- None yet this session.
+
+*** Files or artifacts updated
+
+- PLAN.org
+- PROGRESS.org
+- scripts/verify/bridge-003-gstreamer.mjs
+- services/broadcast-bridge/src/callbacks.mjs
+- services/broadcast-bridge/src/callbacks.spec.mjs
+- services/broadcast-bridge/src/server.mjs
+- src/lib/room/RoomPresencePanel.svelte
+- src/lib/server/bridge-client.ts
+- src/lib/server/bridge-client.spec.ts
+- src/lib/server/broadcast-state.ts
+- src/lib/server/broadcast-state.spec.ts
+- src/routes/bridge/[roomId]/events/+server.ts
+- src/routes/bridge/[roomId]/events/server.spec.ts
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/broadcast-state/+server.ts
+- src/routes/room/[roomId]/broadcast-state/server.spec.ts
+- src/routes/room/[roomId]/broadcast.e2e.ts
+- vite.config.ts
+
+*** Known risk or unresolved issue
+
+- Full browser WHIP to real YouTube reception remains bridge-005 HITL because it requires a live-enabled YouTube account and real stream credentials.
+- npm run check still has the existing missing @types/node warning.
+- npm run lint still has the existing empty src/lib/index.ts warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Start bridge-005 when HITL credentials are available: verify YouTube 720p30 end-to-end broadcast with a live-enabled YouTube account and real stream credentials.

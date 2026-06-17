@@ -1,12 +1,10 @@
 import { createMediaJoinGrant } from "$lib/server/media-join";
 import { ensureBridgeClientConfigured } from "$lib/server/bridge-env";
-import {
-  startBridgeSession,
-  stopBridgeSession,
-} from "$lib/server/bridge-client";
+import { startBridgeSession, stopBridgeSession } from "$lib/server/bridge-client";
 import {
   endRoomBroadcast,
   failRoomBroadcast,
+  getRoomBroadcastCallbackGrant,
   getRoomBroadcastIngestGrant,
   getRoomBroadcastView,
   startRoomBroadcast,
@@ -43,7 +41,9 @@ export const load: PageServerLoad = async ({ params, url }) => {
     chatMessages: getRoomChatMessages(params.roomId),
     activeParticipantId,
     mediaGrant,
-    broadcast: getRoomBroadcastView(params.roomId),
+    broadcast: getRoomBroadcastView(params.roomId, {
+      includeHealth: activeParticipant?.role === "host",
+    }),
     hostWhipIngestGrant:
       activeParticipant?.role === "host" ? getRoomBroadcastIngestGrant(params.roomId) : null,
   };
@@ -117,7 +117,7 @@ export const actions: Actions = {
 
     redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
   },
-  broadcast: async ({ params, request }) => {
+  broadcast: async ({ params, request, url }) => {
     ensureBridgeClientConfigured();
     const formData = await request.formData();
     const hostParticipantId = String(formData.get("hostParticipantId") ?? "");
@@ -138,10 +138,17 @@ export const actions: Actions = {
       }
 
       try {
+        const callbackGrant = getRoomBroadcastCallbackGrant(params.roomId);
+        if (!callbackGrant) {
+          throw new Error("Broadcast Bridge callback grant was not created.");
+        }
+
         await startBridgeSession({
           roomId: params.roomId,
           rtmpServerUrl,
           streamKey,
+          callbackUrl: new URL(callbackGrant.callbackUrl, url.origin).toString(),
+          callbackBearerToken: callbackGrant.bearerToken,
         });
       } catch (error) {
         failRoomBroadcast({
