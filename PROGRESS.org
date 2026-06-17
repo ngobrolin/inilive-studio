@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: health-001 persist Broadcast Health events.
+- Current highest-priority unfinished AFK feature: shell-001 wire Room prototype into authenticated product shell.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
@@ -2072,4 +2072,55 @@ Continue with TDD and complete broadcasts-001: product-backed Broadcast records 
 
 *** Next best step
 
-Start health-001 with TDD: persist Broadcast Health events in Postgres.
+Start shell-001 with TDD: wire the Room prototype into the authenticated product shell.
+
+* 2026-06-17 health-001 persist Broadcast Health events
+
+*** Goal
+
+Continue with TDD and complete health-001: persist Broadcast Health events in Postgres with HMAC-SHA256 signed bridge callbacks.
+
+*** Completed
+
+- Ran ./init.sh baseline before health work; baseline passed.
+- TDD cycle 1: unit tests for HMAC-SHA256 sign and verify helpers.
+- TDD cycle 2: unit tests for Broadcast Health event recording with payload redaction.
+- TDD cycle 3: bridge callback endpoint tests for HMAC rejection, acceptance, and product Broadcast persistence.
+- Added health event service, in-memory and Postgres stores, and runtime store selection.
+- Updated SvelteKit bridge callback endpoint to verify `X-Bridge-Signature` before bearer auth and persist events for product Broadcasts.
+- Updated Broadcast Bridge callbacks to sign payloads with `BRIDGE_CALLBACK_HMAC_SECRET`.
+- Updated bridge verification script to require HMAC-signed callbacks.
+- Marked health-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before health-001: passed.
+  - Vitest: 76 passed, 2 skipped.
+  - Playwright: 50 passed.
+- Targeted verification while developing:
+  - `npm run test:unit -- --run src/lib/server/health/ src/routes/bridge/[roomId]/events/server.spec.ts services/broadcast-bridge/src/callbacks.spec.mjs`: passed (9 tests, 1 skipped without DATABASE_URL).
+  - `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run test:unit -- --run src/lib/server/health/postgres-store.integration.spec.ts`: passed (1 test).
+  - `npm run check`: passed with 0 errors and 0 warnings.
+- Final ./init.sh: passed.
+  - Vitest: 83 passed, 3 skipped.
+  - Playwright: 50 passed.
+
+*** Evidence captured
+
+- HMAC helpers: src/lib/server/health/signatures.ts and src/lib/server/health/callback-secret.ts
+- Health event service and stores: src/lib/server/health/
+- Bridge callback endpoint: src/routes/bridge/[roomId]/events/+server.ts
+- Bridge signing: services/broadcast-bridge/src/callbacks.mjs
+- Unit and route specs: src/lib/server/health/*.spec.ts, src/routes/bridge/[roomId]/events/server.spec.ts, services/broadcast-bridge/src/callbacks.spec.mjs
+- Postgres integration: src/lib/server/health/postgres-store.integration.spec.ts
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Hermetic e2e uses in-memory health event storage when DATABASE_URL is unset; Postgres persistence was verified with DATABASE_URL integration test.
+- Production deployments must set `BRIDGE_CALLBACK_HMAC_SECRET` consistently on SvelteKit and the Broadcast Bridge process.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start shell-001 with TDD: wire the Room prototype into the authenticated product shell.

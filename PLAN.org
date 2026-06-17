@@ -1155,7 +1155,7 @@ Persist one Broadcast record per live run of a reusable Room. Add the product Br
 :TYPE: AFK
 :PRIORITY: 22
 :AREA: broadcast-health
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: broadcasts-001
 :END:
 
@@ -1165,12 +1165,12 @@ Persist Broadcast Health events reported by the Broadcast Bridge and expose Host
 
 *** Acceptance criteria
 
-- [ ] Bridge reports health events to SvelteKit with HMAC-SHA256 signed payloads.
-- [ ] SvelteKit verifies bridge event signatures.
-- [ ] Broadcast Health events are persisted in Postgres.
-- [ ] Host sees connected, degraded, failed, and ended health details.
-- [ ] Guests see Broadcast State only, not detailed Broadcast Health metrics.
-- [ ] Secrets are redacted from structured logs.
+- [X] Bridge reports health events to SvelteKit with HMAC-SHA256 signed payloads.
+- [X] SvelteKit verifies bridge event signatures.
+- [X] Broadcast Health events are persisted in Postgres.
+- [X] Host sees connected, degraded, failed, and ended health details.
+- [X] Guests see Broadcast State only, not detailed Broadcast Health metrics.
+- [X] Secrets are redacted from structured logs.
 
 *** Verification
 
@@ -1182,7 +1182,14 @@ Persist Broadcast Health events reported by the Broadcast Bridge and expose Host
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented durable Broadcast Health events with TDD vertical slices.
+  - HMAC helpers: ~/code/inilive-studio/src/lib/server/health/signatures.ts and ~/code/inilive-studio/src/lib/server/health/callback-secret.ts
+  - Health event service and stores: ~/code/inilive-studio/src/lib/server/health/health.ts, ~/code/inilive-studio/src/lib/server/health/store.ts, ~/code/inilive-studio/src/lib/server/health/postgres-store.ts, and ~/code/inilive-studio/src/lib/server/health/runtime.ts
+  - Bridge callback verification and persistence: ~/code/inilive-studio/src/routes/bridge/[roomId]/events/+server.ts
+  - Bridge HMAC signing: ~/code/inilive-studio/services/broadcast-bridge/src/callbacks.mjs
+  - Unit coverage: ~/code/inilive-studio/src/lib/server/health/signatures.spec.ts, ~/code/inilive-studio/src/lib/server/health/health.spec.ts, ~/code/inilive-studio/src/routes/bridge/[roomId]/events/server.spec.ts, and ~/code/inilive-studio/services/broadcast-bridge/src/callbacks.spec.mjs
+  - Postgres integration: ~/code/inilive-studio/src/lib/server/health/postgres-store.integration.spec.ts
+  - Verification passed: ./init.sh with 83 Vitest tests passing, 3 skipped Postgres integration suites without DATABASE_URL, and 50 Playwright tests passing; `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run test:unit -- --run src/lib/server/health/postgres-store.integration.spec.ts`; npm run check with 0 errors.
 
 *** Notes
 
