@@ -13,6 +13,7 @@
 	broadcast={data.broadcast}
 	chatMessages={data.chatMessages}
 	hostWhipIngestGrant={data.hostWhipIngestGrant}
+	isProductRoom={data.isProductRoom}
 	mediaGrant={data.mediaGrant}
 	presence={data.presence}
 />
