@@ -6,6 +6,7 @@
  */
 
 import { spawn } from "node:child_process";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServer } from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -113,6 +114,7 @@ async function verifyContainerElements(podmanCommand) {
 }
 
 async function verifyControlApi() {
+  const callbackHmacSecret = "bridge-003-verification-hmac-secret";
   const callbackEvents = [];
   const callbackServer = createServer((request, response) => {
     const chunks = [];
@@ -120,7 +122,22 @@ async function verifyControlApi() {
     request.on("end", () => {
       const authorization = request.headers.authorization;
       const body = Buffer.concat(chunks).toString("utf8");
+      const signatureHeader = request.headers["x-bridge-signature"];
+      const expectedSignature = `sha256=${createHmac("sha256", callbackHmacSecret)
+        .update(body)
+        .digest("hex")}`;
+
       if (authorization !== "Bearer bridge-callback-secret") {
+        response.writeHead(401);
+        response.end();
+        return;
+      }
+
+      if (
+        typeof signatureHeader !== "string" ||
+        signatureHeader.length !== expectedSignature.length ||
+        !timingSafeEqual(Buffer.from(signatureHeader), Buffer.from(expectedSignature))
+      ) {
         response.writeHead(401);
         response.end();
         return;
@@ -140,6 +157,7 @@ async function verifyControlApi() {
       BRIDGE_CONTROL_PORT: "9877",
       BRIDGE_WHIP_PORT: "9878",
       BRIDGE_WHIP_SESSION_BASE_PORT: "9890",
+      BRIDGE_CALLBACK_HMAC_SECRET: callbackHmacSecret,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
