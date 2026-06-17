@@ -8,6 +8,7 @@ describe("database migrations", () => {
     expect(migrations.map((migration) => migration.name)).toEqual([
       "0001_product_shell_foundation.sql",
       "0002_magic_link_tokens.sql",
+      "0003_broadcast_countdown.sql",
     ]);
     expect(migrations[0]?.sql).toContain("CREATE TABLE host_accounts");
     expect(migrations[0]?.sql).toContain("CREATE TABLE host_sessions");

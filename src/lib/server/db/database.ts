@@ -49,6 +49,7 @@ export type Database = {
     started_at: Date | null;
     ended_at: Date | null;
     created_at: Generated<Date>;
+    countdown_ends_at: Date | null;
   };
   broadcast_health_events: {
     id: Generated<string>;
