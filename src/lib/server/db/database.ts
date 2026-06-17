@@ -1,50 +1,62 @@
-import { Kysely, PostgresDialect } from "kysely";
+import { Kysely, PostgresDialect, type Generated } from "kysely";
 import pg from "pg";
 
 export type Database = {
+  schema_migrations: {
+    name: string;
+    applied_at: Generated<Date>;
+  };
   host_accounts: {
-    id: string;
+    id: Generated<string>;
     email: string;
-    created_at: Date;
+    created_at: Generated<Date>;
   };
   host_sessions: {
-    id: string;
+    id: Generated<string>;
     host_account_id: string;
     token_hash: string;
     expires_at: Date;
-    last_seen_at: Date;
-    created_at: Date;
+    last_seen_at: Generated<Date>;
+    created_at: Generated<Date>;
+  };
+  magic_link_tokens: {
+    id: Generated<string>;
+    host_account_id: string;
+    token_hash: string;
+    expires_at: Date;
+    used_at: Date | null;
+    created_at: Generated<Date>;
   };
   rooms: {
-    id: string;
+    id: Generated<string>;
     host_account_id: string;
     title: string;
-    created_at: Date;
-    updated_at: Date;
+    created_at: Generated<Date>;
+    updated_at: Generated<Date>;
   };
   guest_invites: {
-    id: string;
+    id: Generated<string>;
     room_id: string;
     token_hash: string;
     revoked_at: Date | null;
-    created_at: Date;
+    created_at: Generated<Date>;
   };
   broadcasts: {
-    id: string;
+    id: Generated<string>;
     room_id: string;
     state: "countdown" | "broadcasting" | "ended" | "failed";
     failure_message: string | null;
     started_at: Date | null;
     ended_at: Date | null;
-    created_at: Date;
+    created_at: Generated<Date>;
   };
   broadcast_health_events: {
-    id: string;
+    id: Generated<string>;
     broadcast_id: string;
     status: "connecting" | "connected" | "degraded" | "failed" | "ended";
     message: string | null;
     payload: unknown;
-    created_at: Date;
+    created_at: Generated<Date>;
   };
 };
 

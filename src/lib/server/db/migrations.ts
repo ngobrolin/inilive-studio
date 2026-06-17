@@ -2,6 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { sql, type Generated, type Kysely } from "kysely";
+import type { Database } from "./database";
 
 const migrationsDirectory = join(dirname(fileURLToPath(import.meta.url)), "migrations");
 
@@ -21,14 +22,7 @@ export async function readMigrationFiles(directory = migrationsDirectory): Promi
   );
 }
 
-type MigrationDatabase = {
-  schema_migrations: {
-    name: string;
-    applied_at: Generated<Date>;
-  };
-};
-
-export async function migrateDatabase(db: Kysely<MigrationDatabase>): Promise<void> {
+export async function migrateDatabase(db: Kysely<Database>): Promise<void> {
   await db.schema
     .createTable("schema_migrations")
     .ifNotExists()
