@@ -40,3 +40,16 @@ npm run build
 You can preview the production build with `npm run preview`.
 
 > To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+
+## Local database
+
+Milestone 3 product data uses Postgres through Podman Compose, Kysely, and plain SQL migrations.
+
+```sh
+podman compose up -d postgres
+export DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio
+npm run db:migrate
+npm run db:smoke
+```
+
+Migrations live in `src/lib/server/db/migrations/` and are intentionally plain SQL. Stream keys and Room Chat messages are not part of the persisted v1 schema.

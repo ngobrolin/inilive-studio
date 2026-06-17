@@ -1813,3 +1813,54 @@ Continue with TDD and complete bridge-004: Host-visible Broadcast Health callbac
 *** Next best step
 
 Start bridge-005 when HITL credentials are available: verify YouTube 720p30 end-to-end broadcast with a live-enabled YouTube account and real stream credentials.
+
+* 2026-06-17 data-001 Postgres/Kysely foundation
+
+*** Summary
+
+- Continued with TDD after bridge-004 was already passing and bridge-005 remained HITL on real YouTube credentials.
+- Started the next AFK feature, data-001, despite its bridge-005 blocker, to keep implementation moving while HITL credentials are unavailable.
+- Added local Postgres through Podman Compose.
+- Added Kysely + pg server database access.
+- Added a plain SQL migration reader/runner and the first v1 product schema migration.
+- Added DB scripts and restart docs in README.md and .env.example.
+- Marked data-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before data-001: passed.
+  - Vitest: 16 files passed, 49 tests passed.
+  - Playwright: 37 tests passed.
+- TDD red: `npm run test:unit -- --run src/lib/server/db/migrations.spec.ts` failed because `./migrations` did not exist.
+- TDD green: migration unit spec passed after adding the migration reader and initial SQL migration.
+- npm run check: initially failed on Kysely migration-runner typing, then passed after tightening schema types and raw SQL execution.
+- Local DB verification passed:
+  - `podman compose up -d postgres`
+  - `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run db:migrate`
+  - `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run db:smoke`
+- Touched-file formatting passed: `npm run fmt:check -- src/lib/server/db/migrations.spec.ts src/lib/server/db/migrations.ts src/lib/server/db/database.ts scripts/db/migrate.mjs scripts/db/smoke.mjs package.json compose.yaml README.md .env.example`.
+- Final ./init.sh passed after code and tracker updates.
+  - Vitest: 17 files passed, 50 tests passed.
+  - Playwright: 37 tests passed.
+  - npm audit still reports 3 low severity vulnerabilities.
+
+*** Evidence captured
+
+- Local Postgres service: compose.yaml
+- DB access layer: src/lib/server/db/database.ts
+- Migration runner: src/lib/server/db/migrations.ts
+- Initial schema migration: src/lib/server/db/migrations/0001_product_shell_foundation.sql
+- Migration behavior test: src/lib/server/db/migrations.spec.ts
+- DB scripts: scripts/db/migrate.mjs and scripts/db/smoke.mjs
+- Dependency updates: package.json and package-lock.json include kysely, pg, @types/pg, and @types/node.
+- Documentation: README.md and .env.example.
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- The local Postgres verification container was stopped with `podman compose down` after the commit; future sessions can restart it with `podman compose up -d postgres`.
+- data-001 was implemented while formally blocked by bridge-005 because bridge-005 cannot progress without human credentials.
+
+*** Next best step
+
+Proceed to auth-001 when ready: add Host magic-link auth and sessions on top of the new database foundation, unless bridge-005 credentials become available first.

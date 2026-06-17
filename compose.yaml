@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    environment:
+      POSTGRES_DB: inilive_studio
+      POSTGRES_USER: inilive
+      POSTGRES_PASSWORD: inilive_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inilive -d inilive_studio"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  postgres-data:

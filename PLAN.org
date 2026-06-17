@@ -910,7 +910,7 @@ Goal: turn the proven prototype and media path into a usable v1 product with Hos
 :TYPE: AFK
 :PRIORITY: 17
 :AREA: data
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: bridge-005
 :END:
 
@@ -920,11 +920,11 @@ Add the v1 data foundation: Postgres, Kysely with pg, plain SQL migrations, and 
 
 *** Acceptance criteria
 
-- [ ] Postgres runs locally through the documented development path.
-- [ ] Kysely and pg are configured for server-side database access.
-- [ ] Plain SQL migrations can be applied from a clean database.
-- [ ] Initial schema supports the planned product entities without storing YouTube stream keys or Room Chat messages.
-- [ ] Startup and verification documentation reflects database setup.
+- [X] Postgres runs locally through the documented development path.
+- [X] Kysely and pg are configured for server-side database access.
+- [X] Plain SQL migrations can be applied from a clean database.
+- [X] Initial schema supports the planned product entities without storing YouTube stream keys or Room Chat messages.
+- [X] Startup and verification documentation reflects database setup.
 
 *** Verification
 
@@ -935,7 +935,16 @@ Add the v1 data foundation: Postgres, Kysely with pg, plain SQL migrations, and 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented the Milestone 3 data foundation with TDD.
+  - Local Postgres service: ~/code/inilive-studio/compose.yaml
+  - Server DB access: ~/code/inilive-studio/src/lib/server/db/database.ts using Kysely + pg.
+  - Plain SQL migration runner: ~/code/inilive-studio/src/lib/server/db/migrations.ts
+  - Initial schema: ~/code/inilive-studio/src/lib/server/db/migrations/0001_product_shell_foundation.sql
+  - Initial schema includes Host Accounts, Host Sessions, Rooms, Guest Invites, Broadcasts, and Broadcast Health Events.
+  - Initial schema intentionally does not persist YouTube stream keys or Room Chat messages.
+  - DB commands: `npm run db:migrate` and `npm run db:smoke`.
+  - Docs updated: ~/code/inilive-studio/README.md and ~/code/inilive-studio/.env.example.
+  - Verification passed: `podman compose up -d postgres`; `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run db:migrate`; `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run db:smoke`; migration unit spec; `npm run check`; touched-file `npm run fmt:check`; final `./init.sh` with 50 Vitest tests and 37 Playwright tests.
 
 *** Notes
 

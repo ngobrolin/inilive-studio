@@ -16,7 +16,15 @@
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt",
-    "fmt:check": "oxfmt --check"
+    "fmt:check": "oxfmt --check",
+    "db:migrate": "node --experimental-strip-types scripts/db/migrate.mjs",
+    "db:smoke": "node --experimental-strip-types scripts/db/smoke.mjs"
+  },
+  "dependencies": {
+    "kysely": "^0.29.2",
+    "livekit-client": "^2.19.2",
+    "livekit-server-sdk": "^2.15.4",
+    "pg": "^8.21.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -24,6 +32,8 @@
     "@sveltejs/kit": "^2.63.0",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^25.9.3",
+    "@types/pg": "^8.20.0",
     "@vitest/browser-playwright": "^4.1.8",
     "oxfmt": "^0.54.0",
     "oxlint": "^1.69.0",
@@ -35,9 +45,5 @@
     "vite": "^8.0.16",
     "vitest": "^4.1.8",
     "vitest-browser-svelte": "^2.1.1"
-  },
-  "dependencies": {
-    "livekit-client": "^2.19.2",
-    "livekit-server-sdk": "^2.15.4"
   }
 }
