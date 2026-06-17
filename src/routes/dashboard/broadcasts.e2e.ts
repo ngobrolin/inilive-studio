@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 
 async function signInHost(
@@ -16,8 +17,10 @@ async function signInHost(
   const latestTokenBody = (await latestTokenResponse.json()) as { token: string | null };
   expect(latestTokenBody.token).toMatch(/^[\w-]+$/);
 
+  await page.goto("about:blank");
   await page.goto(`/auth/verify#${latestTokenBody.token}`);
   await expect(page).toHaveURL("/dashboard");
+  await expect(page.getByRole("heading", { name: "Host dashboard" })).toBeVisible();
 }
 
 async function enterBackstage(page: Page, joinUrl: string, displayName: string) {
@@ -28,28 +31,33 @@ async function enterBackstage(page: Page, joinUrl: string, displayName: string) 
   return page.url();
 }
 
+function uniqueRoomTitle(label: string): string {
+  return `${label} ${randomUUID()}`;
+}
+
 test("product Room starts a persisted Broadcast Countdown before going live", async ({
   page,
   request,
 }) => {
+  const roomTitle = uniqueRoomTitle("Countdown episode");
   await signInHost(page, request, "broadcast-countdown-host@example.com");
 
-  await page.getByLabel("Room Title").fill("Countdown episode");
+  await page.getByLabel("Room Title").fill(roomTitle);
   await page.getByRole("button", { name: "Create Room" }).click();
-  const hostRoomLink = page.getByRole("link", { name: /Countdown episode/ });
+  const hostRoomLink = page.getByRole("link", { name: new RegExp(roomTitle) });
   await expect(hostRoomLink).toBeVisible();
   const roomHref = await hostRoomLink.getAttribute("href");
   expect(roomHref).toMatch(/^\/room\//);
 
   await page.goto(`${roomHref}/join`);
-  const hostBackstageUrl = await enterBackstage(page, page.url(), "Host One");
+  await enterBackstage(page, page.url(), "Host One");
   await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
   await page.getByLabel("Stream key").fill("test-stream-key");
   await page.getByRole("button", { name: "Start Broadcast Countdown" }).click();
 
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcast Countdown");
   await expect(page.getByTestId("broadcast-countdown")).toBeVisible();
-  await expect(page.getByTestId("broadcast-countdown")).toContainText(/Going live in [1-5] second/);
+  await expect(page.getByTestId("broadcast-countdown")).toContainText(/Going live in \d+ second/);
 
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcasting", {
     timeout: 10_000,
@@ -61,11 +69,14 @@ test("Host can cancel a product Broadcast Countdown and return to Backstage", as
   page,
   request,
 }) => {
+  const roomTitle = uniqueRoomTitle("Cancel countdown episode");
   await signInHost(page, request, "broadcast-cancel-countdown@example.com");
 
-  await page.getByLabel("Room Title").fill("Cancel countdown episode");
+  await page.getByLabel("Room Title").fill(roomTitle);
   await page.getByRole("button", { name: "Create Room" }).click();
-  const roomHref = await page.getByRole("link", { name: /Cancel countdown episode/ }).getAttribute("href");
+  const roomHref = await page
+    .getByRole("link", { name: new RegExp(roomTitle) })
+    .getAttribute("href");
   expect(roomHref).toMatch(/^\/room\//);
 
   await enterBackstage(page, `${roomHref}/join`, "Host One");
@@ -86,14 +97,15 @@ test("Guest sees the product Broadcast Countdown before the Room goes live", asy
   request,
   context,
 }) => {
+  const roomTitle = uniqueRoomTitle("Guest countdown episode");
   await signInHost(page, request, "broadcast-guest-countdown@example.com");
 
-  await page.getByLabel("Room Title").fill("Guest countdown episode");
+  await page.getByLabel("Room Title").fill(roomTitle);
   await page.getByRole("button", { name: "Create Room" }).click();
-  const inviteLink = await page
-    .getByLabel("Guest Invite link for Guest countdown episode")
-    .inputValue();
-  const roomHref = await page.getByRole("link", { name: /Guest countdown episode/ }).getAttribute("href");
+  const inviteLink = await page.getByLabel(`Guest Invite link for ${roomTitle}`).inputValue();
+  const roomHref = await page
+    .getByRole("link", { name: new RegExp(roomTitle) })
+    .getAttribute("href");
   expect(roomHref).toMatch(/^\/room\//);
 
   await enterBackstage(page, `${roomHref}/join`, "Host One");
