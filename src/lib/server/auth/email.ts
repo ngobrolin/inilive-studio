@@ -21,11 +21,15 @@ export function createCapturingEmailSender(): {
   };
 }
 
+export function buildMagicLinkVerifyUrl(appOrigin: string, token: string): string {
+  return `${appOrigin}/auth/verify#${token}`;
+}
+
 export function createConsoleMagicLinkEmailSender(appOrigin: string): MagicLinkEmailSender {
   return async ({ email, token }) => {
+    const verifyUrl = buildMagicLinkVerifyUrl(appOrigin, token);
     console.info(
-      `Magic link requested for ${email}. Open ${appOrigin}/auth/verify to complete sign-in.`,
+      `Magic link requested for ${email}. Open this URL to complete sign-in:\n${verifyUrl}`,
     );
-    console.info(`Dev token for ${email}: ${token}`);
   };
 }
