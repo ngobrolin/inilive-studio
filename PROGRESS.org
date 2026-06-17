@@ -5,9 +5,10 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: rooms-001 reusable Host Rooms.
+- Current highest-priority unfinished AFK feature: invites-001 product-backed Guest Invites.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
+- rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
 
 * Session Log
 
@@ -1917,3 +1918,56 @@ Continue with TDD and complete auth-001: Host magic-link auth and Postgres-backe
 *** Next best step
 
 Start rooms-001 with TDD: reusable Host Rooms backed by Postgres and signed-in Host sessions.
+
+* 2026-06-17 rooms-001 reusable Host Rooms
+
+*** Goal
+
+Continue with TDD and complete rooms-001: reusable Host Rooms backed by Postgres and signed-in Host sessions.
+
+*** Completed
+
+- Ran ./init.sh baseline before rooms work; baseline passed.
+- TDD cycle 1: unit test for signed-in Host creating a Room with a Room Title.
+- TDD cycle 2: unit test for Host dashboard list isolation between Host Accounts.
+- TDD cycle 3: route tests for POST /rooms requiring session and creating a Room.
+- Added Postgres room store, in-memory hermetic fallback, Host dashboard at /dashboard, and POST /rooms API.
+- Added Playwright coverage for create Room, Host isolation, and unsigned redirect to /login.
+- Fixed parallel e2e token races by filtering /auth/dev/latest-token with ?email=.
+- Fixed Kysely Database types for generated room columns and schema_migrations.
+- Updated verify redirect and login e2e to land on /dashboard.
+- Marked rooms-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before rooms-001: passed.
+  - Vitest: 64 passed, 1 skipped.
+  - Playwright: 39 passed.
+- Targeted rooms specs: passed.
+  - Vitest: rooms.spec.ts (2), rooms/server.spec.ts (2).
+- npx playwright test 'src/routes/dashboard/page.e2e.ts' --workers=1: passed (3 tests).
+- npm run check: passed with 0 errors after Database type fixes.
+- ./init.sh final: passed.
+  - Vitest: 68 passed, 2 skipped.
+  - Playwright: 42 passed.
+
+*** Evidence captured
+
+- Room service: src/lib/server/rooms/rooms.ts
+- Room stores: src/lib/server/rooms/store.ts and src/lib/server/rooms/postgres-store.ts
+- Host dashboard: src/routes/dashboard/+page.svelte and src/routes/dashboard/+page.server.ts
+- Create Room API: src/routes/rooms/+server.ts
+- Unit and route specs: src/lib/server/rooms/rooms.spec.ts and src/routes/rooms/server.spec.ts
+- Postgres integration: src/lib/server/rooms/postgres-store.integration.spec.ts
+- Playwright e2e: src/routes/dashboard/page.e2e.ts
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Hermetic e2e uses in-memory room storage when DATABASE_URL is unset; Postgres persistence requires DATABASE_URL integration verification.
+- Reusable Rooms are not yet wired into the prototype Backstage Room flow; that belongs to shell-001.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start invites-001 with TDD: product-backed Guest Invites for reusable Host Rooms.

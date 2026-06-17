@@ -1008,7 +1008,7 @@ Implement custom email magic-link auth for Host Accounts with server-side sessio
 :TYPE: AFK
 :PRIORITY: 19
 :AREA: rooms
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: auth-001
 :END:
 
@@ -1018,12 +1018,12 @@ Allow a signed-in Host to create, view, and return to reusable Rooms. Each Room 
 
 *** Acceptance criteria
 
-- [ ] Signed-in Host can create a Room.
-- [ ] Host can set and see a Room Title.
-- [ ] Host can return to previously created Rooms after restarting the app.
-- [ ] Room dashboard shows the Host's Rooms only.
-- [ ] Room Title is used for Host organization and not treated as public broadcast metadata.
-- [ ] Guest access remains invite-based and separate from Host auth.
+- [X] Signed-in Host can create a Room.
+- [X] Host can set and see a Room Title.
+- [X] Host can return to previously created Rooms after restarting the app.
+- [X] Room dashboard shows the Host's Rooms only.
+- [X] Room Title is used for Host organization and not treated as public broadcast metadata.
+- [X] Guest access remains invite-based and separate from Host auth.
 
 *** Verification
 
@@ -1035,11 +1035,22 @@ Allow a signed-in Host to create, view, and return to reusable Rooms. Each Room 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented reusable Host Rooms with TDD vertical slices.
+  - Room service: ~/code/inilive-studio/src/lib/server/rooms/rooms.ts
+  - In-memory and Postgres stores: ~/code/inilive-studio/src/lib/server/rooms/store.ts and ~/code/inilive-studio/src/lib/server/rooms/postgres-store.ts
+  - Host dashboard: ~/code/inilive-studio/src/routes/dashboard/+page.svelte and ~/code/inilive-studio/src/routes/dashboard/+page.server.ts
+  - Create Room API: ~/code/inilive-studio/src/routes/rooms/+server.ts
+  - Session helper: ~/code/inilive-studio/src/lib/server/auth/host-session.ts
+  - Unit and route specs: ~/code/inilive-studio/src/lib/server/rooms/rooms.spec.ts and ~/code/inilive-studio/src/routes/rooms/server.spec.ts
+  - Postgres integration: ~/code/inilive-studio/src/lib/server/rooms/postgres-store.integration.spec.ts
+  - Playwright e2e: ~/code/inilive-studio/src/routes/dashboard/page.e2e.ts (3 tests)
+  - Verify redirect after sign-in now lands on /dashboard.
+  - Targeted verification passed: npx playwright test 'src/routes/dashboard/page.e2e.ts' --workers=1; npm run check; ./init.sh (68 Vitest passed, 2 skipped; 42 Playwright passed).
 
 *** Notes
 
 - Workspaces and Teams are out of scope for v1.
+- Wiring reusable Rooms into the prototype Backstage flow belongs to shell-001.
 
 ** TODO invites-001 - Add product-backed Guest Invites
 :PROPERTIES:
