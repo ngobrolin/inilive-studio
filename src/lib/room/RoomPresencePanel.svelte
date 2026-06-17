@@ -13,6 +13,7 @@
 		mediaGrant,
 		broadcast,
 		hostWhipIngestGrant,
+		isProductRoom = false,
 	}: {
 		presence: RoomPresence;
 		chatMessages: RoomChatMessage[];
@@ -20,6 +21,7 @@
 		mediaGrant: MediaJoinGrant | null;
 		broadcast: RoomBroadcastView;
 		hostWhipIngestGrant: BroadcastIngestGrant | null;
+		isProductRoom?: boolean;
 	} = $props();
 	const visibleParticipants = $derived(
 		presence.participants.filter((participant) => !participant.removed),
@@ -34,9 +36,19 @@
 	let liveBroadcastOverride = $state<RoomBroadcastView | null>(null);
 	const liveBroadcast = $derived(liveBroadcastOverride ?? broadcast);
 	const isBroadcasting = $derived(liveBroadcast.state === 'broadcasting');
+	const isCountdown = $derived(liveBroadcast.state === 'countdown');
+	let countdownTick = $state(Date.now());
+	let completeCountdownForm = $state<HTMLFormElement | null>(null);
+	const countdownSecondsRemaining = $derived(
+		liveBroadcast.countdownEndsAt
+			? Math.max(0, Math.ceil((liveBroadcast.countdownEndsAt - countdownTick) / 1_000))
+			: 0,
+	);
 	const broadcastStateLabel = $derived(
 		liveBroadcast.state === 'broadcasting'
 			? 'Broadcasting'
+			: liveBroadcast.state === 'countdown'
+				? 'Broadcast Countdown'
 			: liveBroadcast.state === 'ended'
 				? 'Broadcast ended'
 				: liveBroadcast.state === 'failed'
@@ -64,10 +76,29 @@
 			}
 		};
 		const interval = window.setInterval(() => {
+			countdownTick = Date.now();
 			void refreshBroadcastState();
-		}, 2_000);
+		}, 250);
 
 		return () => window.clearInterval(interval);
+	});
+
+	$effect(() => {
+		if (!activeHost || !isCountdown || !liveBroadcast.countdownEndsAt) {
+			return;
+		}
+
+		const remaining = liveBroadcast.countdownEndsAt - Date.now();
+		if (remaining <= 0) {
+			completeCountdownForm?.requestSubmit();
+			return;
+		}
+
+		const timeout = window.setTimeout(() => {
+			completeCountdownForm?.requestSubmit();
+		}, remaining);
+
+		return () => window.clearTimeout(timeout);
 	});
 </script>
 
@@ -142,6 +173,15 @@
 				The Broadcast ended and this Room returned to Backstage. Start a new Broadcast when you are
 				ready.
 			</p>
+		{:else if liveBroadcast.state === 'countdown'}
+			<p class="mt-2 text-sm leading-6">
+				{#if isProductRoom}
+					The Broadcast Countdown is visible to everyone in this reusable Room. YouTube goes live when
+					the Countdown reaches zero.
+				{:else}
+					The Broadcast Countdown is starting.
+				{/if}
+			</p>
 		{:else if liveBroadcast.state === 'backstage'}
 			<p class="mt-2 text-sm leading-6">
 				Nothing is live to YouTube yet. The Host can paste ephemeral stream credentials to start a
@@ -164,6 +204,36 @@
 			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast Health</p>
 			<h2 class="mt-2 text-2xl font-semibold">{broadcastHealthLabel}</h2>
 			<p class="mt-2 text-sm leading-6">{liveBroadcast.health.message}</p>
+		</section>
+	{/if}
+
+	{#if isCountdown}
+		<section
+			class="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
+			data-testid="broadcast-countdown"
+		>
+			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Countdown</p>
+			<p class="mt-2 text-4xl font-semibold tabular-nums">{countdownSecondsRemaining}</p>
+			<p class="mt-2 text-sm leading-6">
+				Going live in {countdownSecondsRemaining} second{countdownSecondsRemaining === 1 ? '' : 's'}.
+			</p>
+			{#if activeHost}
+				<form class="mt-4" method="POST" action="?/broadcast">
+					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+					<button
+						class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold"
+						name="broadcastAction"
+						type="submit"
+						value="cancel-countdown"
+					>
+						Cancel Countdown
+					</button>
+				</form>
+				<form bind:this={completeCountdownForm} class="hidden" method="POST" action="?/broadcast">
+					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+					<input name="broadcastAction" type="hidden" value="complete-countdown" />
+				</form>
+			{/if}
 		</section>
 	{/if}
 
@@ -209,7 +279,7 @@
 						</button>
 					</form>
 				</div>
-			{:else}
+			{:else if !isCountdown}
 				<form class="mt-4 grid gap-4" method="POST" action="?/broadcast">
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 					<div>
@@ -238,7 +308,7 @@
 						type="submit"
 						value="start"
 					>
-						Start Broadcast
+						{isProductRoom ? 'Start Broadcast Countdown' : 'Start Broadcast'}
 					</button>
 				</form>
 			{/if}
