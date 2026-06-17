@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { hostRoomPath } from "$lib/room/entry-copy";
 	import type { PageData } from "./$types";
 
 	let { data }: { data: PageData } = $props();
@@ -71,9 +72,14 @@
 		{:else}
 			<ul class="mt-4 space-y-3">
 				{#each data.rooms as room (room.id)}
-					<li class="rounded-xl border border-slate-200 px-4 py-3">
-						<p class="font-medium">{room.title}</p>
-						<p class="mt-1 text-xs text-slate-500">Room id: {room.id}</p>
+					<li>
+						<a
+							class="block rounded-xl border border-slate-200 px-4 py-3 transition hover:border-slate-400 hover:bg-slate-50"
+							href={hostRoomPath(room.id)}
+						>
+							<p class="font-medium">{room.title}</p>
+							<p class="mt-1 text-xs text-slate-500">Room id: {room.id}</p>
+						</a>
 					</li>
 				{/each}
 			</ul>

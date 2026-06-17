@@ -31,6 +31,17 @@ test("signed-in Host can create a reusable Room from the dashboard", async ({ pa
   await expect(page.getByText("Weekly show")).toBeVisible();
 });
 
+test("signed-in Host can open a Room from the dashboard", async ({ page, request }) => {
+  await signInHost(page, request, "dashboard-open-room@example.com");
+
+  await page.getByLabel("Room Title").fill("Weekly show");
+  await page.getByRole("button", { name: "Create Room" }).click();
+
+  await page.getByRole("link", { name: /Weekly show/ }).click();
+  await expect(page).toHaveURL(/\/room\/[\w-]+$/);
+  await expect(page.getByRole("heading", { name: "Choose a Room entry path" })).toBeVisible();
+});
+
 test("Host dashboard shows only the signed-in Host's Rooms", async ({ page, request }) => {
   await signInHost(page, request, "dashboard-host-one@example.com");
   await page.getByLabel("Room Title").fill("Host One room");
