@@ -29,6 +29,38 @@
 		title = "";
 		window.location.reload();
 	}
+
+	async function regenerateGuestInvite(roomId: string) {
+		const response = await fetch(`/rooms/${roomId}/invite`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ action: "regenerate" }),
+		});
+
+		if (response.status === 401) {
+			window.location.href = "/login";
+			return;
+		}
+
+		if (!response.ok) {
+			errorMessage = "Could not update this Guest Invite right now.";
+			return;
+		}
+
+		const body = (await response.json()) as { guestInviteToken?: string };
+		if (body.guestInviteToken) {
+			data = {
+				...data,
+				rooms: data.rooms.map((room) =>
+					room.id === roomId ? { ...room, guestInviteToken: body.guestInviteToken! } : room,
+				),
+			};
+		}
+	}
+
+	function guestInviteUrl(roomId: string, token: string) {
+		return `/room/${roomId}/invite/${token}`;
+	}
 </script>
 
 <main class="mx-auto flex min-h-screen max-w-3xl flex-col px-6 py-12">
@@ -73,13 +105,30 @@
 			<ul class="mt-4 space-y-3">
 				{#each data.rooms as room (room.id)}
 					<li>
-						<a
-							class="block rounded-xl border border-slate-200 px-4 py-3 transition hover:border-slate-400 hover:bg-slate-50"
-							href={hostRoomPath(room.id)}
-						>
-							<p class="font-medium">{room.title}</p>
-							<p class="mt-1 text-xs text-slate-500">Room id: {room.id}</p>
-						</a>
+						<div class="rounded-xl border border-slate-200 px-4 py-3">
+							<a
+								class="block transition hover:text-slate-600"
+								href={hostRoomPath(room.id)}
+							>
+								<p class="font-medium">{room.title}</p>
+								<p class="mt-1 text-xs text-slate-500">Room id: {room.id}</p>
+							</a>
+							<label class="mt-3 block text-xs font-medium text-slate-600">
+								Guest Invite link for {room.title}
+								<input
+									class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs"
+									readonly
+									value={guestInviteUrl(room.id, room.guestInviteToken)}
+								/>
+							</label>
+							<button
+								class="mt-3 rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700"
+								type="button"
+								onclick={() => regenerateGuestInvite(room.id)}
+							>
+								Regenerate Guest Invite for {room.title}
+							</button>
+						</div>
 					</li>
 				{/each}
 			</ul>

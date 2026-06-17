@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createHostRoom, listHostRooms } from "./rooms";
+import { createHostRoom, listHostRooms, validateGuestInvite } from "./rooms";
+import { hashToken } from "$lib/server/auth/tokens";
 import { createInMemoryRoomStore } from "./store";
 
 describe("host rooms", () => {
@@ -17,6 +18,7 @@ describe("host rooms", () => {
       title: "Weekly show",
     });
     expect(result.room?.id).toMatch(/^room-/);
+    expect(result.room?.guestInviteToken).toMatch(/^[\w-]{43}$/);
   });
 
   it("shows only the signed-in Host's Rooms on the dashboard list", async () => {
@@ -31,5 +33,24 @@ describe("host rooms", () => {
 
     expect(hostOneRooms.map((room) => room.title)).toEqual(["Weekly show", "Guest hour"]);
     expect(hostTwoRooms.map((room) => room.title)).toEqual(["Other Host room"]);
+  });
+
+  it("accepts the active Guest Invite token and rejects other tokens for product Rooms", async () => {
+    const store = createInMemoryRoomStore();
+    const result = await createHostRoom(
+      { hostAccountId: "host-1", title: "Weekly show" },
+      { store },
+    );
+    const room = result.room!;
+
+    await expect(
+      validateGuestInvite({ roomId: room.id, token: room.guestInviteToken }, { store }),
+    ).resolves.toBe("valid");
+    await expect(
+      validateGuestInvite({ roomId: room.id, token: hashToken(room.guestInviteToken) }, { store }),
+    ).resolves.toBe("valid");
+    await expect(
+      validateGuestInvite({ roomId: room.id, token: "not-the-token" }, { store }),
+    ).resolves.toBe("invalid");
   });
 });

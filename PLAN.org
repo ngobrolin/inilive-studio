@@ -1058,7 +1058,7 @@ Allow a signed-in Host to create, view, and return to reusable Rooms. Each Room 
 :TYPE: AFK
 :PRIORITY: 20
 :AREA: guest-invites
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: rooms-001
 :END:
 
@@ -1068,12 +1068,12 @@ Create product-backed Guest Invites for each Room. A Host can copy, revoke, or r
 
 *** Acceptance criteria
 
-- [ ] Each Room has a hard-to-guess Guest Invite token with at least 128 bits of entropy.
-- [ ] Host can copy the Guest Invite link.
-- [ ] Host can revoke or regenerate the Guest Invite.
-- [ ] Revoked Guest Invites no longer allow Guest entry.
-- [ ] Guests can enter through a valid Guest Invite without an Account.
-- [ ] Join attempts are rate-limited per IP or have a documented placeholder if rate limiting is sliced separately.
+- [X] Each Room has a hard-to-guess Guest Invite token with at least 128 bits of entropy.
+- [X] Host can copy the Guest Invite link.
+- [X] Host can revoke or regenerate the Guest Invite.
+- [X] Revoked Guest Invites no longer allow Guest entry.
+- [X] Guests can enter through a valid Guest Invite without an Account.
+- [X] Join attempts are rate-limited per IP or have a documented placeholder if rate limiting is sliced separately.
 
 *** Verification
 
@@ -1085,11 +1085,21 @@ Create product-backed Guest Invites for each Room. A Host can copy, revoke, or r
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented product-backed Guest Invites with TDD.
+  - Room creation now creates an active Guest Invite token using the existing 32-byte secure token helper.
+  - Host dashboard shows a copyable Guest Invite link for each Room.
+  - Host dashboard can regenerate a Room's Guest Invite; the old link and direct old `/join` URL show "Guest Invite unavailable".
+  - Product Guest Invite validation is wired into Guest Invite landing and Join Check routes while preserving legacy authless prototype invite URLs for non-product Rooms.
+  - Server store changes: ~/code/inilive-studio/src/lib/server/rooms/rooms.ts, ~/code/inilive-studio/src/lib/server/rooms/store.ts, and ~/code/inilive-studio/src/lib/server/rooms/postgres-store.ts.
+  - Regenerate API: ~/code/inilive-studio/src/routes/rooms/[roomId]/invite/+server.ts.
+  - UI and e2e: ~/code/inilive-studio/src/routes/dashboard/+page.svelte and ~/code/inilive-studio/src/routes/dashboard/page.e2e.ts.
+  - Verification passed: `./init.sh` with 71 Vitest tests passing, 2 skipped Postgres integration tests without DATABASE_URL, and 46 Playwright tests passing.
+  - Rate limiting placeholder: invite join attempts are not rate-limited yet; this is documented as a production hardening slice before launch.
 
 *** Notes
 
 - Removing a Guest does not itself revoke the Guest Invite.
+- Dedicated per-IP Guest Invite join rate limiting remains a production hardening follow-up; current behavior documents the placeholder rather than silently implying rate limiting exists.
 
 ** TODO broadcasts-001 - Add product-backed Broadcast records
 :PROPERTIES:

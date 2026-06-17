@@ -1971,3 +1971,55 @@ Continue with TDD and complete rooms-001: reusable Host Rooms backed by Postgres
 *** Next best step
 
 Start invites-001 with TDD: product-backed Guest Invites for reusable Host Rooms.
+
+* 2026-06-17 invites-001 product-backed Guest Invites
+
+*** Goal
+
+Continue with TDD and complete invites-001: product-backed Guest Invites for reusable Host Rooms.
+
+*** Completed
+
+- Ran ./init.sh baseline before invite work; baseline passed.
+- TDD cycle 1: added Room service coverage for 32-byte secure Guest Invite tokens created with Rooms.
+- TDD cycle 2: added Host dashboard e2e coverage for copyable Guest Invite links and signed-out Guest access through a valid product invite.
+- TDD cycle 3: added invalid-token e2e coverage so existing product Rooms reject wrong Guest Invite tokens.
+- TDD cycle 4: added Host regenerate e2e coverage so old invite links and old direct Join Check URLs become unavailable while the new link works.
+- Added active Guest Invite creation to in-memory and Postgres Room stores.
+- Added Guest Invite validation to the invite landing page and Guest Join Check route/action.
+- Added POST /rooms/[roomId]/invite for signed-in Hosts to regenerate a Room's active Guest Invite.
+- Updated the Host dashboard to display copyable invite links and a regenerate control.
+- Marked invites-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before invites-001: passed.
+  - Vitest: 70 passed, 2 skipped.
+  - Playwright: 43 passed.
+- Targeted verification while developing:
+  - `npm run test:unit -- --run src/lib/server/rooms/rooms.spec.ts`: passed.
+  - `npx playwright test 'src/routes/dashboard/page.e2e.ts' --workers=1`: passed with 7 tests.
+  - `npm run check`: passed with 0 errors and 0 warnings.
+- Final ./init.sh: passed.
+  - Vitest: 71 passed, 2 skipped.
+  - Playwright: 46 passed.
+
+*** Evidence captured
+
+- Room invite service/store changes: src/lib/server/rooms/rooms.ts, src/lib/server/rooms/store.ts, src/lib/server/rooms/postgres-store.ts.
+- Host dashboard invite UI: src/routes/dashboard/+page.svelte.
+- Regenerate API: src/routes/rooms/[roomId]/invite/+server.ts.
+- Invite validation routes: src/routes/room/[roomId]/invite/[token]/ and src/routes/room/[roomId]/invite/[token]/join/.
+- Unit coverage: src/lib/server/rooms/rooms.spec.ts.
+- Browser coverage: src/routes/dashboard/page.e2e.ts.
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Hermetic e2e uses in-memory room/invite storage when DATABASE_URL is unset; Postgres invite persistence should be exercised with DATABASE_URL integration verification in a later hardening pass.
+- Guest Invite join attempts are not rate-limited yet; invites-001 documents this as a production hardening placeholder rather than shipping silent protection.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start broadcasts-001 with TDD: product-backed Broadcast records for reusable Rooms, unless bridge-005 credentials become available first.
