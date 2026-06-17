@@ -20,6 +20,15 @@ test("Guest can open Guest Invite URL without an Account", async ({ page }) => {
   await expect(page.getByText("Backstage", { exact: true })).toBeVisible();
 });
 
+test("development demo Guest Invite still opens for product-looking Room IDs", async ({ page }) => {
+  await page.goto("/room/0848a93d-0375-4d36-a502-fec96bec9e6d/invite/demo");
+
+  await expect(page.getByRole("heading", { level: 2 })).toContainText(
+    "Join the Room without creating an Account",
+  );
+  await expect(page.getByText("Guest Invite URL", { exact: true })).toBeVisible();
+});
+
 test("Host and Guest entry pages highlight the active role", async ({ page }) => {
   await page.goto("/room/demo");
   await expect(page.getByRole("link", { name: "Host", exact: true })).toHaveAttribute(
