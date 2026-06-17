@@ -11,7 +11,7 @@ Live Studio is a browser-based production Room where a signed-in Host brings up 
 
 * Rules
   :PROPERTIES:
-  :SINGLE_ACTIVE_MILESTONE: Milestone 2
+  :SINGLE_ACTIVE_MILESTONE: Milestone 3
   :SINGLE_ACTIVE_FEATURE: true
   :PASSING_REQUIRES_EVIDENCE: true
   :DO_NOT_SKIP_VERIFICATION: true
@@ -899,7 +899,7 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 * Milestone 3 - Product Shell
 :PROPERTIES:
 :MILESTONE_ID: m3-product-shell
-:STATUS: not_started
+:STATUS: active
 :END:
 
 Goal: turn the proven prototype and media path into a usable v1 product with Host Accounts, reusable Rooms, Guest Invites, Broadcast records, and durable Broadcast Health events.
@@ -956,7 +956,7 @@ Add the v1 data foundation: Postgres, Kysely with pg, plain SQL migrations, and 
 :TYPE: AFK
 :PRIORITY: 18
 :AREA: auth
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: data-001
 :END:
 
@@ -966,12 +966,12 @@ Implement custom email magic-link auth for Host Accounts with server-side sessio
 
 *** Acceptance criteria
 
-- [ ] Host can request a magic link by email.
-- [ ] Magic-link tokens have at least 128 bits of entropy, expire after 15 minutes, and are single-use.
-- [ ] Login endpoint returns identical response regardless of email existence.
-- [ ] Sessions use HttpOnly, Secure, SameSite=Lax cookies with at least 128-bit session tokens.
-- [ ] Sessions have a 30-day absolute expiry with sliding activity window.
-- [ ] Re-auth invalidates prior magic-link session as specified.
+- [X] Host can request a magic link by email.
+- [X] Magic-link tokens have at least 128 bits of entropy, expire after 15 minutes, and are single-use.
+- [X] Login endpoint returns identical response regardless of email existence.
+- [X] Sessions use HttpOnly, Secure, SameSite=Lax cookies with at least 128-bit session tokens.
+- [X] Sessions have a 30-day absolute expiry with sliding activity window.
+- [X] Re-auth invalidates prior magic-link session as specified.
 
 *** Verification
 
@@ -983,11 +983,24 @@ Implement custom email magic-link auth for Host Accounts with server-side sessio
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented Host magic-link auth and Postgres-backed sessions with TDD vertical slices.
+  - Token helpers: ~/code/inilive-studio/src/lib/server/auth/tokens.ts
+  - Magic-link request flow: ~/code/inilive-studio/src/lib/server/auth/magic-link.ts
+  - Session exchange and cookies: ~/code/inilive-studio/src/lib/server/auth/sessions.ts
+  - Postgres auth store: ~/code/inilive-studio/src/lib/server/auth/postgres-store.ts
+  - Hermetic runtime fallback: ~/code/inilive-studio/src/lib/server/auth/runtime.ts
+  - Migration: ~/code/inilive-studio/src/lib/server/db/migrations/0002_magic_link_tokens.sql
+  - Auth routes: ~/code/inilive-studio/src/routes/auth/login/+server.ts, ~/code/inilive-studio/src/routes/auth/exchange/+server.ts, ~/code/inilive-studio/src/routes/auth/logout/+server.ts
+  - Host UI: ~/code/inilive-studio/src/routes/login/+page.svelte and ~/code/inilive-studio/src/routes/auth/verify/+page.svelte
+  - Unit and route specs: ~/code/inilive-studio/src/lib/server/auth/*.spec.ts and ~/code/inilive-studio/src/routes/auth/*/server.spec.ts
+  - Playwright e2e: ~/code/inilive-studio/src/routes/login/page.e2e.ts
+  - Postgres integration: ~/code/inilive-studio/src/lib/server/auth/postgres-store.integration.spec.ts
+  - Verification passed: ./init.sh (65 Vitest including skipped Postgres integration without DATABASE_URL, 39 Playwright); `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run test:unit -- --run src/lib/server/auth/postgres-store.integration.spec.ts`; npm run check; npm run lint.
 
 *** Notes
 
-- Transactional email provider is Resend or Postmark; self-hosted SMTP is out of scope.
+- Transactional email provider is Resend or Postmark; development uses console logging and hermetic e2e uses an in-memory capture sender.
+- Magic-link tokens are exchanged through POST `/auth/exchange` after `/auth/verify` reads the token from the URL fragment.
 
 ** TODO rooms-001 - Add reusable Host Rooms
 :PROPERTIES:

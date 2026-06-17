@@ -5,10 +5,9 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: none in Milestone 2 until bridge-005 HITL is completed.
-- bridge-003 "Spike GStreamer WHIP-to-RTMP bridge" is passing. The pinned image builds, container GStreamer 1.24 and required WHIP-to-RTMP elements are verified, the control API lifecycle passes, and the Host browser posts the Composed Room Feed SDP to authenticated WHIP ingest.
-- bridge-004 "Add Host-visible Broadcast Health callbacks" is passing. The bridge sends authenticated Broadcast Health callbacks, SvelteKit records connecting/connected/degraded/failed/ended health, Hosts see the health panel through polling, Guests only see Broadcast State, and callback/log/UI payloads avoid stream-key exposure.
-- Current HITL follow-up: bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials.
+- Current highest-priority unfinished AFK feature: rooms-001 reusable Host Rooms.
+- bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
+- auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 
 * Session Log
 
@@ -1863,4 +1862,58 @@ Start bridge-005 when HITL credentials are available: verify YouTube 720p30 end-
 
 *** Next best step
 
-Proceed to auth-001 when ready: add Host magic-link auth and sessions on top of the new database foundation, unless bridge-005 credentials become available first.
+Proceed to rooms-001 when ready: add reusable Host Rooms on top of auth-001, unless bridge-005 credentials become available first.
+
+* 2026-06-17 auth-001 Host magic-link auth
+
+*** Goal
+
+Continue with TDD and complete auth-001: Host magic-link auth and Postgres-backed sessions.
+
+*** Completed
+
+- Confirmed working directory and ran ./init.sh baseline before auth work.
+- TDD cycle 1: unit tests for secure token generation and hashing.
+- TDD cycle 2: magic-link request returns enumeration-safe responses and invalidates prior links.
+- TDD cycle 3: session exchange is single-use with 30-day absolute expiry and sliding activity window.
+- TDD cycle 4: route tests for login and exchange endpoints, including HttpOnly SameSite=Lax cookies.
+- Added migration 0002_magic_link_tokens.sql and Postgres auth store.
+- Added auth routes, Host sign-in UI, verify page with fragment-based POST exchange, and hermetic e2e fallback when DATABASE_URL is unset.
+- Fixed in-memory auth store caching so login and exchange share state in hermetic preview mode.
+- Marked auth-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before auth-001: passed.
+  - Vitest: 50 tests passed.
+  - Playwright: 37 tests passed.
+- Targeted auth unit and route specs: passed.
+  - Vitest: 14 auth tests across tokens, magic-link, sessions, cookies, and route handlers.
+- Postgres integration with podman compose:
+  - `podman compose up -d postgres`
+  - `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run db:migrate`
+  - `DATABASE_URL=postgres://inilive:inilive_dev_password@127.0.0.1:5432/inilive_studio npm run test:unit -- --run src/lib/server/auth/postgres-store.integration.spec.ts`
+- npm run check: passed with 0 errors.
+- npm run lint: passed with the existing empty src/lib/index.ts warning.
+- ./init.sh final: passed.
+  - Vitest: 64 passed, 1 skipped integration suite without DATABASE_URL.
+  - Playwright: 39 passed.
+
+*** Evidence captured
+
+- Auth modules: src/lib/server/auth/
+- Auth routes and UI: src/routes/auth/, src/routes/login/
+- Migration: src/lib/server/db/migrations/0002_magic_link_tokens.sql
+- Playwright e2e: src/routes/login/page.e2e.ts
+- Postgres integration: src/lib/server/auth/postgres-store.integration.spec.ts
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Production transactional email (Resend or Postmark) is not wired yet; development uses console logging.
+- Hermetic e2e uses in-memory auth when DATABASE_URL is unset; Postgres session behavior requires DATABASE_URL integration verification.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start rooms-001 with TDD: reusable Host Rooms backed by Postgres and signed-in Host sessions.
