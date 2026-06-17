@@ -1201,7 +1201,7 @@ Persist Broadcast Health events reported by the Broadcast Bridge and expose Host
 :TYPE: AFK
 :PRIORITY: 23
 :AREA: product-shell
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: invites-001 broadcasts-001 health-001
 :END:
 
@@ -1211,12 +1211,12 @@ Turn the proven prototype Room into the authenticated product shell. Hosts enter
 
 *** Acceptance criteria
 
-- [ ] Host Room entry requires a valid Host session.
-- [ ] Guest Room entry works through a valid Guest Invite without an Account.
-- [ ] Host moderation controls work in the product-backed Room flow.
-- [ ] Broadcast controls use product-backed Broadcast records and bridge integration.
-- [ ] Room Chat remains ephemeral and is not persisted.
-- [ ] No v1 non-goals appear in the product surface.
+- [X] Host Room entry requires a valid Host session.
+- [X] Guest Room entry works through a valid Guest Invite without an Account.
+- [X] Host moderation controls work in the product-backed Room flow.
+- [X] Broadcast controls use product-backed Broadcast records and bridge integration.
+- [X] Room Chat remains ephemeral and is not persisted.
+- [X] No v1 non-goals appear in the product surface.
 
 *** Verification
 
@@ -1228,7 +1228,15 @@ Turn the proven prototype Room into the authenticated product shell. Hosts enter
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Wired the Room prototype into the authenticated product shell with TDD vertical slices.
+  - Product Room host access resolver: ~/code/inilive-studio/src/lib/server/rooms/host-access.ts
+  - Host session gate for product Rooms: ~/code/inilive-studio/src/lib/server/rooms/require-host-session.ts
+  - Protected host entry and Join Check routes: ~/code/inilive-studio/src/routes/room/[roomId]/+page.server.ts and ~/code/inilive-studio/src/routes/room/[roomId]/join/+page.server.ts
+  - Room store lookup: `getRoom()` on ~/code/inilive-studio/src/lib/server/rooms/store.ts and ~/code/inilive-studio/src/lib/server/rooms/postgres-store.ts
+  - Unit coverage: ~/code/inilive-studio/src/lib/server/rooms/host-access.spec.ts (3 tests)
+  - Product shell browser coverage: ~/code/inilive-studio/src/routes/room/[roomId]/shell.e2e.ts (6 tests)
+  - Existing product Broadcast coverage: ~/code/inilive-studio/src/routes/dashboard/broadcasts.e2e.ts (3 tests)
+  - Verification passed: ./init.sh with 86 Vitest tests passing, 3 skipped Postgres integration suites without DATABASE_URL, and 56 Playwright tests passing; npm run check with 0 errors.
 
 *** Notes
 

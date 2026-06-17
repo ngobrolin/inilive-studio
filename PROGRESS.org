@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: shell-001 wire Room prototype into authenticated product shell.
+- Current highest-priority unfinished AFK feature: cleanup-001 remove or protect Milestone 1 authless prototype routes.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
@@ -2123,4 +2123,53 @@ Continue with TDD and complete health-001: persist Broadcast Health events in Po
 
 *** Next best step
 
-Start shell-001 with TDD: wire the Room prototype into the authenticated product shell.
+Start cleanup-001 with TDD: remove or protect authless Milestone 1 prototype routes.
+
+* 2026-06-17 shell-001 wire Room prototype into product shell
+
+*** Goal
+
+Continue with TDD and complete shell-001: wire the Room prototype into the authenticated product shell.
+
+*** Completed
+
+- Ran ./init.sh baseline before shell work; baseline passed.
+- TDD cycle 1: unit tests for product Room host access (prototype, sign-in required, owner-only).
+- TDD cycle 2: Playwright tests for unsigned redirect, wrong-host redirect, owner Join Check, Guest Invite entry, moderation, and ephemeral Room Chat in product Rooms.
+- Added `getRoom()` to in-memory and Postgres room stores.
+- Added `resolveProductRoomHostAccess()` and `requireProductRoomHostSession()` helpers.
+- Protected product Room host entry and Join Check routes with Host session checks.
+- Marked shell-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before shell-001: passed.
+  - Vitest: 83 passed, 3 skipped.
+  - Playwright: 50 passed.
+- Targeted verification while developing:
+  - `npm run test:unit -- --run src/lib/server/rooms/host-access.spec.ts`: passed (3 tests).
+  - `npx playwright test 'src/routes/room/\[roomId\]/shell.e2e.ts' --workers=1`: passed (6 tests).
+  - `npm run check`: passed with 0 errors and 0 warnings.
+- Final ./init.sh: passed.
+  - Vitest: 86 passed, 3 skipped.
+  - Playwright: 56 passed.
+
+*** Evidence captured
+
+- Host access resolver: src/lib/server/rooms/host-access.ts
+- Session gate: src/lib/server/rooms/require-host-session.ts
+- Protected routes: src/routes/room/[roomId]/+page.server.ts and src/routes/room/[roomId]/join/+page.server.ts
+- Unit coverage: src/lib/server/rooms/host-access.spec.ts
+- Browser coverage: src/routes/room/[roomId]/shell.e2e.ts
+- Product Broadcast coverage retained: src/routes/dashboard/broadcasts.e2e.ts
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Authless prototype Room URLs such as `/room/demo` still exist for Milestone 1 flows until cleanup-001.
+- Hermetic e2e uses in-memory stores when DATABASE_URL is unset; Postgres product shell behavior was not re-run this session beyond existing integration suites.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start cleanup-001 with TDD: remove or protect authless Milestone 1 prototype routes.
