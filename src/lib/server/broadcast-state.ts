@@ -1,10 +1,12 @@
-export type BroadcastLifecycle = "backstage" | "broadcasting" | "ended" | "failed";
+export type BroadcastLifecycle = "backstage" | "countdown" | "broadcasting" | "ended" | "failed";
 export type BroadcastHealthStatus = "connecting" | "connected" | "degraded" | "ended" | "failed";
 
 export type RoomBroadcastView = {
   state: BroadcastLifecycle;
   failureMessage: string | null;
   health: BroadcastHealthView | null;
+  countdownEndsAt: number | null;
+  productBroadcastId: string | null;
 };
 
 type RoomBroadcastRecord = {
@@ -12,11 +14,17 @@ type RoomBroadcastRecord = {
   failureMessage: string | null;
   hostParticipantId: string | null;
   health: BroadcastHealthView | null;
+  countdownEndsAt: number | null;
+  productBroadcastId: string | null;
 };
 
 type BroadcastCredentials = {
   rtmpServerUrl: string;
   streamKey: string;
+};
+
+type PendingBroadcastAttempt = BroadcastCredentials & {
+  hostParticipantId: string;
 };
 
 export type BroadcastIngestGrant = {
@@ -39,6 +47,7 @@ export type BroadcastHealthView = {
 
 const broadcasts = new Map<string, RoomBroadcastRecord>();
 const credentials = new Map<string, BroadcastCredentials>();
+const pendingBroadcastAttempts = new Map<string, PendingBroadcastAttempt>();
 const ingestGrants = new Map<string, BroadcastIngestGrant>();
 const callbackGrants = new Map<string, BroadcastCallbackGrant>();
 const INGEST_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -47,6 +56,7 @@ const CALLBACK_TOKEN_TTL_MS = 10 * 60 * 1000;
 export function clearBroadcastState(): void {
   broadcasts.clear();
   credentials.clear();
+  pendingBroadcastAttempts.clear();
   ingestGrants.clear();
   callbackGrants.clear();
 }
@@ -62,6 +72,8 @@ export function getRoomBroadcastView(
     state: record?.state ?? "backstage",
     failureMessage: record?.failureMessage ?? null,
     health: includeHealth ? (record?.health ?? null) : null,
+    countdownEndsAt: record?.countdownEndsAt ?? null,
+    productBroadcastId: record?.productBroadcastId ?? null,
   };
 }
 
@@ -167,11 +179,21 @@ export function recordBridgeBroadcastHealth(input: {
   return { error: null, status: 202 };
 }
 
-export function startRoomBroadcast(input: {
+export function getRoomProductBroadcastId(roomId: string): string | null {
+  return broadcasts.get(roomId)?.productBroadcastId ?? null;
+}
+
+export function getPendingBroadcastAttempt(roomId: string): PendingBroadcastAttempt | null {
+  return pendingBroadcastAttempts.get(roomId) ?? null;
+}
+
+export function startRoomBroadcastCountdown(input: {
   roomId: string;
   hostParticipantId: string;
   rtmpServerUrl: string;
   streamKey: string;
+  countdownEndsAt: number;
+  productBroadcastId: string;
 }): { error: string | null } {
   const rtmpServerUrl = input.rtmpServerUrl.trim();
   const streamKey = input.streamKey.trim();
@@ -185,7 +207,92 @@ export function startRoomBroadcast(input: {
   }
 
   const current = getRoomBroadcastView(input.roomId);
-  if (current.state === "broadcasting") {
+  if (current.state === "broadcasting" || current.state === "countdown") {
+    return { error: "A Broadcast is already active in this Room." };
+  }
+
+  broadcasts.set(input.roomId, {
+    state: "countdown",
+    failureMessage: null,
+    hostParticipantId: input.hostParticipantId,
+    health: null,
+    countdownEndsAt: input.countdownEndsAt,
+    productBroadcastId: input.productBroadcastId,
+  });
+  pendingBroadcastAttempts.set(input.roomId, {
+    hostParticipantId: input.hostParticipantId,
+    rtmpServerUrl,
+    streamKey,
+  });
+
+  return { error: null };
+}
+
+export function cancelRoomBroadcastCountdown(input: {
+  roomId: string;
+  hostParticipantId: string;
+}): { error: string | null } {
+  const record = broadcasts.get(input.roomId);
+
+  if (!record || record.state !== "countdown") {
+    return { error: "No Broadcast Countdown is active in this Room." };
+  }
+
+  if (record.hostParticipantId !== input.hostParticipantId) {
+    return { error: "Only the Host can cancel the Broadcast Countdown." };
+  }
+
+  broadcasts.delete(input.roomId);
+  pendingBroadcastAttempts.delete(input.roomId);
+
+  return { error: null };
+}
+
+export function completeRoomBroadcastCountdown(input: { roomId: string }): { error: string | null } {
+  const record = broadcasts.get(input.roomId);
+  const pending = pendingBroadcastAttempts.get(input.roomId);
+
+  if (!record || record.state !== "countdown" || !pending) {
+    return { error: "No Broadcast Countdown is ready to complete in this Room." };
+  }
+
+  if (!record.countdownEndsAt || record.countdownEndsAt > Date.now()) {
+    return { error: "Broadcast Countdown is still running." };
+  }
+
+  const productBroadcastId = record.productBroadcastId;
+  pendingBroadcastAttempts.delete(input.roomId);
+  broadcasts.delete(input.roomId);
+
+  return startRoomBroadcast({
+    roomId: input.roomId,
+    hostParticipantId: pending.hostParticipantId,
+    rtmpServerUrl: pending.rtmpServerUrl,
+    streamKey: pending.streamKey,
+    productBroadcastId,
+  });
+}
+
+export function startRoomBroadcast(input: {
+  roomId: string;
+  hostParticipantId: string;
+  rtmpServerUrl: string;
+  streamKey: string;
+  productBroadcastId?: string | null;
+}): { error: string | null } {
+  const rtmpServerUrl = input.rtmpServerUrl.trim();
+  const streamKey = input.streamKey.trim();
+
+  if (!rtmpServerUrl) {
+    return { error: "Enter the RTMP server URL before starting a Broadcast." };
+  }
+
+  if (!streamKey) {
+    return { error: "Enter the stream key before starting a Broadcast." };
+  }
+
+  const current = getRoomBroadcastView(input.roomId);
+  if (current.state === "broadcasting" || current.state === "countdown") {
     return { error: "A Broadcast is already active in this Room." };
   }
 
@@ -198,6 +305,8 @@ export function startRoomBroadcast(input: {
       message: "Broadcast Bridge is connecting to the Broadcast Destination.",
       updatedAt: Date.now(),
     },
+    countdownEndsAt: null,
+    productBroadcastId: input.productBroadcastId ?? null,
   });
   credentials.set(input.roomId, { rtmpServerUrl, streamKey });
   ingestGrants.set(input.roomId, {
