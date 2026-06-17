@@ -1,4 +1,9 @@
 import { createMediaJoinGrant } from "$lib/server/media-join";
+import { ensureBridgeClientConfigured } from "$lib/server/bridge-env";
+import {
+  startBridgeSession,
+  stopBridgeSession,
+} from "$lib/server/bridge-client";
 import {
   endRoomBroadcast,
   failRoomBroadcast,
@@ -113,20 +118,39 @@ export const actions: Actions = {
     redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
   },
   broadcast: async ({ params, request }) => {
+    ensureBridgeClientConfigured();
     const formData = await request.formData();
     const hostParticipantId = String(formData.get("hostParticipantId") ?? "");
     const action = String(formData.get("broadcastAction") ?? "");
 
     if (action === "start") {
+      const rtmpServerUrl = String(formData.get("rtmpServerUrl") ?? "");
+      const streamKey = String(formData.get("streamKey") ?? "");
       const result = startRoomBroadcast({
         roomId: params.roomId,
         hostParticipantId,
-        rtmpServerUrl: String(formData.get("rtmpServerUrl") ?? ""),
-        streamKey: String(formData.get("streamKey") ?? ""),
+        rtmpServerUrl,
+        streamKey,
       });
 
       if (result.error) {
         return fail(400, { error: result.error });
+      }
+
+      try {
+        await startBridgeSession({
+          roomId: params.roomId,
+          rtmpServerUrl,
+          streamKey,
+        });
+      } catch (error) {
+        failRoomBroadcast({
+          roomId: params.roomId,
+          failureMessage: "The Broadcast Bridge could not start for this Room.",
+        });
+        return fail(500, {
+          error: error instanceof Error ? error.message : "Broadcast Bridge start failed.",
+        });
       }
     } else if (action === "end") {
       const result = endRoomBroadcast({
@@ -137,6 +161,8 @@ export const actions: Actions = {
       if (result.error) {
         return fail(400, { error: result.error });
       }
+
+      await stopBridgeSession({ roomId: params.roomId });
     } else if (action === "simulate-fail") {
       const result = failRoomBroadcast({
         roomId: params.roomId,
@@ -146,6 +172,8 @@ export const actions: Actions = {
       if (result.error) {
         return fail(400, { error: result.error });
       }
+
+      await stopBridgeSession({ roomId: params.roomId });
     } else {
       return fail(400, { error: "Choose a Broadcast action." });
     }

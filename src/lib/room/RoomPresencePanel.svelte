@@ -1,8 +1,8 @@
 <script lang="ts">
 	import ComposedFeedCanvas from '$lib/room/ComposedFeedCanvas.svelte';
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
+	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
-	import type { RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
 
 	let {
@@ -11,12 +11,14 @@
 		activeParticipantId,
 		mediaGrant,
 		broadcast,
+		hostWhipIngestGrant,
 	}: {
 		presence: RoomPresence;
 		chatMessages: RoomChatMessage[];
 		activeParticipantId: string;
 		mediaGrant: MediaJoinGrant | null;
 		broadcast: RoomBroadcastView;
+		hostWhipIngestGrant: BroadcastIngestGrant | null;
 	} = $props();
 	const visibleParticipants = $derived(
 		presence.participants.filter((participant) => !participant.removed),
@@ -359,6 +361,8 @@
 		<aside class="grid content-start gap-4">
 			<ComposedFeedCanvas
 				activeScreenShare={presence.activeScreenShare}
+				{broadcast}
+				{hostWhipIngestGrant}
 				participants={visibleParticipants}
 			/>
 

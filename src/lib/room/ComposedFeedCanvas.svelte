@@ -1,43 +1,50 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
+	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomParticipant, RoomScreenShare } from '$lib/server/room-presence';
 
 	let {
 		participants,
 		activeScreenShare,
+		broadcast,
+		hostWhipIngestGrant,
 	}: {
 		participants: RoomParticipant[];
 		activeScreenShare: RoomScreenShare | null;
+		broadcast: RoomBroadcastView;
+		hostWhipIngestGrant: BroadcastIngestGrant | null;
 	} = $props();
 
-	let canvas = $state<HTMLCanvasElement | null>(null);
 	let captureStatus = $state('Waiting for canvas');
-	let measuredFps = $state(0);
-	let stream: MediaStream | null = null;
-	let animationFrame = 0;
-	let frameCount = 0;
-	let lastFpsSample = 0;
+	let whipStatus = $state('WHIP ingest idle');
+	let fpsDisplay: HTMLElement | null = null;
+	let streamReady = $state(0);
+	const capture = {
+		stream: null as MediaStream | null,
+	};
+	let audioContext: AudioContext | null = null;
+	let silentAudioTrack: MediaStreamTrack | null = null;
+	let currentWhipConnection: RTCPeerConnection | null = null;
+	let currentWhipPublishKey = '';
 
 	const width = 1280;
 	const height = 720;
 	const visibleParticipants = $derived(participants.filter((participant) => !participant.removed).slice(0, 4));
 	const outputLabel = $derived(`${width}×${height} · captureStream(30)`);
 
-	$effect(() => {
-		if (!canvas) {
-			return;
-		}
-
-		const context = canvas.getContext('2d');
+	function composeCanvas(sourceCanvas: HTMLCanvasElement) {
+		const context = sourceCanvas.getContext('2d');
 		if (!context) {
 			captureStatus = 'Canvas unavailable';
-			return;
+			return {};
 		}
 
-		stream = canvas.captureStream(30);
-		captureStatus = stream ? 'Composed feed stream ready' : 'captureStream unavailable';
-		lastFpsSample = performance.now();
-		frameCount = 0;
+		capture.stream = createComposedStream(sourceCanvas);
+		streamReady += 1;
+		captureStatus = capture.stream ? 'Composed feed stream ready' : 'captureStream unavailable';
+		let localLastFpsSample = performance.now();
+		let localFrameCount = 0;
+		let localAnimationFrame = 0;
 
 		function draw(now: number) {
 			if (!context) {
@@ -45,30 +52,150 @@
 			}
 
 			drawFrame(context, now);
-			frameCount += 1;
+			localFrameCount += 1;
 
-			if (now - lastFpsSample >= 1000) {
-				measuredFps = Math.round((frameCount * 1000) / (now - lastFpsSample));
-				frameCount = 0;
-				lastFpsSample = now;
+			if (now - localLastFpsSample >= 1000) {
+				if (fpsDisplay) {
+					fpsDisplay.textContent = `${Math.round((localFrameCount * 1000) / (now - localLastFpsSample))}`;
+				}
+				localFrameCount = 0;
+				localLastFpsSample = now;
 			}
 
-			animationFrame = requestAnimationFrame(draw);
+			localAnimationFrame = requestAnimationFrame(draw);
 		}
 
-		animationFrame = requestAnimationFrame(draw);
+		localAnimationFrame = requestAnimationFrame(draw);
 
-		return () => {
-			cancelAnimationFrame(animationFrame);
+		return {
+			destroy() {
+				cancelAnimationFrame(localAnimationFrame);
+			},
 		};
-	});
+	}
 
 	onDestroy(() => {
-		globalThis.cancelAnimationFrame?.(animationFrame);
-		for (const track of stream?.getTracks() ?? []) {
+		stopWhipPublisher();
+		for (const track of capture.stream?.getTracks() ?? []) {
 			track.stop();
 		}
+		silentAudioTrack?.stop();
+		void audioContext?.close();
 	});
+
+	$effect(() => {
+		const currentStream = streamReady > 0 ? capture.stream : null;
+		const shouldPublish =
+			broadcast.state === 'broadcasting' && hostWhipIngestGrant !== null && currentStream !== null;
+		const publishKey = shouldPublish
+			? `${hostWhipIngestGrant.whipUrl}:${hostWhipIngestGrant.bearerToken}`
+			: '';
+
+		if (publishKey === currentWhipPublishKey) {
+			return;
+		}
+
+		stopWhipPublisher();
+		currentWhipPublishKey = publishKey;
+
+		const currentGrant = hostWhipIngestGrant;
+
+		if (!shouldPublish || !currentGrant || !currentStream) {
+			whipStatus = broadcast.state === 'broadcasting' ? 'Waiting for Composed Room Feed' : 'WHIP ingest idle';
+			return;
+		}
+
+		void startWhipPublisher({
+			grant: currentGrant,
+			composedStream: currentStream,
+		});
+	});
+
+	function createComposedStream(sourceCanvas: HTMLCanvasElement): MediaStream | null {
+		if (typeof sourceCanvas.captureStream !== 'function') {
+			return null;
+		}
+
+		const nextStream = sourceCanvas.captureStream(30);
+		return nextStream;
+	}
+
+	async function startWhipPublisher(input: {
+		grant: BroadcastIngestGrant;
+		composedStream: MediaStream;
+	}) {
+		if (!globalThis.RTCPeerConnection) {
+			whipStatus = 'WHIP ingest unavailable';
+			return;
+		}
+
+		const peerConnection = new RTCPeerConnection();
+		currentWhipConnection = peerConnection;
+		whipStatus = 'WHIP ingest connecting';
+
+		try {
+			const publishStream = withSilentAudio(input.composedStream);
+			for (const track of publishStream.getTracks()) {
+				peerConnection.addTrack(track, input.composedStream);
+			}
+
+			const offer = await peerConnection.createOffer();
+			await peerConnection.setLocalDescription(offer);
+
+			const response = await fetch(input.grant.whipUrl, {
+				method: 'POST',
+				headers: {
+					Authorization: `Bearer ${input.grant.bearerToken}`,
+					'Content-Type': 'application/sdp',
+				},
+				body: offer.sdp ?? '',
+			});
+
+			if (!response.ok) {
+				throw new Error(`WHIP ingest failed with status ${response.status}`);
+			}
+
+			if (currentWhipConnection === peerConnection) {
+				whipStatus = 'WHIP ingest connected';
+			}
+
+			const answer = await response.text();
+			if (answer.trim() && response.headers.get('Content-Type')?.includes('application/sdp')) {
+				await peerConnection.setRemoteDescription({ type: 'answer', sdp: answer });
+			}
+		} catch {
+			if (currentWhipConnection === peerConnection) {
+				whipStatus = 'WHIP ingest failed';
+				stopWhipPublisher();
+			}
+		}
+	}
+
+	function stopWhipPublisher() {
+		currentWhipConnection?.close();
+		currentWhipConnection = null;
+	}
+
+	function withSilentAudio(videoStream: MediaStream): MediaStream {
+		if (videoStream.getAudioTracks().length > 0) {
+			return videoStream;
+		}
+
+		audioContext ??= new AudioContext();
+		const gain = audioContext.createGain();
+		const oscillator = audioContext.createOscillator();
+		const destination = audioContext.createMediaStreamDestination();
+		gain.gain.value = 0;
+		oscillator.connect(gain).connect(destination);
+		oscillator.start();
+
+		silentAudioTrack = destination.stream.getAudioTracks()[0] ?? null;
+		if (silentAudioTrack) {
+			videoStream.addTrack(silentAudioTrack);
+		}
+
+		return videoStream;
+	}
 
 	function drawFrame(context: CanvasRenderingContext2D, now: number) {
 		context.fillStyle = '#0a0a0a';
@@ -186,10 +313,10 @@
 
 	<div class="mt-4 overflow-hidden rounded-md border border-neutral-800 bg-neutral-950">
 		<canvas
-			bind:this={canvas}
 			class="aspect-video w-full"
 			data-testid="composition-canvas"
 			height={height}
+			use:composeCanvas
 			width={width}
 		></canvas>
 	</div>
@@ -203,14 +330,24 @@
 		</div>
 		<div class="rounded-md bg-neutral-100 p-3">
 			<dt class="font-semibold text-neutral-600">Measured fps</dt>
-			<dd class="mt-1 font-semibold text-neutral-950" data-testid="composition-fps">
-				{measuredFps || 'Measuring'}
+			<dd
+				bind:this={fpsDisplay}
+				class="mt-1 font-semibold text-neutral-950"
+				data-testid="composition-fps"
+			>
+				Measuring
 			</dd>
 		</div>
 		<div class="rounded-md bg-neutral-100 p-3">
 			<dt class="font-semibold text-neutral-600">Primary source</dt>
 			<dd class="mt-1 font-semibold text-neutral-950" data-testid="composition-primary-source">
 				{activeScreenShare ? 'Screen Share' : 'Participant grid'}
+			</dd>
+		</div>
+		<div class="rounded-md bg-neutral-100 p-3">
+			<dt class="font-semibold text-neutral-600">WHIP ingest</dt>
+			<dd class="mt-1 font-semibold text-neutral-950" data-testid="whip-ingest-status">
+				{whipStatus}
 			</dd>
 		</div>
 	</dl>

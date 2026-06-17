@@ -5,7 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: bridge-003 "Spike GStreamer WHIP-to-RTMP bridge" in PLAN.org (Milestone 2).
+- Current highest-priority unfinished AFK feature: bridge-004 "Add Host-visible Broadcast Health callbacks" in PLAN.org (Milestone 2, not_started, unblocked by bridge-003 passing).
+- bridge-003 "Spike GStreamer WHIP-to-RTMP bridge" is passing. The pinned image builds, container GStreamer 1.24 and required WHIP-to-RTMP elements are verified, the control API lifecycle passes, and the Host browser posts the Composed Room Feed SDP to authenticated WHIP ingest.
 - Current HITL follow-up: none for Milestone 1; media-001-live passed with evidence in docs/spikes/media-001-managed-sfu-choice.md.
 
 * Session Log
@@ -1359,3 +1360,363 @@ Complete bridge-002 with TDD: add short-lived per-Broadcast bearer-token authent
 *** Next best step
 
 Start bridge-003 with TDD/spike discipline: validate the GStreamer WHIP-to-RTMP path after the bearer-token gate.
+
+** Session 022
+:PROPERTIES:
+:SESSION_ID: 022
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Start bridge-003 with TDD: add the separate GStreamer WHIP-to-RTMP Broadcast Bridge service and wire SvelteKit ingest handoff.
+
+*** Completed
+
+- Ran ./init.sh baseline before starting; baseline passed.
+- TDD cycle 1: unit tests for 720p30 bridge output profile, RTMP sink location, and log redaction.
+- TDD cycle 2: unit tests for bridge control client start/stop and WHIP forwarding.
+- TDD cycle 3: WHIP route test for authenticated proxying to the bridge when `BRIDGE_ENABLED=1`.
+- Added separate bridge process at services/broadcast-bridge with control API, WHIP proxy, and GStreamer pipeline launcher.
+- Added pinned Dockerfile building gst-plugin-webrtc for whipserversrc.
+- Wired Backstage broadcast start/end to bridge session lifecycle when bridge is enabled.
+- Added spike doc and verification script.
+
+*** Verification run
+
+- ./init.sh baseline: passed before implementation (32 Vitest, 35 Playwright).
+- npm run test:unit -- --run bridge-pipeline bridge-client whip server.spec: passed (10 tests).
+- node scripts/verify/bridge-003-gstreamer.mjs: passed control API session lifecycle; container build skipped because Podman socket was unavailable in the verification shell.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- ./init.sh after implementation: passed (42 Vitest, 35 Playwright).
+
+*** Evidence captured
+
+- Pipeline config: src/lib/server/bridge-pipeline.ts
+- Bridge client: src/lib/server/bridge-client.ts
+- WHIP proxy route: src/routes/whip/[roomId]/+server.ts
+- Bridge service: services/broadcast-bridge/
+- Spike doc: docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- Verification script: scripts/verify/bridge-003-gstreamer.mjs
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- src/lib/server/bridge-pipeline.ts
+- src/lib/server/bridge-pipeline.spec.ts
+- src/lib/server/bridge-client.ts
+- src/lib/server/bridge-client.spec.ts
+- src/lib/server/bridge-env.ts
+- src/routes/whip/[roomId]/+server.ts
+- src/routes/whip/[roomId]/server.spec.ts
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- services/broadcast-bridge/package.json
+- services/broadcast-bridge/Dockerfile
+- services/broadcast-bridge/src/server.mjs
+- services/broadcast-bridge/src/pipeline.mjs
+- docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- scripts/verify/bridge-003-gstreamer.mjs
+- .env.example
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- bridge-003 is not passing yet: container GStreamer version, live WHIP ingest, and RTMP output still need verification.
+- Podman machine must be running to build the pinned bridge image and confirm GStreamer ≥1.22 inside the container.
+- Browser WHIP client wiring from the Composed Room Feed canvas is not implemented yet.
+- gst-plugin-webrtc Docker build is heavyweight and was not completed in this session.
+- session-handoff.md and other pre-existing files remain not oxfmt-clean.
+- npm run check still has the missing @types/node warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Build the pinned bridge container with Podman, confirm GStreamer ≥1.22 and whipserversrc availability, then run live WHIP ingest + safe RTMP output verification so bridge-003 can be marked passing.
+
+** Session 023
+:PROPERTIES:
+:SESSION_ID: 023
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Continue bridge-003 with TDD/spike discipline and prevent skipped container checks from being reported as passing verification.
+
+*** Completed
+
+- Ran ./init.sh baseline before continuing; baseline passed.
+- Confirmed PLAN.org still marks bridge-003 as the highest-priority unfinished AFK feature.
+- Added a verification gate helper so bridge-003 verification fails unless the pinned container is built, container GStreamer meets ≥1.22, and the bridge control API session lifecycle passes.
+- Wired scripts/verify/bridge-003-gstreamer.mjs to the strict verification gate.
+- Added nodejs to services/broadcast-bridge/Dockerfile because the bridge image runs `node src/server.mjs`.
+- Tried to start the existing Podman machine twice. `podman machine start podman-machine-default` returned success both times, but `podman machine inspect` still reported `State: "stopped"` and `podman info` could not connect to 127.0.0.1:62234.
+
+*** Verification run
+
+- ./init.sh baseline: passed before changes.
+  - Vitest: 41 tests passed.
+  - Playwright: 35 tests passed.
+- npm run test:unit -- --run src/lib/server/bridge-verification.spec.ts: passed.
+- npm run test:unit -- --run src/lib/server/bridge-verification.spec.ts src/lib/server/bridge-pipeline.spec.ts src/lib/server/bridge-client.spec.ts src/routes/whip/'[roomId]'/server.spec.ts: passed.
+  - Vitest: 11 tests passed across 4 files.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- npm run lint: passed with 0 errors and 1 existing empty src/lib/index.ts warning.
+- node scripts/verify/bridge-003-gstreamer.mjs: failed as intended because Podman was unreachable.
+  - Failure evidence: pinned bridge container image was not built.
+  - Failure evidence: container GStreamer is missing or below 1.22.
+
+*** Evidence captured
+
+- Strict verification gate: scripts/verify/bridge-003-gstreamer-lib.mjs
+- Verification gate test: src/lib/server/bridge-verification.spec.ts
+- Strict script wiring: scripts/verify/bridge-003-gstreamer.mjs
+- Bridge image runtime fix: services/broadcast-bridge/Dockerfile
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- services/broadcast-bridge/Dockerfile
+- scripts/verify/bridge-003-gstreamer.mjs
+- scripts/verify/bridge-003-gstreamer-lib.mjs
+- src/lib/server/bridge-verification.spec.ts
+- docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- bridge-003 remains in progress. The pinned bridge container and container GStreamer version are still unverified because the local Podman machine does not stay reachable from this shell.
+- Full WHIP ingest and RTMP output verification remain pending.
+- Browser WHIP client wiring from the Composed Room Feed canvas is not implemented yet.
+- npm run check still has the missing @types/node warning.
+- npm run lint still has the existing empty src/lib/index.ts warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Repair or recreate the local Podman machine, then rerun `node scripts/verify/bridge-003-gstreamer.mjs`. The script must pass before bridge-003 can be marked passing.
+
+** Session 024
+:PROPERTIES:
+:SESSION_ID: 024
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Find one not_started, unblocked AFK task and start it with TDD.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Read PROGRESS.org, PLAN.org, recent commits, and the current workspace status.
+- Ran ./init.sh baseline before starting any new work; baseline passed.
+- Checked PLAN.org feature metadata for TYPE, PRIORITY, STATUS, and BLOCKED_BY.
+- Confirmed there is no task that satisfies not_started + AFK + unblocked:
+  - bridge-004 is not_started AFK, but blocked by bridge-003.
+  - data-001 and later AFK tasks are blocked by bridge-005 or later unfinished predecessors.
+- Did not start bridge-004 or later work because doing so would violate PLAN.org dependency ordering.
+- Did not alter PLAN.org because no feature state changed.
+
+*** Verification run
+
+- ./init.sh: passed.
+  - Vitest: 42 tests passed.
+  - Playwright: 35 tests passed.
+
+*** Evidence captured
+
+- PLAN.org routing query showed bridge-003 is in_progress, bridge-004 is the first not_started AFK issue, and bridge-004 is blocked by bridge-003.
+- Current git status already contains uncommitted bridge-003 work from the previous session.
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- bridge-003 remains the active unfinished AFK slice and is blocked on local Podman reachability for the pinned bridge container verification.
+- Starting bridge-004 before bridge-003 passes would skip the documented Broadcast Bridge dependency.
+
+*** Next best step
+
+Continue bridge-003 by repairing or recreating the local Podman machine, then rerun `node scripts/verify/bridge-003-gstreamer.mjs`.
+
+** Session 025
+:PROPERTIES:
+:SESSION_ID: 025
+:DATE: 2026-06-16
+:END:
+
+*** Goal
+
+Continue bridge-003 with TDD/spike discipline and move the strict GStreamer bridge verification forward.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Loaded the TDD workflow and continued the active bridge-003 slice instead of starting blocked downstream work.
+- Ran ./init.sh baseline before changing anything; baseline passed.
+- Started `podman-machine-default`; it now reports `State: running`.
+- Increased the local Podman machine memory from 2 GiB to 4 GiB, then to 8 GiB after Rust plugin compilation continued to be killed or stalled.
+- Reached the pinned bridge image build path and identified/fixed two Dockerfile issues:
+  - `gst-plugins-rs` was cloned from moving main; pinned it to `gstreamer-1.24.13` to align with Ubuntu 24.04's GStreamer 1.24 packages.
+  - Rust plugin compilation exceeded local VM limits; limited Cargo to one job, enabled Cargo Git CLI fetches, and switched the spike plugin build to debug output copied from `target/debug/libgstrswebrtc.so`.
+- Confirmed `gstreamer1.0-plugins-bad` in the Ubuntu 24.04 image does not provide `whipserversrc`, so the source-built Rust plugin is still required.
+- Updated bridge-003 evidence in PLAN.org and docs/spikes/bridge-003-gstreamer-whip-rtmp.md.
+
+*** Verification run
+
+- ./init.sh: passed.
+  - Vitest: 42 tests passed.
+  - Playwright: 35 tests passed.
+- node scripts/verify/bridge-003-gstreamer.mjs: failed/blocked after reaching container build; earlier Podman connection blocker is resolved, but the container image still does not build.
+- podman build -t inilive-broadcast-bridge:bridge-003 services/broadcast-bridge:
+  - Failed first because apt Cargo could not parse `resolver = "3"` from moving `gst-plugins-rs` main.
+  - Failed next with SIGKILL during release Rust compilation under constrained memory.
+  - After Dockerfile fixes and 8 GiB VM memory, timed out while Cargo updated `https://github.com/gtk-rs/gtk-rs-core` inside the container.
+- podman run --rm b530a540b5ab gst-inspect-1.0 whipserversrc: exited 255 and confirmed no packaged `whipserversrc` element.
+- npm run test:unit -- --run src/lib/server/bridge-verification.spec.ts src/lib/server/bridge-pipeline.spec.ts: passed.
+  - Vitest: 6 tests passed across 2 files.
+
+*** Evidence captured
+
+- Dockerfile fixes: services/broadcast-bridge/Dockerfile
+- Spike notes: docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- Plan evidence: PLAN.org bridge-003 Evidence section
+- Podman machine evidence: `podman machine inspect podman-machine-default` reported `Memory: 8192` and `State: running`.
+
+*** Commits
+
+- None this session.
+
+*** Files or artifacts updated
+
+- services/broadcast-bridge/Dockerfile
+- docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- bridge-003 remains in progress. The pinned bridge container still has not built successfully.
+- Current blocker is narrower than before: Podman is reachable, but the Docker build hangs while Cargo fetches `gtk-rs-core` from GitHub for `gst-plugin-webrtc`.
+- Full WHIP ingest and RTMP output verification remain pending.
+- Browser WHIP client wiring from the Composed Room Feed canvas is not implemented yet.
+- npm run check still has the missing @types/node warning.
+- npm run lint still has the existing empty src/lib/index.ts warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Continue bridge-003 by making the Rust plugin build reproducible despite Cargo Git fetches, likely by prefetching or vendoring the `gst-plugins-rs` dependency graph, using a prebuilt `gst-plugin-webrtc` artifact/image, or switching to a base image that already includes `whipserversrc`. Then rerun `node scripts/verify/bridge-003-gstreamer.mjs` until the strict gate passes.
+
+** Session 026
+:PROPERTIES:
+:SESSION_ID: 026
+:DATE: 2026-06-17
+:END:
+
+*** Goal
+
+Continue bridge-003 with TDD and complete the AFK GStreamer WHIP-to-RTMP bridge verification boundary.
+
+*** Completed
+
+- Confirmed working directory: /Users/riza/code/inilive-studio.
+- Loaded the TDD workflow and continued bridge-003 because PLAN.org still had it as the active in-progress AFK feature.
+- Ran ./init.sh baseline before changing code; baseline passed.
+- Added a failing bridge verification gate test for required WHIP-to-RTMP runtime elements, then updated the strict verifier to check `whipserversrc`, `x264enc`, `avenc_aac`, `flvmux`, and `rtmpsink` inside the pinned container.
+- Confirmed the Dockerfile's published `gst-plugin-webrtc` crate path avoids the previous `gtk-rs-core` Git fetch blocker.
+- Ran `node scripts/verify/bridge-003-gstreamer.mjs`; it passed with container GStreamer 1.24, required runtime elements, and bridge control API session lifecycle.
+- Added a TDD browser slice for Host Composed Room Feed WHIP publishing:
+  - Red Playwright test: Host starts Broadcast and the page POSTs SDP to `/whip/[roomId]` with `Authorization: Bearer whip_...`.
+  - Green implementation: `ComposedFeedCanvas.svelte` creates a WHIP offer from the 720p canvas stream, adds a silent audio track, and posts to the short-lived ingest grant.
+- Reworked the imperative canvas animation loop into a Svelte action after browser probing found Svelte's effect update-depth guard firing from RAF bookkeeping.
+- Marked bridge-003 passing in PLAN.org with the AFK boundary documented. Real YouTube-side proof remains bridge-005 HITL.
+
+*** Verification run
+
+- ./init.sh baseline: passed before new changes.
+  - Vitest: 42 tests passed.
+  - Playwright: 35 tests passed.
+- ./init.sh final: passed after the last code and lint fix.
+  - Vitest: 42 tests passed.
+  - Playwright: 36 tests passed.
+  - npm audit still reported 3 low severity vulnerabilities through @sveltejs/kit.
+- npm run check: passed with 0 errors and 1 existing @types/node warning.
+- npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts' --workers=1: passed.
+  - Playwright: 5 tests passed.
+- npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts' --workers=1: passed.
+  - Playwright: 5 tests passed.
+- npm run test:unit -- --run src/lib/server/bridge-verification.spec.ts src/lib/server/bridge-pipeline.spec.ts src/lib/server/bridge-client.spec.ts 'src/routes/whip/[roomId]/server.spec.ts': passed.
+  - Vitest: 11 tests passed across 4 files.
+- node scripts/verify/bridge-003-gstreamer.mjs: passed.
+  - local gstreamer not installed.
+  - container gstreamer 1.24.
+  - container elements: whipserversrc, x264enc, avenc_aac, flvmux, rtmpsink.
+  - control api session lifecycle passed.
+
+*** Evidence captured
+
+- Browser WHIP publishing: src/lib/room/ComposedFeedCanvas.svelte
+- Host WHIP grant plumbing: src/lib/room/RoomPresencePanel.svelte and src/routes/room/[roomId]/backstage/+page.svelte
+- Browser coverage: src/routes/room/[roomId]/broadcast.e2e.ts
+- Strict verifier: scripts/verify/bridge-003-gstreamer.mjs and scripts/verify/bridge-003-gstreamer-lib.mjs
+- Verifier test: src/lib/server/bridge-verification.spec.ts
+- Spike doc: docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- Plan evidence: PLAN.org bridge-003 Evidence section
+
+*** Commits
+
+- Complete bridge-003 broadcast bridge verification.
+
+*** Files or artifacts updated
+
+- .env.example
+- services/broadcast-bridge/Dockerfile
+- services/broadcast-bridge/package.json
+- services/broadcast-bridge/src/pipeline.mjs
+- services/broadcast-bridge/src/server.mjs
+- src/lib/room/ComposedFeedCanvas.svelte
+- src/lib/room/RoomPresencePanel.svelte
+- src/lib/server/bridge-client.ts
+- src/lib/server/bridge-client.spec.ts
+- src/lib/server/bridge-env.ts
+- src/lib/server/bridge-pipeline.ts
+- src/lib/server/bridge-pipeline.spec.ts
+- src/lib/server/bridge-verification.spec.ts
+- src/routes/room/[roomId]/backstage/+page.server.ts
+- src/routes/room/[roomId]/backstage/+page.svelte
+- src/routes/room/[roomId]/broadcast.e2e.ts
+- src/routes/whip/[roomId]/+server.ts
+- src/routes/whip/[roomId]/server.spec.ts
+- scripts/verify/bridge-003-gstreamer.mjs
+- scripts/verify/bridge-003-gstreamer-lib.mjs
+- docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+- PLAN.org
+- PROGRESS.org
+
+*** Known risk or unresolved issue
+
+- Full browser WHIP to real YouTube reception remains bridge-005 HITL because it requires a live-enabled YouTube account and stream credentials.
+- Broadcast Health callbacks and wrong-credential timing are not part of bridge-003; they are bridge-004.
+- npm run check still has the existing missing @types/node warning.
+- npm run lint still has the existing empty src/lib/index.ts warning.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix.
+
+*** Next best step
+
+Start bridge-004 with TDD: add Host-visible Broadcast Health callbacks from the bridge to SvelteKit, including failed/ended timing and redacted event payloads.

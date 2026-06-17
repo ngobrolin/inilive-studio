@@ -69,6 +69,28 @@ test("Host sees Failed when the bridge reports a Broadcast failure", async ({ pa
   await expect(page.getByLabel("Stream key")).toBeVisible();
 });
 
+test("Host sends the Composed Room Feed to the authenticated WHIP ingest endpoint", async ({
+  page,
+}) => {
+  const roomId = `broadcast-whip-${Date.now()}`;
+
+  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+
+  await page.goto(hostUrl);
+  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
+  await page.getByLabel("Stream key").fill("test-stream-key");
+  const whipRequest = page.waitForRequest((request) => {
+    return request.method() === "POST" && request.url().endsWith(`/whip/${roomId}`);
+  });
+  await page.getByRole("button", { name: "Start Broadcast" }).click();
+
+  const request = await whipRequest;
+  expect(request.headers().authorization).toMatch(/^Bearer whip_/);
+  expect(request.headers()["content-type"]).toContain("application/sdp");
+  expect(request.postData() ?? "").toContain("v=0");
+  await expect(page.getByTestId("whip-ingest-status")).toContainText("WHIP ingest connected");
+});
+
 async function enterRoom(page: Page, url: string, name: string) {
   await page.goto(url);
   await page.getByLabel("Display Name").fill(name);

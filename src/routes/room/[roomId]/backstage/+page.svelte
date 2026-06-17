@@ -12,6 +12,7 @@
 	activeParticipantId={data.activeParticipantId}
 	broadcast={data.broadcast}
 	chatMessages={data.chatMessages}
+	hostWhipIngestGrant={data.hostWhipIngestGrant}
 	mediaGrant={data.mediaGrant}
 	presence={data.presence}
 />

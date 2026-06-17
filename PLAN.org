@@ -737,7 +737,7 @@ Add short-lived per-Broadcast bearer-token authentication for WHIP ingest. Inval
 :TYPE: AFK
 :PRIORITY: 14
 :AREA: broadcast-bridge
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: bridge-002
 :END:
 
@@ -747,12 +747,12 @@ Build and validate the server-side Broadcast Bridge pipeline using GStreamer in 
 
 *** Acceptance criteria
 
-- [ ] GStreamer version is at least 1.22 in the pinned container image.
-- [ ] Bridge accepts WHIP ingest from the Composed Room Feed path.
-- [ ] Bridge outputs H.264 video and AAC audio suitable for YouTube RTMP.
-- [ ] Target is 720p30, 4 Mbps, keyframe every 2s, AAC 44.1kHz stereo.
-- [ ] RTMP URLs and stream keys are redacted from logs.
-- [ ] Bridge can be run as a separate process or service from SvelteKit.
+- [X] GStreamer version is at least 1.22 in the pinned container image.
+- [X] Bridge accepts WHIP ingest from the Composed Room Feed path.
+- [X] Bridge outputs H.264 video and AAC audio suitable for YouTube RTMP.
+- [X] Target is 720p30, 4 Mbps, keyframe every 2s, AAC 44.1kHz stereo.
+- [X] RTMP URLs and stream keys are redacted from logs.
+- [X] Bridge can be run as a separate process or service from SvelteKit.
 
 *** Verification
 
@@ -763,11 +763,42 @@ Build and validate the server-side Broadcast Bridge pipeline using GStreamer in 
 
 *** Evidence
 
-- None recorded.
+- 2026-06-16: Started bridge-003 with TDD vertical slices.
+  - Output profile + RTMP redaction: ~/code/inilive-studio/src/lib/server/bridge-pipeline.ts (+ bridge-pipeline.spec.ts, 5 tests)
+  - SvelteKit bridge client + WHIP proxy: ~/code/inilive-studio/src/lib/server/bridge-client.ts, ~/code/inilive-studio/src/routes/whip/[roomId]/+server.ts (+ specs, 5 tests)
+  - Separate bridge process: ~/code/inilive-studio/services/broadcast-bridge/ (Node control API + GStreamer launcher)
+  - Pinned container image: ~/code/inilive-studio/services/broadcast-bridge/Dockerfile (Ubuntu 24.04 + gst-plugin-webrtc build)
+  - Spike doc: ~/code/inilive-studio/docs/spikes/bridge-003-gstreamer-whip-rtmp.md
+  - Verification script: ~/code/inilive-studio/scripts/verify/bridge-003-gstreamer.mjs (control API session lifecycle passed; container build pending stable Podman connection)
+  - Backstage starts/stops bridge sessions when `BRIDGE_ENABLED=1`.
+  - ./init.sh passed after implementation (42 Vitest tests, 35 Playwright tests).
+- 2026-06-16: Continued bridge-003 verification hardening.
+  - Added strict verification gate: ~/code/inilive-studio/scripts/verify/bridge-003-gstreamer-lib.mjs (+ bridge-verification.spec.ts).
+  - The verification script now fails unless the pinned container builds, container GStreamer meets ≥1.22, and the control API lifecycle passes.
+  - Added nodejs to ~/code/inilive-studio/services/broadcast-bridge/Dockerfile so the bridge image can run `node src/server.mjs`.
+  - Current blocker: `podman machine start podman-machine-default` returned success twice, but `podman machine inspect` still reported stopped and `podman info` could not connect to 127.0.0.1:62234.
+  - Targeted verification passed: bridge-verification, bridge-pipeline, bridge-client, and WHIP route specs (11 tests); npm run check passed with the existing @types/node warning; npm run lint passed with the existing empty src/lib/index.ts warning.
+  - `node scripts/verify/bridge-003-gstreamer.mjs` now fails honestly until Podman can build and run the pinned image.
+- 2026-06-16: Reached the container build path and narrowed the bridge image blocker.
+  - Podman now starts and reports `State: running`; local machine memory was increased to 8 GiB for the GStreamer Rust plugin build.
+  - Fixed the Dockerfile's moving dependency by pinning `gst-plugins-rs` to `gstreamer-1.24.13`, aligned with Ubuntu 24.04 GStreamer 1.24 packages.
+  - Reduced Rust build pressure with single-job Cargo, Cargo Git CLI fetches, and a debug `gst-plugin-webrtc` build copied from `target/debug/libgstrswebrtc.so`.
+  - Confirmed Ubuntu 24.04's packaged GStreamer does not provide `whipserversrc`, so the source-built Rust plugin is still required.
+  - Current blocker: `podman build -t inilive-broadcast-bridge:bridge-003 services/broadcast-bridge` hangs while Cargo updates `https://github.com/gtk-rs/gtk-rs-core` inside the container.
+  - Targeted verification passed: `npm run test:unit -- --run src/lib/server/bridge-verification.spec.ts src/lib/server/bridge-pipeline.spec.ts` (6 tests).
+- 2026-06-17: Completed bridge-003 AFK verification.
+  - Replaced the moving `gst-plugins-rs` source build with the published `gst-plugin-webrtc` crate tarball in ~/code/inilive-studio/services/broadcast-bridge/Dockerfile, avoiding the `gtk-rs-core` Git fetch blocker.
+  - Tightened ~/code/inilive-studio/scripts/verify/bridge-003-gstreamer.mjs so it requires the pinned image to build, container GStreamer to meet 1.22+, required runtime elements (`whipserversrc`, `x264enc`, `avenc_aac`, `flvmux`, `rtmpsink`) to inspect successfully, and the bridge control API session lifecycle to pass.
+  - Wired the Host browser path so the 720p Composed Room Feed creates a WHIP offer and POSTs it to `/whip/[roomId]` with `Authorization: Bearer whip_...` when Broadcasting starts.
+  - Added a silent audio track for WHIP publishing so the bridge receives video and audio sources.
+  - Browser coverage: ~/code/inilive-studio/src/routes/room/[roomId]/broadcast.e2e.ts confirms authenticated SDP POST and connected WHIP status.
+  - Targeted verification passed: `npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts' --workers=1` (5 tests), `npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts' --workers=1` (5 tests), bridge unit specs (11 tests), `npm run check` (0 errors, existing @types/node warning), and `node scripts/verify/bridge-003-gstreamer.mjs`.
+  - Strict bridge verifier evidence: container GStreamer 1.24, required elements available, and control API session lifecycle passed.
 
 *** Notes
 
 - OBS remains a testing aid only, not part of the v1 product flow.
+- Real YouTube-side confirmation and wrong-credential behavior remain in bridge-005 because they require a live-enabled YouTube account.
 
 ** TODO bridge-004 - Add Host-visible Broadcast Health callbacks
 :PROPERTIES:
