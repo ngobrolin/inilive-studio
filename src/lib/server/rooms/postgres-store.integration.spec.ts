@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { Kysely } from "kysely";
 import { createDatabase, type Database } from "$lib/server/db/database";
@@ -22,7 +23,7 @@ describe.skipIf(!databaseUrl)("postgres host rooms integration", () => {
 
   it("persists reusable Host Rooms across fresh store connections", async () => {
     const authStore = createPostgresAuthStore(db);
-    const host = await authStore.createHostAccount("rooms-host@example.com");
+    const host = await authStore.createHostAccount(`rooms-host-${randomUUID()}@example.com`);
 
     const writeStore = createPostgresRoomStore(db);
     await createHostRoom({ hostAccountId: host.id, title: "Weekly show" }, { store: writeStore });
