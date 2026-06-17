@@ -10,6 +10,7 @@ export default defineConfig({
       LIVEKIT_URL: "",
       LIVEKIT_API_KEY: "",
       LIVEKIT_API_SECRET: "",
+      DATABASE_URL: "",
     },
   },
   testMatch: "**/*.e2e.{ts,js}",
