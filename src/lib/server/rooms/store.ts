@@ -10,6 +10,7 @@ export type HostRoom = {
 export type RoomStore = {
   createRoom(hostAccountId: string, title: string, guestInviteTokenHash: string): Promise<HostRoom>;
   listRoomsForHost(hostAccountId: string): Promise<HostRoom[]>;
+  getRoom(roomId: string): Promise<HostRoom | null>;
   roomExists(roomId: string): Promise<boolean>;
   hasActiveGuestInvite(roomId: string, tokenHash: string): Promise<boolean>;
   regenerateGuestInvite(
@@ -46,6 +47,10 @@ export function createInMemoryRoomStore(): RoomStore {
 
     async listRoomsForHost(hostAccountId) {
       return [...(roomsByHost.get(hostAccountId) ?? [])];
+    },
+
+    async getRoom(roomId) {
+      return rooms.get(roomId) ?? null;
     },
 
     async roomExists(roomId) {

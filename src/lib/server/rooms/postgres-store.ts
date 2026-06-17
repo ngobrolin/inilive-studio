@@ -65,6 +65,27 @@ export function createPostgresRoomStore(db: Kysely<Database>): RoomStore {
       );
     },
 
+    async getRoom(roomId) {
+      const row = await db
+        .selectFrom("rooms")
+        .select(["id", "host_account_id", "title", "created_at", "updated_at"])
+        .where("id", "=", roomId)
+        .executeTakeFirst();
+
+      if (!row) {
+        return null;
+      }
+
+      return {
+        id: row.id,
+        hostAccountId: row.host_account_id,
+        title: row.title,
+        guestInviteToken: "",
+        createdAt: row.created_at,
+        updatedAt: row.updated_at,
+      };
+    },
+
     async roomExists(roomId) {
       const row = await db
         .selectFrom("rooms")
