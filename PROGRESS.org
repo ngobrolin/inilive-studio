@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: invites-001 product-backed Guest Invites.
+- Current highest-priority unfinished AFK feature: health-001 persist Broadcast Health events.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
@@ -2022,4 +2022,54 @@ Continue with TDD and complete invites-001: product-backed Guest Invites for reu
 
 *** Next best step
 
-Start broadcasts-001 with TDD: product-backed Broadcast records for reusable Rooms, unless bridge-005 credentials become available first.
+Start health-001 with TDD: persist Broadcast Health events in Postgres, unless bridge-005 credentials become available first.
+
+* 2026-06-17 broadcasts-001 product-backed Broadcast records
+
+*** Goal
+
+Continue with TDD and complete broadcasts-001: product-backed Broadcast records for reusable Rooms.
+
+*** Completed
+
+- Ran ./init.sh baseline before broadcast work; baseline passed.
+- TDD cycle 1: unit test for starting Countdown creating a persisted Broadcast record.
+- TDD cycle 2: unit tests for canceling Countdown, completing Countdown into Broadcasting, and persisting Ended/Failed states.
+- TDD cycle 3: Playwright coverage for product Room Countdown start, Host cancel, and Guest visibility.
+- Added in-memory and Postgres Broadcast stores with migration 0003_broadcast_countdown.sql.
+- Wired reusable Rooms to a 5-second Broadcast Countdown before bridge start while keeping prototype Rooms on the direct start path.
+- Synced Ended/Failed terminal states from backstage and bridge callbacks into persisted Broadcast records.
+- Marked broadcasts-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before broadcasts-001: passed.
+  - Vitest: 71 passed, 2 skipped.
+  - Playwright: 46 passed.
+- Targeted verification while developing:
+  - `npm run test:unit -- --run src/lib/server/broadcasts/broadcasts.spec.ts`: passed (5 tests).
+  - `npx playwright test 'src/routes/dashboard/broadcasts.e2e.ts' --workers=1`: passed (3 tests).
+  - `npm run check`: passed with 0 errors and 0 warnings.
+- Final ./init.sh: passed.
+  - Vitest: 76 passed, 2 skipped.
+  - Playwright: 50 passed.
+
+*** Evidence captured
+
+- Broadcast service and stores: src/lib/server/broadcasts/
+- Countdown migration: src/lib/server/db/migrations/0003_broadcast_countdown.sql
+- Backstage integration: src/routes/room/[roomId]/backstage/+page.server.ts
+- Countdown UI: src/lib/room/RoomPresencePanel.svelte
+- Unit coverage: src/lib/server/broadcasts/broadcasts.spec.ts
+- Browser coverage: src/routes/dashboard/broadcasts.e2e.ts
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Hermetic e2e uses in-memory broadcast storage when DATABASE_URL is unset; Postgres Broadcast persistence should be exercised with DATABASE_URL integration verification in a later hardening pass.
+- Countdown cancel copy for Guests briefly showing "Broadcast cancelled" is not yet implemented; cancel returns directly to Backstage.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start health-001 with TDD: persist Broadcast Health events in Postgres.

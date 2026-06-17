@@ -1107,7 +1107,7 @@ Create product-backed Guest Invites for each Room. A Host can copy, revoke, or r
 :TYPE: AFK
 :PRIORITY: 21
 :AREA: broadcasts
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: rooms-001 bridge-004
 :END:
 
@@ -1117,12 +1117,12 @@ Persist one Broadcast record per live run of a reusable Room. Add the product Br
 
 *** Acceptance criteria
 
-- [ ] Starting Countdown creates a Broadcast record.
-- [ ] Countdown lasts 5 seconds and is visible to Host and Guests.
-- [ ] Host can cancel Countdown before it completes; canceled record handling matches the spec.
-- [ ] Broadcasting, Ended, and Failed states are persisted.
-- [ ] Ending a Broadcast returns current participants to Backstage.
-- [ ] Failed Broadcast allows starting a new Broadcast rather than in-place resume.
+- [X] Starting Countdown creates a Broadcast record.
+- [X] Countdown lasts 5 seconds and is visible to Host and Guests.
+- [X] Host can cancel Countdown before it completes; canceled record handling matches the spec.
+- [X] Broadcasting, Ended, and Failed states are persisted.
+- [X] Ending a Broadcast returns current participants to Backstage.
+- [X] Failed Broadcast allows starting a new Broadcast rather than in-place resume.
 
 *** Verification
 
@@ -1135,7 +1135,15 @@ Persist one Broadcast record per live run of a reusable Room. Add the product Br
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Implemented product-backed Broadcast records with TDD vertical slices.
+  - Broadcast service and stores: ~/code/inilive-studio/src/lib/server/broadcasts/broadcasts.ts, ~/code/inilive-studio/src/lib/server/broadcasts/store.ts, ~/code/inilive-studio/src/lib/server/broadcasts/postgres-store.ts, and ~/code/inilive-studio/src/lib/server/broadcasts/runtime.ts.
+  - Countdown migration: ~/code/inilive-studio/src/lib/server/db/migrations/0003_broadcast_countdown.sql.
+  - Product Room Countdown runtime wiring: ~/code/inilive-studio/src/lib/server/broadcast-state.ts and ~/code/inilive-studio/src/routes/room/[roomId]/backstage/+page.server.ts.
+  - Backstage Countdown UI: ~/code/inilive-studio/src/lib/room/RoomPresencePanel.svelte.
+  - Unit coverage: ~/code/inilive-studio/src/lib/server/broadcasts/broadcasts.spec.ts (5 tests).
+  - Browser coverage: ~/code/inilive-studio/src/routes/dashboard/broadcasts.e2e.ts (3 tests).
+  - Prototype Rooms still start Broadcasting directly without Countdown; reusable product Rooms use the 5-second Countdown before bridge start.
+  - Verification passed: ./init.sh with 76 Vitest tests passing, 2 skipped Postgres integration tests without DATABASE_URL, and 50 Playwright tests passing.
 
 *** Notes
 
