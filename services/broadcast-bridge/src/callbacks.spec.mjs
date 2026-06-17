@@ -1,11 +1,22 @@
+import { createHmac } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { buildBroadcastHealthCallbackRequest, sendBroadcastHealthCallback } from "./callbacks.mjs";
 
+function buildSignatureHeader(body, secret) {
+  const digest = createHmac("sha256", secret).update(body).digest("hex");
+  return `sha256=${digest}`;
+}
+
 describe("Broadcast Health callbacks", () => {
-  it("builds an authenticated JSON callback request without stream credentials", () => {
+  it("builds an HMAC-signed JSON callback request without stream credentials", () => {
+    const body = JSON.stringify({
+      status: "failed",
+      message: "RTMP output disconnected.",
+    });
     const [, options] = buildBroadcastHealthCallbackRequest({
       callbackUrl: "http://localhost/bridge/demo/events",
       callbackBearerToken: "bridge_secret",
+      callbackHmacSecret: "bridge-hmac-secret",
       status: "failed",
       message: "RTMP output disconnected.",
     });
@@ -15,11 +26,9 @@ describe("Broadcast Health callbacks", () => {
       headers: {
         Authorization: "Bearer bridge_secret",
         "Content-Type": "application/json",
+        "X-Bridge-Signature": buildSignatureHeader(body, "bridge-hmac-secret"),
       },
-      body: JSON.stringify({
-        status: "failed",
-        message: "RTMP output disconnected.",
-      }),
+      body,
     });
     expect(options.body).not.toContain("stream-key");
   });
@@ -31,6 +40,7 @@ describe("Broadcast Health callbacks", () => {
       {
         callbackUrl: "http://localhost/bridge/demo/events",
         callbackBearerToken: "bridge_secret",
+        callbackHmacSecret: "bridge-hmac-secret",
         status: "connected",
         message: "Broadcast Bridge is connected.",
       },
@@ -48,6 +58,7 @@ describe("Broadcast Health callbacks", () => {
         {
           callbackUrl: "http://localhost/bridge/demo/events",
           callbackBearerToken: "bridge_secret",
+          callbackHmacSecret: "bridge-hmac-secret",
           status: "connected",
           message: "Broadcast Bridge is connected.",
         },

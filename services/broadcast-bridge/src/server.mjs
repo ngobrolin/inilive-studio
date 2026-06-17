@@ -35,6 +35,7 @@ function reportBroadcastHealth(session, status, message) {
   sendBroadcastHealthCallback({
     callbackUrl: session.callbackUrl,
     callbackBearerToken: session.callbackBearerToken,
+    callbackHmacSecret: process.env.BRIDGE_CALLBACK_HMAC_SECRET ?? "dev-bridge-callback-hmac-secret",
     status,
     message,
   }).catch((error) => {
