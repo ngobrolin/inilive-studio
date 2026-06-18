@@ -2,10 +2,13 @@ import { spawn } from "node:child_process";
 import { createServer } from "node:http";
 import { sendBroadcastHealthCallback } from "./callbacks.mjs";
 import { buildGstLaunchArgs, buildRtmpSinkLocation, redactRtmpSinkLocation } from "./pipeline.mjs";
+import { classifyPipelineFailure } from "./pipeline-failure.mjs";
+import { hasRunningPipeline } from "./session-lifecycle.mjs";
 
 const CONTROL_PORT = Number(process.env.BRIDGE_CONTROL_PORT ?? 8787);
 const WHIP_PORT = Number(process.env.BRIDGE_WHIP_PORT ?? 8788);
 const WHIP_SESSION_BASE_PORT = Number(process.env.BRIDGE_WHIP_SESSION_BASE_PORT ?? 8790);
+const LISTEN_HOST = process.env.BRIDGE_LISTEN_HOST ?? "127.0.0.1";
 
 /** @type {Map<string, { roomId: string, whipPort: number, process: import('node:child_process').ChildProcessWithoutNullStreams | null, rtmpLocation: string, callbackUrl: string, callbackBearerToken: string, terminalReported: boolean }>} */
 const sessions = new Map();
@@ -52,6 +55,12 @@ function reportTerminalBroadcastHealth(session, status, message) {
   reportBroadcastHealth(session, status, message);
 }
 
+const GST_ERROR_TAIL_BYTES = 8192;
+
+function appendErrorTail(current, text) {
+  return `${current}${text}`.slice(-GST_ERROR_TAIL_BYTES);
+}
+
 async function readGStreamerVersion() {
   return new Promise((resolve) => {
     const child = spawn("gst-launch-1.0", ["--version"]);
@@ -83,6 +92,7 @@ function startPipeline(session) {
   }
 
   const child = spawn("gst-launch-1.0", gstArgs, { env, stdio: ["ignore", "pipe", "pipe"] });
+  let stderrTail = "";
   child.on("error", (error) => {
     process.stderr.write(
       `[bridge:${session.whipPort}] failed to start pipeline: ${error.message}\n`,
@@ -97,21 +107,26 @@ function startPipeline(session) {
     const text = chunk
       .toString()
       .replaceAll(session.rtmpLocation, redactRtmpSinkLocation(session.rtmpLocation));
+    stderrTail = appendErrorTail(stderrTail, text);
     process.stderr.write(`[bridge:${session.whipPort}] ${text}`);
     if (/warning/i.test(text)) {
       reportBroadcastHealth(session, "degraded", "Broadcast Bridge reports degraded output.");
     }
   });
-  child.on("exit", (code) => {
+  child.on("close", (code, signal) => {
     process.stderr.write(
-      `[bridge:${session.whipPort}] pipeline exited with code ${code ?? "unknown"}\n`,
+      `[bridge:${session.whipPort}] pipeline closed with code ${code ?? "unknown"} signal ${
+        signal ?? "none"
+      }\n`,
     );
     session.process = null;
     if (!session.terminalReported) {
       reportTerminalBroadcastHealth(
         session,
         code === 0 ? "ended" : "failed",
-        code === 0 ? "Broadcast Bridge ended the Broadcast." : "RTMP output disconnected.",
+        code === 0
+          ? "Broadcast Bridge ended the Broadcast."
+          : classifyPipelineFailure(stderrTail),
       );
     }
   });
@@ -138,36 +153,43 @@ async function proxyWhipRequest(roomId, request, response) {
     return;
   }
 
-  const targetUrl = `http://127.0.0.1:${session.whipPort}/whip/endpoint`;
-  const headers = new Headers();
-  for (const [key, value] of Object.entries(request.headers)) {
-    if (typeof value === "string") {
-      headers.set(key, value);
+  try {
+    const targetUrl = `http://127.0.0.1:${session.whipPort}/whip/endpoint`;
+    const headers = new Headers();
+    for (const [key, value] of Object.entries(request.headers)) {
+      if (typeof value === "string") {
+        headers.set(key, value);
+      }
     }
+
+    const body = await new Promise((resolve, reject) => {
+      const chunks = [];
+      request.on("data", (chunk) => chunks.push(chunk));
+      request.on("end", () => resolve(Buffer.concat(chunks)));
+      request.on("error", reject);
+    });
+    const bridgeResponse = await fetch(targetUrl, {
+      method: request.method,
+      headers,
+      body,
+    });
+    const bridgeResponseBody = Buffer.from(await bridgeResponse.arrayBuffer());
+    if (bridgeResponse.ok) {
+      reportBroadcastHealth(
+        session,
+        "connected",
+        "Broadcast Bridge accepted WHIP ingest and is publishing to the Broadcast Destination.",
+      );
+    }
+
+    response.writeHead(bridgeResponse.status, Object.fromEntries(bridgeResponse.headers.entries()));
+    response.end(bridgeResponseBody);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`[bridge:${session.whipPort}] WHIP proxy failed: ${message}\n`);
+    response.writeHead(502, { "Content-Type": "text/plain" });
+    response.end("Broadcast Bridge WHIP ingest is not ready.");
   }
-
-  const body = await new Promise((resolve, reject) => {
-    const chunks = [];
-    request.on("data", (chunk) => chunks.push(chunk));
-    request.on("end", () => resolve(Buffer.concat(chunks)));
-    request.on("error", reject);
-  });
-
-  const bridgeResponse = await fetch(targetUrl, {
-    method: request.method,
-    headers,
-    body,
-  });
-  if (bridgeResponse.ok) {
-    reportBroadcastHealth(
-      session,
-      "connected",
-      "Broadcast Bridge is connected to the Broadcast Destination.",
-    );
-  }
-
-  response.writeHead(bridgeResponse.status, Object.fromEntries(bridgeResponse.headers.entries()));
-  response.end(Buffer.from(await bridgeResponse.arrayBuffer()));
 }
 
 const controlServer = createServer(async (request, response) => {
@@ -200,10 +222,19 @@ const controlServer = createServer(async (request, response) => {
         return;
       }
 
-      if (sessions.has(roomId)) {
+      if (!/^rtmps?:\/\//i.test(rtmpServerUrl)) {
+        sendJson(response, 400, {
+          error: "RTMP server URL must start with rtmp:// or rtmps://.",
+        });
+        return;
+      }
+
+      const existingSession = sessions.get(roomId);
+      if (hasRunningPipeline(existingSession)) {
         sendJson(response, 409, { error: "A bridge session already exists for this Room." });
         return;
       }
+      sessions.delete(roomId);
 
       const whipPort = WHIP_SESSION_BASE_PORT + nextSessionPortOffset;
       nextSessionPortOffset += 1;
@@ -264,12 +295,14 @@ const whipServer = createServer(async (request, response) => {
   response.end();
 });
 
-controlServer.listen(CONTROL_PORT, "127.0.0.1", () => {
+controlServer.listen(CONTROL_PORT, LISTEN_HOST, () => {
   process.stdout.write(
-    `Broadcast bridge control API listening on http://127.0.0.1:${CONTROL_PORT}\n`,
+    `Broadcast bridge control API listening on http://${LISTEN_HOST}:${CONTROL_PORT}\n`,
   );
 });
 
-whipServer.listen(WHIP_PORT, "127.0.0.1", () => {
-  process.stdout.write(`Broadcast bridge WHIP proxy listening on http://127.0.0.1:${WHIP_PORT}\n`);
+whipServer.listen(WHIP_PORT, LISTEN_HOST, () => {
+  process.stdout.write(
+    `Broadcast bridge WHIP proxy listening on http://${LISTEN_HOST}:${WHIP_PORT}\n`,
+  );
 });
