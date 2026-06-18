@@ -2,12 +2,18 @@
 	import { onDestroy } from 'svelte';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
 	import type {
+		LocalVideoTrack,
 		Participant,
 		RemoteParticipant,
 		RemoteTrack,
 		RemoteTrackPublication,
 		Room as LiveKitRoom,
 	} from 'livekit-client';
+	import {
+		formatLiveKitConnectionError,
+		liveKitSessionKey,
+		withMediaSetupTimeout,
+	} from '$lib/room/livekit-media';
 	import {
 		applyRemoteEvent,
 		emptyRemoteParticipants,
@@ -37,8 +43,20 @@
 	let screenShareLabel = $state('Screen Share inactive');
 	let remoteScreenShare = $state<{ identity: string; name: string; active: boolean } | null>(null);
 	let remoteParticipants = $state(emptyRemoteParticipants());
+	let localCameraTrack = $state<LocalVideoTrack | null>(null);
 
 	const remoteTiles = $derived(listRemoteTiles(remoteParticipants));
+	const sessionKey = $derived(
+		liveKitSessionKey({
+			stub: grant.stub,
+			token: grant.token,
+			serverUrl: grant.serverUrl,
+			cameraEnabled,
+			microphoneEnabled,
+			screenShareActive,
+			canScreenShare,
+		}),
+	);
 
 	// Keep the actual remote media elements out of reactive state so attaching
 	// tracks never triggers a re-render loop.
@@ -109,6 +127,19 @@
 	});
 
 	$effect(() => {
+		if (!localVideo || !localCameraTrack) {
+			return;
+		}
+
+		localCameraTrack.attach(localVideo);
+
+		return () => {
+			localCameraTrack?.detach();
+		};
+	});
+
+	$effect(() => {
+		const activeSessionKey = sessionKey;
 		let cancelled = false;
 		let room: LiveKitRoom | null = null;
 
@@ -129,8 +160,8 @@
 
 					await room.connect(grant.serverUrl, grant.token);
 
-					if (cancelled) {
-						room.disconnect();
+					if (cancelled || activeSessionKey !== sessionKey) {
+						await room.disconnect();
 						return;
 					}
 
@@ -148,26 +179,29 @@
 						}
 					}
 
-					const cameraPublication = await room.localParticipant.setCameraEnabled(cameraEnabled);
-					await room.localParticipant.setMicrophoneEnabled(microphoneEnabled);
+					const cameraPublication = await withMediaSetupTimeout(
+						room.localParticipant.setCameraEnabled(cameraEnabled),
+						15_000,
+						'Camera setup timed out. Close other apps using the camera and reload Backstage.',
+					);
+					await withMediaSetupTimeout(
+						room.localParticipant.setMicrophoneEnabled(microphoneEnabled),
+						15_000,
+						'Microphone setup timed out. Close other apps using the microphone and reload Backstage.',
+					);
 					if (canScreenShare && screenShareActive) {
 						await room.localParticipant.setScreenShareEnabled(true);
 						screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
 					} else {
-						screenShareLabel = grant.stub
-							? 'Screen Share state is reflected locally in stub mode'
-							: 'Screen Share inactive';
+						screenShareLabel = 'Screen Share inactive';
 					}
 
-					if (cancelled) {
-						room.disconnect();
+					if (cancelled || activeSessionKey !== sessionKey) {
+						await room.disconnect();
 						return;
 					}
 
-					if (localVideo && cameraPublication?.track) {
-						cameraPublication.track.attach(localVideo);
-					}
-
+					localCameraTrack = (cameraPublication?.track as LocalVideoTrack | undefined) ?? null;
 					connectionStatus = 'Connected · LiveKit';
 					connectionLabel = cameraEnabled
 						? 'Publishing camera and microphone choices into this prototype Room'
@@ -181,7 +215,7 @@
 					audio: microphoneEnabled,
 				});
 
-				if (cancelled) {
+				if (cancelled || activeSessionKey !== sessionKey) {
 					for (const track of stream.getTracks()) {
 						track.stop();
 					}
@@ -192,9 +226,13 @@
 				connectionLabel = grant.stub
 					? 'Local preview ready · configure LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET for Room media'
 					: 'Connecting to LiveKit Cloud';
-			} catch {
-				if (!cancelled) {
-					connectionLabel = 'Unable to start local media preview';
+			} catch (error) {
+				if (!cancelled && activeSessionKey === sessionKey) {
+					connectionStatus = grant.stub
+						? 'Local preview failed'
+						: 'LiveKit connection failed';
+					connectionLabel = formatLiveKitConnectionError(error);
+					localCameraTrack = null;
 				}
 			}
 		}
@@ -301,8 +339,11 @@
 
 		return () => {
 			cancelled = true;
-			void room?.localParticipant.setScreenShareEnabled(false);
-			room?.disconnect();
+			localCameraTrack = null;
+			const activeRoom = room;
+			room = null;
+			void activeRoom?.localParticipant.setScreenShareEnabled(false);
+			void activeRoom?.disconnect();
 			remoteVideoElements.clear();
 			remoteAudioElements.clear();
 			pendingVideoTracks.clear();
