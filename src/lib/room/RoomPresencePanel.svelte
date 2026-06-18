@@ -10,6 +10,7 @@
 		presence,
 		chatMessages,
 		activeParticipantId,
+		actionError = null,
 		mediaGrant,
 		broadcast,
 		hostWhipIngestGrant,
@@ -19,6 +20,7 @@
 		presence: RoomPresence;
 		chatMessages: RoomChatMessage[];
 		activeParticipantId: string;
+		actionError?: string | null;
 		mediaGrant: MediaJoinGrant | null;
 		broadcast: RoomBroadcastView;
 		hostWhipIngestGrant: BroadcastIngestGrant | null;
@@ -130,6 +132,15 @@
 			restored after restart.
 		</p>
 	</header>
+
+	{#if actionError}
+		<p
+			class="mt-6 rounded-md border border-rose-300 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-950"
+			data-testid="action-error"
+		>
+			{actionError}
+		</p>
+	{/if}
 
 	{#if activeHost && guestInvitePath}
 		<section
