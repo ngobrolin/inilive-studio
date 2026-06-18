@@ -256,7 +256,8 @@ export function completeRoomBroadcastCountdown(input: { roomId: string }): { err
     return { error: "No Broadcast Countdown is ready to complete in this Room." };
   }
 
-  if (!record.countdownEndsAt || record.countdownEndsAt > Date.now()) {
+  const now = Date.now();
+  if (!record.countdownEndsAt || record.countdownEndsAt > now + 250) {
     return { error: "Broadcast Countdown is still running." };
   }
 

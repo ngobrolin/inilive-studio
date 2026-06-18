@@ -248,6 +248,11 @@ export const actions: Actions = {
         await cancelBroadcastCountdown({ broadcastId: productBroadcastId }, { store: broadcastStore });
       }
     } else if (action === "complete-countdown") {
+      const currentBroadcast = getRoomBroadcastView(params.roomId);
+      if (currentBroadcast.state === "broadcasting") {
+        redirect(303, `/room/${params.roomId}/backstage?participant=${hostParticipantId}`);
+      }
+
       const productBroadcastId = getRoomProductBroadcastId(params.roomId);
 
       if (productBroadcastId) {

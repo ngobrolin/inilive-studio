@@ -44,6 +44,7 @@
 	const isCountdown = $derived(liveBroadcast.state === 'countdown');
 	let countdownTick = $state(Date.now());
 	let completeCountdownForm = $state<HTMLFormElement | null>(null);
+	let completeCountdownRequested = $state(false);
 	const countdownSecondsRemaining = $derived(
 		liveBroadcast.countdownEndsAt
 			? Math.max(0, Math.ceil((liveBroadcast.countdownEndsAt - countdownTick) / 1_000))
@@ -89,19 +90,30 @@
 	});
 
 	$effect(() => {
-		if (!activeHost || !isCountdown || !liveBroadcast.countdownEndsAt) {
+		if (!isCountdown) {
+			completeCountdownRequested = false;
+		}
+
+		if (!activeHost || !isCountdown || !liveBroadcast.countdownEndsAt || completeCountdownRequested) {
 			return;
 		}
+
+		const submitCompleteCountdown = () => {
+			if (completeCountdownRequested) {
+				return;
+			}
+
+			completeCountdownRequested = true;
+			completeCountdownForm?.requestSubmit();
+		};
 
 		const remaining = liveBroadcast.countdownEndsAt - Date.now();
 		if (remaining <= 0) {
-			completeCountdownForm?.requestSubmit();
+			submitCompleteCountdown();
 			return;
 		}
 
-		const timeout = window.setTimeout(() => {
-			completeCountdownForm?.requestSubmit();
-		}, remaining);
+		const timeout = window.setTimeout(submitCompleteCountdown, remaining);
 
 		return () => window.clearTimeout(timeout);
 	});

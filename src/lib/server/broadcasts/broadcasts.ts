@@ -69,7 +69,7 @@ export async function completeBroadcastCountdown(
   }
 
   const now = input.now ?? Date.now();
-  if (!record.countdownEndsAt || record.countdownEndsAt.getTime() > now) {
+  if (!record.countdownEndsAt || record.countdownEndsAt.getTime() > now + 250) {
     return { broadcast: null, error: "countdown_not_ready" };
   }
 
