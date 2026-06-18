@@ -35,6 +35,10 @@ export function isBridgeClientEnabled(): boolean {
   return config.enabled;
 }
 
+function bridgeUnreachableMessage(): string {
+  return `Broadcast Bridge is not reachable at ${config.controlBaseUrl}. Start the bridge container before broadcasting.`;
+}
+
 export async function startBridgeSession(input: {
   roomId: string;
   rtmpServerUrl: string;
@@ -46,11 +50,16 @@ export async function startBridgeSession(input: {
     return;
   }
 
-  const response = await fetch(`${config.controlBaseUrl}/sessions`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${config.controlBaseUrl}/sessions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+  } catch {
+    throw new Error(bridgeUnreachableMessage());
+  }
 
   if (!response.ok) {
     throw new Error(`Bridge session start failed with status ${response.status}`);

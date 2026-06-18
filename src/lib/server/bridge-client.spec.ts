@@ -89,4 +89,19 @@ describe("bridge client", () => {
       method: "DELETE",
     });
   });
+
+  it("reports when the bridge control API is unreachable", async () => {
+    configureBridgeClient({ controlBaseUrl: "http://127.0.0.1:8787", enabled: true });
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("fetch failed")));
+
+    await expect(
+      startBridgeSession({
+        roomId: "demo",
+        rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+        streamKey: "secret-stream-key",
+        callbackUrl: "http://localhost/bridge/demo/events",
+        callbackBearerToken: "bridge_secret",
+      }),
+    ).rejects.toThrow("Broadcast Bridge is not reachable at http://127.0.0.1:8787");
+  });
 });
