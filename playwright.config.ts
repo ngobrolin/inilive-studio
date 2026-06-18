@@ -11,6 +11,7 @@ export default defineConfig({
       LIVEKIT_API_KEY: "",
       LIVEKIT_API_SECRET: "",
       DATABASE_URL: "",
+      BRIDGE_ENABLED: "",
     },
   },
   testMatch: "**/*.e2e.{ts,js}",

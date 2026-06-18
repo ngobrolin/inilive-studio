@@ -1,16 +1,23 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  enterGuestBackstage,
+  enterHostBackstage,
+  setupProductRoom,
+  startProductBroadcast,
+} from "$lib/testing/playwright/product-room";
 
-test("Host can enter YouTube credentials and start Broadcasting", async ({ page }) => {
-  const roomId = `broadcast-start-${Date.now()}`;
+test("Host can enter YouTube credentials and start Broadcasting", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-start@example.com",
+    title: "Broadcast start episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await page.goto(hostUrl);
   await expect(page.getByTestId("broadcast-controls")).toBeVisible();
   await expect(page.getByText("the YouTube archive is the recording")).toBeVisible();
-  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
-  await page.getByLabel("Stream key").fill("test-stream-key");
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
+  await startProductBroadcast(page);
 
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcasting");
   await expect(page.getByTestId("broadcast-health")).toContainText("Connecting");
@@ -21,15 +28,16 @@ test("Host can enter YouTube credentials and start Broadcasting", async ({ page 
   await expect(page.getByLabel("Stream key")).toHaveCount(0);
 });
 
-test("Host can end a Broadcast and return to the Ended state", async ({ page }) => {
-  const roomId = `broadcast-end-${Date.now()}`;
+test("Host can end a Broadcast and return to the Ended state", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-end@example.com",
+    title: "Broadcast end episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await page.goto(hostUrl);
-  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
-  await page.getByLabel("Stream key").fill("test-stream-key");
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
+  await startProductBroadcast(page);
   await page.getByRole("button", { name: "End Broadcast" }).click();
 
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcast ended");
@@ -37,16 +45,17 @@ test("Host can end a Broadcast and return to the Ended state", async ({ page }) 
   await expect(page.getByLabel("Stream key")).toBeVisible();
 });
 
-test("Host Broadcast Health updates from bridge callback polling", async ({ page }) => {
-  const roomId = `broadcast-health-${Date.now()}`;
+test("Host Broadcast Health updates from bridge callback polling", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-health@example.com",
+    title: "Broadcast health episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await page.goto(hostUrl);
-  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
-  await page.getByLabel("Stream key").fill("test-stream-key");
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
-  await page.route(`**/room/${roomId}/broadcast-state?**`, async (route) => {
+  await startProductBroadcast(page);
+  await page.route(`**/room/${room.roomId}/broadcast-state?**`, async (route) => {
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -68,16 +77,17 @@ test("Host Broadcast Health updates from bridge callback polling", async ({ page
   await expect(page.getByTestId("broadcast-health")).toContainText("RTMP output is degraded.");
 });
 
-test("Guest sees Broadcast State but not Host credential controls", async ({ page }) => {
-  const roomId = `broadcast-guest-${Date.now()}`;
+test("Guest sees Broadcast State but not Host credential controls", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-guest-view@example.com",
+    title: "Broadcast guest view episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  const guestUrl = await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const guestUrl = await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await page.goto(hostUrl);
-  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
-  await page.getByLabel("Stream key").fill("test-stream-key");
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
+  await startProductBroadcast(page);
 
   await page.goto(guestUrl);
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcasting");
@@ -87,15 +97,16 @@ test("Guest sees Broadcast State but not Host credential controls", async ({ pag
   await expect(page.getByLabel("Stream key")).toHaveCount(0);
 });
 
-test("Host sees Failed when the bridge reports a Broadcast failure", async ({ page }) => {
-  const roomId = `broadcast-failed-${Date.now()}`;
+test("Host sees Failed when the bridge reports a Broadcast failure", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-failed@example.com",
+    title: "Broadcast failed episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await page.goto(hostUrl);
-  await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
-  await page.getByLabel("Stream key").fill("test-stream-key");
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
+  await startProductBroadcast(page);
   await page.getByRole("button", { name: "Simulate bridge failure" }).click();
 
   await expect(page.getByTestId("broadcast-state")).toContainText("Broadcast failed");
@@ -108,30 +119,26 @@ test("Host sees Failed when the bridge reports a Broadcast failure", async ({ pa
 
 test("Host sends the Composed Room Feed to the authenticated WHIP ingest endpoint", async ({
   page,
+  request,
 }) => {
-  const roomId = `broadcast-whip-${Date.now()}`;
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-whip@example.com",
+    title: "Broadcast whip episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await page.goto(hostUrl);
   await page.getByLabel("RTMP server URL").fill("rtmp://a.rtmp.youtube.com/live2");
   await page.getByLabel("Stream key").fill("test-stream-key");
   const whipRequest = page.waitForRequest((request) => {
-    return request.method() === "POST" && request.url().endsWith(`/whip/${roomId}`);
+    return request.method() === "POST" && request.url().endsWith(`/whip/${room.roomId}`);
   });
-  await page.getByRole("button", { name: "Start Broadcast" }).click();
+  await page.getByRole("button", { name: "Start Broadcast Countdown" }).click();
 
-  const request = await whipRequest;
-  expect(request.headers().authorization).toMatch(/^Bearer whip_/);
-  expect(request.headers()["content-type"]).toContain("application/sdp");
-  expect(request.postData() ?? "").toContain("v=0");
+  const requestInfo = await whipRequest;
+  expect(requestInfo.headers().authorization).toMatch(/^Bearer whip_/);
+  expect(requestInfo.headers()["content-type"]).toContain("application/sdp");
+  expect(requestInfo.postData() ?? "").toContain("v=0");
   await expect(page.getByTestId("whip-ingest-status")).toContainText("WHIP ingest connected");
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-  return page.url();
-}

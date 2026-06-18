@@ -1,8 +1,17 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  enterGuestBackstage,
+  enterHostBackstage,
+  setupProductRoom,
+} from "$lib/testing/playwright/product-room";
 
-test("Host can start and stop Screen Share state", async ({ page }) => {
-  const roomId = `screen-share-${Date.now()}`;
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
+test("Host can start and stop Screen Share state", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "screen-share-host@example.com",
+    title: "Screen share host episode",
+  });
+
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
 
   await expect(page.getByTestId("screen-share-status")).toContainText(
     "No Screen Share is active.",
@@ -20,10 +29,17 @@ test("Host can start and stop Screen Share state", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Start Screen Share" })).toBeVisible();
 });
 
-test("Guests can see active Screen Share state but cannot start Screen Share", async ({ page }) => {
-  const roomId = `guest-screen-share-${Date.now()}`;
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  const guestUrl = await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+test("Guests can see active Screen Share state but cannot start Screen Share", async ({
+  page,
+  request,
+}) => {
+  const room = await setupProductRoom(page, request, {
+    email: "screen-share-guest@example.com",
+    title: "Screen share guest episode",
+  });
+
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const guestUrl = await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await page.goto(hostUrl);
   await page.getByRole("button", { name: "Start Screen Share" }).click();
@@ -35,11 +51,3 @@ test("Guests can see active Screen Share state but cannot start Screen Share", a
   await expect(page.getByRole("button", { name: "Start Screen Share" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Stop Screen Share" })).toHaveCount(0);
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-  return page.url();
-}

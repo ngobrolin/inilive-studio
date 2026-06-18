@@ -1,10 +1,18 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  enterGuestBackstage,
+  enterHostBackstage,
+  setupProductRoom,
+} from "$lib/testing/playwright/product-room";
 
-test("Host can force-mute and force-camera-off a Guest", async ({ page }) => {
-  const roomId = `moderation-${Date.now()}`;
+test("Host can force-mute and force-camera-off a Guest", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "moderation-force@example.com",
+    title: "Moderation force episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  const guestUrl = await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const guestUrl = await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await page.goto(hostUrl);
   await page.getByRole("button", { name: "Force mute Guest One" }).click();
@@ -17,11 +25,14 @@ test("Host can force-mute and force-camera-off a Guest", async ({ page }) => {
   await expect(page.getByText("The Host turned your camera off")).toBeVisible();
 });
 
-test("Host can request unmute and the Guest can accept", async ({ page }) => {
-  const roomId = `request-unmute-${Date.now()}`;
+test("Host can request unmute and the Guest can accept", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "moderation-unmute@example.com",
+    title: "Moderation unmute episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  const guestUrl = await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const guestUrl = await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await page.goto(hostUrl);
   await page.getByRole("button", { name: "Request unmute from Guest One" }).click();
@@ -35,11 +46,14 @@ test("Host can request unmute and the Guest can accept", async ({ page }) => {
   await expect(page.getByText("Mic on").nth(1)).toBeVisible();
 });
 
-test("Host can remove a Guest from the current Room session", async ({ page }) => {
-  const roomId = `remove-guest-${Date.now()}`;
+test("Host can remove a Guest from the current Room session", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "moderation-remove@example.com",
+    title: "Moderation remove episode",
+  });
 
-  const hostUrl = await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  const guestUrl = await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const guestUrl = await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await page.goto(hostUrl);
   await page.getByRole("button", { name: "Remove Guest One" }).click();
@@ -49,11 +63,3 @@ test("Host can remove a Guest from the current Room session", async ({ page }) =
   await expect(page.getByText("Removed from Room")).toBeVisible();
   await expect(page.getByText("does not revoke the Guest Invite")).toBeVisible();
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-  return page.url();
-}

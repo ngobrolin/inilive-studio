@@ -1,12 +1,21 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  enterGuestBackstage,
+  enterHostBackstage,
+  setupProductRoom,
+} from "$lib/testing/playwright/product-room";
 
-test("Backstage shows a participant grid and not-live Broadcast Preview", async ({ page }) => {
-  const roomId = `composition-${Date.now()}`;
-
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One", {
-    cameraOff: true,
+test("Backstage shows a participant grid and not-live Broadcast Preview", async ({
+  page,
+  request,
+}) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-grid@example.com",
+    title: "Composition grid episode",
   });
+
+  await enterHostBackstage(page, room.roomHref, "Host One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest One", { cameraOff: true });
 
   await expect(page.getByRole("heading", { name: "Participant grid" })).toBeVisible();
   await expect(page.getByTestId("participant-grid")).toContainText("Host One");
@@ -22,23 +31,27 @@ test("Backstage shows a participant grid and not-live Broadcast Preview", async 
   await expect(page.getByTestId("broadcast-preview")).toContainText("Guest One");
 });
 
-test("Guest Backstage view also includes the Broadcast Preview", async ({ page }) => {
-  const roomId = `guest-composition-${Date.now()}`;
+test("Guest Backstage view also includes the Broadcast Preview", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-guest-preview@example.com",
+    title: "Guest preview episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
 
   await expect(page.getByTestId("broadcast-preview")).toContainText("Backstage preview");
   await expect(page.getByTestId("broadcast-preview")).toContainText("Not live");
 });
 
-test("Composed Room Feed renders a 720p captureStream canvas", async ({ page }) => {
-  const roomId = `canvas-composition-${Date.now()}`;
-
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One", {
-    cameraOff: true,
+test("Composed Room Feed renders a 720p captureStream canvas", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-canvas@example.com",
+    title: "Canvas composition episode",
   });
+
+  await enterHostBackstage(page, room.roomHref, "Host One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest One", { cameraOff: true });
 
   const canvas = page.getByTestId("composition-canvas");
   await expect(page.getByRole("heading", { name: "Canvas output" })).toBeVisible();
@@ -54,10 +67,16 @@ test("Composed Room Feed renders a 720p captureStream canvas", async ({ page }) 
     .toBeGreaterThanOrEqual(28);
 });
 
-test("Composed Room Feed captureStream exposes a playable 720p video track", async ({ page }) => {
-  const roomId = `stream-track-${Date.now()}`;
+test("Composed Room Feed captureStream exposes a playable 720p video track", async ({
+  page,
+  request,
+}) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-stream-track@example.com",
+    title: "Stream track episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
 
   const trackInfo = await page.evaluate(async () => {
     const canvas = document.querySelector(
@@ -94,10 +113,13 @@ test("Composed Room Feed captureStream exposes a playable 720p video track", asy
   expect(trackInfo?.height).toBe(720);
 });
 
-test("Composed Room Feed makes Screen Share the primary source", async ({ page }) => {
-  const roomId = `screen-composition-${Date.now()}`;
+test("Composed Room Feed makes Screen Share the primary source", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-screen-share@example.com",
+    title: "Screen share composition episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
   await page.getByRole("button", { name: "Start Screen Share" }).click();
 
   await expect(page.getByTestId("composition-primary-source")).toContainText("Screen Share");
@@ -105,19 +127,3 @@ test("Composed Room Feed makes Screen Share the primary source", async ({ page }
     "Composed feed stream ready",
   );
 });
-
-async function enterRoom(
-  page: Page,
-  url: string,
-  name: string,
-  options: { cameraOff?: boolean } = {},
-) {
-  await page.goto(url);
-  if (options.cameraOff) {
-    await page.getByRole("button", { name: "Turn camera off" }).click();
-  }
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-  return page.url();
-}

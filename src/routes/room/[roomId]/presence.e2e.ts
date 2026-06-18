@@ -1,13 +1,21 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import {
+  enterGuestBackstage,
+  enterHostBackstage,
+  setupProductRoom,
+} from "$lib/testing/playwright/product-room";
 
-test("Host and three Guests are represented in Backstage presence", async ({ page }) => {
-  const roomId = `presence-${Date.now()}`;
+test("Host and three Guests are represented in Backstage presence", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "presence-host-guests@example.com",
+    title: "Presence episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest Two");
+  await enterHostBackstage(page, room.roomHref, "Host One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest Two");
 
-  await page.goto(`/room/${roomId}/invite/demo/join`);
+  await page.goto(room.guestJoinUrl);
   await page.getByRole("button", { name: "Turn camera off" }).click();
   await page.getByLabel("Display Name").fill("Guest Three");
   await page.getByRole("button", { name: "Enter Room" }).click();
@@ -21,21 +29,18 @@ test("Host and three Guests are represented in Backstage presence", async ({ pag
   await expect(page.getByTestId("camera-off-placeholder")).toContainText("Guest Three");
 });
 
-test("a fourth Guest sees Room Full", async ({ page }) => {
-  const roomId = `full-${Date.now()}`;
+test("a fourth Guest sees Room Full", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "presence-room-full@example.com",
+    title: "Room full episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest Two");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest Three");
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest Four");
+  await page.context().clearCookies();
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest One");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest Two");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest Three");
+  await enterGuestBackstage(page, room.guestJoinUrl, "Guest Four");
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("Room Full");
   await expect(page.getByText(/already has three Guests/i)).toBeVisible();
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage|\/full/);
-}

@@ -1,25 +1,25 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import { enterHostBackstage, setupProductRoom } from "$lib/testing/playwright/product-room";
 
-test("Host sees media connection status in Backstage after joining", async ({ page }) => {
-  const roomId = `media-${Date.now()}`;
+test("Host sees media connection status in Backstage after joining", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "media-connection@example.com",
+    title: "Media connection episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
 
   await expect(page.getByTestId("media-connection-status")).toContainText("Local preview only");
   await expect(page.getByTestId("media-connection-status")).toContainText("LiveKit");
 });
 
-test("Host sees a local media preview in Backstage", async ({ page }) => {
-  const roomId = `media-preview-${Date.now()}`;
+test("Host sees a local media preview in Backstage", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "media-preview@example.com",
+    title: "Media preview episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
 
   await expect(page.getByTestId("local-media-preview")).toBeVisible();
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-}

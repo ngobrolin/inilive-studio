@@ -1,9 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
+import { enterHostBackstage, setupProductRoom } from "$lib/testing/playwright/product-room";
 
-test("Host can send a Room Chat message from Backstage", async ({ page }) => {
-  const roomId = `chat-${Date.now()}`;
+test("Host can send a Room Chat message from Backstage", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "room-chat-host@example.com",
+    title: "Room chat host episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
   await page.getByLabel("Room Chat message").fill("Hello Room");
   await page.getByRole("button", { name: "Send message" }).click();
 
@@ -11,13 +15,19 @@ test("Host can send a Room Chat message from Backstage", async ({ page }) => {
   await expect(page.getByText("Hello Room")).toBeVisible();
 });
 
-test("Host and Guest can send plain-text Room Chat messages", async ({ page }) => {
-  const roomId = `chat-multi-${Date.now()}`;
+test("Host and Guest can send plain-text Room Chat messages", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "room-chat-multi@example.com",
+    title: "Room chat multi episode",
+  });
 
-  await enterRoom(page, `/room/${roomId}/join`, "Host One");
+  await enterHostBackstage(page, room.roomHref, "Host One");
   await sendRoomChatMessage(page, "Welcome Guest");
 
-  await enterRoom(page, `/room/${roomId}/invite/demo/join`, "Guest One");
+  await page.goto(room.guestJoinUrl);
+  await page.getByLabel("Display Name").fill("Guest One");
+  await page.getByRole("button", { name: "Enter Room" }).click();
+  await expect(page).toHaveURL(/\/backstage/);
   await sendRoomChatMessage(page, "<strong>Plain text only</strong>");
 
   await expect(page.getByText("Host One · Host")).toBeVisible();
@@ -26,13 +36,6 @@ test("Host and Guest can send plain-text Room Chat messages", async ({ page }) =
   await expect(page.getByText("<strong>Plain text only</strong>")).toBeVisible();
   await expect(page.getByTestId("room-chat-messages").locator("strong")).toHaveCount(0);
 });
-
-async function enterRoom(page: Page, url: string, name: string) {
-  await page.goto(url);
-  await page.getByLabel("Display Name").fill(name);
-  await page.getByRole("button", { name: "Enter Room" }).click();
-  await expect(page).toHaveURL(/\/backstage/);
-}
 
 async function sendRoomChatMessage(page: Page, message: string) {
   await page.getByLabel("Room Chat message").fill(message);
