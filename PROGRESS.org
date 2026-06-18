@@ -5,7 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: cleanup-001 remove or protect Milestone 1 authless prototype routes.
+- Current highest-priority unfinished AFK feature: none in Milestone 3 Product Shell; bridge-005 "Verify YouTube 720p30 end-to-end broadcast" remains HITL.
+- cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
@@ -2166,10 +2167,153 @@ Continue with TDD and complete shell-001: wire the Room prototype into the authe
 *** Known risk or unresolved issue
 
 - bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
-- Authless prototype Room URLs such as `/room/demo` still exist for Milestone 1 flows until cleanup-001.
+- Authless prototype Room URLs such as `/room/demo` were removed in cleanup-001.
 - Hermetic e2e uses in-memory stores when DATABASE_URL is unset; Postgres product shell behavior was not re-run this session beyond existing integration suites.
 - npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
 
 *** Next best step
 
-Start cleanup-001 with TDD: remove or protect authless Milestone 1 prototype routes.
+Start bridge-005 when HITL credentials are available, or begin Milestone 3 hardening/follow-up work if no HITL credentials are available.
+
+* 2026-06-17 cleanup-001 remove authless prototype routes
+
+*** Goal
+
+Continue with TDD and complete cleanup-001: remove or protect Milestone 1 authless prototype routes.
+
+*** Completed
+
+- Ran ./init.sh baseline before cleanup work; baseline passed.
+- TDD cycle 1: unit tests for unknown Rooms returning `not_found` instead of authless prototype access.
+- TDD cycle 2: cleanup Playwright coverage for authless `/room/demo` denial, legacy demo invite rejection, and removed `/prototype/room-entry`.
+- TDD cycle 3: removed the `demo` Guest Invite bypass from product invite validation.
+- Removed throwaway prototype UI at `/prototype/room-entry` and `PrototypeSwitcher.svelte`.
+- Added shared Playwright helper for signed-in product Room fixtures.
+- Migrated Room e2e specs off `/room/demo` onto product Room setup.
+- Updated manual QA script to use dashboard Guest Invite links instead of authless prototype URLs.
+- Marked cleanup-001 passing in PLAN.org with evidence.
+
+*** Verification run
+
+- ./init.sh baseline before cleanup-001: passed.
+  - Vitest: 86 passed, 3 skipped.
+  - Playwright: 56 passed.
+- Targeted verification while developing:
+  - `npm run test:unit -- --run src/lib/server/rooms/host-access.spec.ts src/lib/server/rooms/rooms.spec.ts`: passed (7 tests).
+  - `npx playwright test 'src/routes/room/\[roomId\]/cleanup.e2e.ts' --workers=1`: passed (4 tests).
+  - `npm run check`: passed with 0 errors and 0 warnings.
+- Final ./init.sh: passed.
+  - Vitest: 86 passed, 3 skipped.
+  - Playwright: 56 passed.
+
+*** Evidence captured
+
+- Host access: src/lib/server/rooms/host-access.ts and src/lib/server/rooms/require-host-session.ts
+- Guest invite validation: src/lib/server/rooms/rooms.ts
+- Cleanup browser coverage: src/routes/room/[roomId]/cleanup.e2e.ts
+- Product Room Playwright helper: src/lib/testing/playwright/product-room.ts
+- Manual QA doc: docs/qa/m1-manual-media-test.md
+
+*** Known risk or unresolved issue
+
+- bridge-005 remains HITL and still needs a live-enabled YouTube account plus real stream credentials.
+- Hermetic e2e uses in-memory stores when DATABASE_URL is unset.
+- npm audit still reports low severity cookie vulnerabilities through @sveltejs/kit.
+
+*** Next best step
+
+Start bridge-005 when HITL credentials are available, or pick the next Milestone 3 hardening slice if credentials remain unavailable.
+
+* 2026-06-18 bridge-005 fix WHIP codec negotiation
+
+*** Goal
+
+Fix the live Broadcast failure reported after entering YouTube URL and stream key.
+
+*** Completed
+
+- Reproduced the failure twice from the running bridge logs.
+- Confirmed WHIP signaling succeeded before GStreamer stopped with
+  `reason not-negotiated (-4)`.
+- Added a failing regression assertion requiring browser-compatible codec negotiation.
+- Removed the H.264-only WHIP ingest constraint.
+- Preserved H.264/AAC transcoding for YouTube RTMP output.
+- Rebuilt and restarted the local Broadcast Bridge container.
+- Marked bridge-005 in progress; YouTube-side confirmation remains HITL.
+
+*** Verification run
+
+- Regression test failed before the fix and passed after it.
+- `npx vitest --run services/broadcast-bridge/src/pipeline.spec.mjs services/broadcast-bridge/src/session-lifecycle.spec.mjs`: passed (3 tests).
+- `node scripts/verify/bridge-003-gstreamer.mjs`: passed.
+  - Container GStreamer 1.24.
+  - Required bridge elements available.
+  - Control API lifecycle passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- Live SDP probe: WHIP returned 201 and negotiated VP8.
+- The first Host retry then exposed `Missing element: RED video RTP depayloader`
+  followed by `No streams to output`.
+- Added browser codec preferences so WHIP offers only Opus audio and VP8 video.
+- Browser SDP verification confirmed RED and ULPFEC are absent.
+- `npm run build`: passed and refreshed the active preview bundle.
+- Deterministic browser-to-bridge reproduction found the remaining cause:
+  `videoconvert` could not negotiate decoded canvas video with `framerate=0/1` against
+  the required 30fps output caps.
+- Added `videorate` before the 720p30 caps.
+- Re-ran the full browser-to-WHIP flow with a disposable RTMP destination:
+  - VP8 and Opus negotiated and decoded.
+  - H.264/AAC output reached `rtmp2sink`.
+  - The pipeline failed only because the disposable RTMP port intentionally refused connection.
+- Fixed failure classification so primary RTMP errors are not hidden by later WebRTC cleanup logs.
+- Targeted tests passed: 8 tests across codec preferences, pipeline construction,
+  session lifecycle, and failure classification.
+- Strict bridge verifier passed and the local bridge container was rebuilt and restarted.
+
+*** Known risk or unresolved issue
+
+- The user should retry from the normal Host browser to complete media and YouTube-side
+  verification with the refreshed VP8/Opus-only preview bundle.
+- The existing full `./init.sh` baseline has two unrelated failures caused by current
+  environment-dependent callback origin and bridge-enabled WHIP route expectations.
+
+*** Next best step
+
+Retry the Broadcast from the Host browser with the existing YouTube credentials and verify
+YouTube receives the 720p30 feed.
+
+* 2026-06-18 bridge-005 restore hermetic baseline
+
+*** Goal
+
+Continue bridge-005 work and restore a green `./init.sh` baseline after local `.env`
+bridge settings leaked into unit and Playwright verification.
+
+*** Completed
+
+- Fixed callback-origin resolution so tests can force request-origin behavior without
+  inheriting `BRIDGE_CALLBACK_ORIGIN` from the developer `.env`.
+- Fixed bridge client/env configuration so explicit test setup is not overwritten by
+  `BRIDGE_ENABLED=1` from the developer `.env`.
+- Forced `BRIDGE_ENABLED=""` in Playwright webServer env so broadcast e2e stays hermetic
+  even when the local `.env` enables the bridge for live development.
+
+*** Verification run
+
+- `./init.sh`: passed.
+  - Vitest: 97 passed, 3 skipped.
+  - Playwright: 56 passed.
+- Targeted bridge-005 unit tests: 8 passed across pipeline, session lifecycle, failure
+  classification, and WHIP codec preference specs.
+- `node scripts/verify/bridge-003-gstreamer.mjs`: passed.
+
+*** Known risk or unresolved issue
+
+- bridge-005 YouTube-side confirmation remains HITL and still needs a live-enabled YouTube
+  account plus real stream credentials.
+- Local development can keep `BRIDGE_ENABLED=1` in `.env`; hermetic verification now
+  isolates from that setting.
+
+*** Next best step
+
+Retry the Broadcast from the Host browser with real YouTube credentials and confirm
+YouTube receives the 720p30 feed.

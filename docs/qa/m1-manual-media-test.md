@@ -35,26 +35,37 @@ Suggested screenshot paths:
 ## 1. Host on desktop Chromium
 
 1. Run `./init.sh`, then `npm run dev`.
-2. Open `/room/demo/join` in desktop Chromium.
-3. Enter Display Name `Host QA`, allow camera and microphone, and click **Enter Room**.
-4. Verify Backstage loads at `/room/demo/backstage`.
-5. Verify **Participant grid**, **Broadcast Preview**, **Composed Room Feed** canvas, and **Local preview only** or **Connected · LiveKit** media status.
-6. Verify the Composed Room Feed shows `Composed feed stream ready` and measured fps ≥28 after a few seconds.
+2. Sign in at `/login`, create a Room from `/dashboard`, and open the Host Room link.
+3. Open **Enter as Host** and complete Join Check at `/room/<roomId>/join`.
+4. Enter Display Name `Host QA`, allow camera and microphone, and click **Enter Room**.
+5. Verify Backstage loads at `/room/<roomId>/backstage`.
+6. Verify **Participant grid**, **Broadcast Preview**, **Composed Room Feed** canvas, and **Local preview only** or **Connected · LiveKit** media status.
+7. Verify the Composed Room Feed shows `Composed feed stream ready` and measured fps ≥28 after a few seconds.
 
 **Pass if:** Host reaches Backstage with Join Check media state reflected in the UI and the composed canvas is drawing at the M1 fps gate.
 
 ## 2. Guest on desktop Chromium
 
-1. In a second desktop Chromium profile or window, open `/room/demo/invite/demo/join`.
-2. Enter Display Name `Guest QA`, allow camera and microphone, and click **Enter Room**.
-3. Verify Guest Backstage shows both participants, Broadcast Preview, and no Host-only controls such as **Start Screen Share** or Guest moderation buttons.
-4. If LiveKit credentials are configured, verify remote participant tiles appear for Host and Guest.
+1. Copy the Guest Invite link from the Host dashboard or Backstage for the same Room.
+2. In a second desktop Chromium profile or window, open the Guest Invite link and continue to Join Check.
+3. Enter Display Name `Guest QA`, allow camera and microphone, and click **Enter Room**.
+4. Verify Guest Backstage shows both participants, Broadcast Preview, and no Host-only controls such as **Start Screen Share** or Guest moderation buttons.
+5. If LiveKit credentials are configured, verify remote participant tiles appear for Host and Guest.
+6. On each Backstage session, confirm **Room media** reaches `Connected · LiveKit` before checking remote tiles. If it stays on `Connecting · LiveKit` for more than ~15 seconds, read the message under it and retry after fixing the cause.
 
 **Pass if:** Guest enters the same Room, sees Host presence, and does not receive Host-only controls.
 
+**LiveKit troubleshooting when Guest stays on Connecting:**
+
+- Use a **second browser profile or incognito window** for the Guest. Same-profile tabs can fight over one camera and leave the Guest stuck connecting.
+- Confirm `.env` has `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET`, then restart `npm run dev` or `npm run preview` so both Host and Guest hit the same app instance with credentials loaded.
+- Host and Guest must use the **current Guest Invite link** from dashboard or Backstage. Legacy `/invite/demo` links are invalid for product Rooms.
+- If the Guest shows `LiveKit connection failed`, allow camera and microphone for the site in browser settings and reload Backstage.
+- If the message mentions camera setup timing out, close other apps using the camera (including the Host tab on single-camera machines) and reload the Guest Backstage page.
+
 ## 3. Guest on Chrome for Android
 
-1. On an Android device on the same network, open `http://<dev-machine-host>:5173/room/demo/invite/demo/join`.
+1. On an Android device on the same network, open the current Guest Invite link from the Host dashboard or Backstage.
 2. Complete Join Check with camera and microphone permissions.
 3. Verify Guest reaches Backstage and sees Host presence.
 
@@ -64,7 +75,7 @@ Suggested screenshot paths:
 
 ## 4. Room Full
 
-1. Open three separate Guest sessions for `/room/demo/invite/demo/join` with distinct Display Names.
+1. Open three separate Guest sessions for the same Guest Invite link with distinct Display Names.
 2. Attempt a fourth Guest entry.
 3. Verify the fourth Guest sees **Room Full** instead of Backstage.
 

@@ -863,7 +863,7 @@ Have the bridge report Broadcast Health and terminal states back to the SvelteKi
 :TYPE: HITL
 :PRIORITY: 16
 :AREA: broadcast-bridge
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: bridge-004
 :END:
 
@@ -890,7 +890,30 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 
 *** Evidence
 
-- None recorded.
+- 2026-06-18: Fixed live WHIP ingest codec negotiation after a real Broadcast attempt failed
+  with GStreamer `reason not-negotiated (-4)`.
+  - Removed the H.264-only WHIP negotiation constraint so Chromium and `whipserversrc`
+    can negotiate their default VP8 ingest path.
+  - The bridge still transcodes decoded video to H.264 with `x264enc` for RTMP output.
+  - Regression test: services/broadcast-bridge/src/pipeline.spec.mjs.
+  - Targeted bridge tests passed (3 tests).
+  - Strict bridge verifier passed with container GStreamer 1.24 and all required elements.
+  - Rebuilt and restarted the local `inilive-bridge-dev` container.
+  - First live retry exposed a second negotiation issue: Chromium advertised video RED,
+    but GStreamer 1.24 reported `Missing element: RED video RTP depayloader` and
+    `No streams to output`.
+  - The Host WHIP publisher now constrains offers to plain VP8 video and Opus audio,
+    excluding RED and ULPFEC recovery payloads before SDP is created.
+  - Browser SDP verification produced only `opus/48000/2` and `VP8/90000`.
+  - `npm run check` and `npm run build` passed after the browser-side fix.
+  - A deterministic full browser-to-bridge reproduction then identified the remaining
+    negotiation failure: decoded canvas video arrived with `framerate=0/1`, while the
+    pipeline required `30/1`; `videoscale` cannot convert framerate.
+  - Added `videorate` before the 720p30 output caps.
+  - The same full flow then decoded VP8/Opus, produced H.264/AAC muxed output, and reached
+    `rtmp2sink`; the disposable local RTMP endpoint failed with the expected connection refusal.
+  - Failure classification now preserves the primary RTMP error instead of reporting later
+    WebRTC session-cleanup noise.
 
 *** Notes
 
@@ -899,7 +922,7 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 * Milestone 3 - Product Shell
 :PROPERTIES:
 :MILESTONE_ID: m3-product-shell
-:STATUS: active
+:STATUS: done
 :END:
 
 Goal: turn the proven prototype and media path into a usable v1 product with Host Accounts, reusable Rooms, Guest Invites, Broadcast records, and durable Broadcast Health events.
@@ -1248,7 +1271,7 @@ Turn the proven prototype Room into the authenticated product shell. Hosts enter
 :TYPE: AFK
 :PRIORITY: 24
 :AREA: cleanup
-:STATUS: not_started
+:STATUS: passing
 :BLOCKED_BY: shell-001
 :END:
 
@@ -1258,11 +1281,11 @@ Remove or protect every authless Milestone 1 prototype route so the production p
 
 *** Acceptance criteria
 
-- [ ] All authless Host prototype routes are removed or protected by Host session middleware.
-- [ ] Guest access remains available only through valid Guest Invites.
-- [ ] Prototype-only state paths are removed or clearly development-only.
-- [ ] Tests and documentation no longer point users at unprotected prototype routes.
-- [ ] Standard startup and verification still work after cleanup.
+- [X] All authless Host prototype routes are removed or protected by Host session middleware.
+- [X] Guest access remains available only through valid Guest Invites.
+- [X] Prototype-only state paths are removed or clearly development-only.
+- [X] Tests and documentation no longer point users at unprotected prototype routes.
+- [X] Standard startup and verification still work after cleanup.
 
 *** Verification
 
@@ -1273,7 +1296,15 @@ Remove or protect every authless Milestone 1 prototype route so the production p
 
 *** Evidence
 
-- None recorded.
+- 2026-06-17: Removed authless prototype access and the throwaway prototype entry route with TDD vertical slices.
+  - Unknown Rooms now resolve to `not_found` and redirect unsigned visitors to `/login` or signed-in visitors to `/dashboard`.
+  - Guest Invite validation no longer accepts the legacy `demo` token or authless prototype bypasses.
+  - Removed `/prototype/room-entry` and `PrototypeSwitcher.svelte`.
+  - Shared Playwright helper for product Rooms: ~/code/inilive-studio/src/lib/testing/playwright/product-room.ts
+  - Cleanup browser coverage: ~/code/inilive-studio/src/routes/room/[roomId]/cleanup.e2e.ts (4 tests)
+  - Migrated Milestone 1 Room e2e specs off `/room/demo` onto signed-in product Room fixtures.
+  - Manual QA script updated: ~/code/inilive-studio/docs/qa/m1-manual-media-test.md
+  - Verification passed: ./init.sh with 86 Vitest tests passing, 3 skipped Postgres integration suites without DATABASE_URL, and 56 Playwright tests passing; npm run check with 0 errors.
 
 *** Notes
 
