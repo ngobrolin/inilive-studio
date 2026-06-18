@@ -36,14 +36,10 @@ export async function listHostRooms(
 export async function validateGuestInvite(
   input: { roomId: string; token: string },
   deps: { store: RoomStore },
-): Promise<"valid" | "invalid" | "prototype_room"> {
-  if (input.token === "demo" && process.env.NODE_ENV !== "production") {
-    return "prototype_room";
-  }
-
+): Promise<"valid" | "invalid"> {
   const roomExists = await deps.store.roomExists(input.roomId);
   if (!roomExists) {
-    return "prototype_room";
+    return "invalid";
   }
 
   const tokenHash = hashToken(input.token);

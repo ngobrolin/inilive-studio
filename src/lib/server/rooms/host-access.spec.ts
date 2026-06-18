@@ -4,11 +4,17 @@ import { resolveProductRoomHostAccess } from "./host-access";
 import { createInMemoryRoomStore } from "./store";
 
 describe("product room host access", () => {
-  it("allows authless access to prototype Rooms that are not in the product store", async () => {
+  it("denies access to Rooms that are not in the product store", async () => {
     const store = createInMemoryRoomStore();
 
     await expect(resolveProductRoomHostAccess("demo", null, { store })).resolves.toEqual({
-      kind: "prototype_room",
+      kind: "not_found",
+    });
+
+    await expect(
+      resolveProductRoomHostAccess("demo", { hostAccountId: "host-1" }, { store }),
+    ).resolves.toEqual({
+      kind: "not_found",
     });
   });
 

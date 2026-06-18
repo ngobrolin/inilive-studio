@@ -54,7 +54,7 @@ describe("host rooms", () => {
     ).resolves.toBe("invalid");
   });
 
-  it("keeps the development demo Guest Invite working for product-looking Room URLs", async () => {
+  it("rejects the development demo Guest Invite token for product Rooms", async () => {
     const store = createInMemoryRoomStore();
     const result = await createHostRoom(
       { hostAccountId: "host-1", title: "Weekly show" },
@@ -63,7 +63,7 @@ describe("host rooms", () => {
     const room = result.room!;
 
     await expect(validateGuestInvite({ roomId: room.id, token: "demo" }, { store })).resolves.toBe(
-      "prototype_room",
+      "invalid",
     );
   });
 });

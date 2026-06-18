@@ -1,7 +1,7 @@
 import type { RoomStore } from "./store";
 
 export type ProductRoomHostAccess =
-  | { kind: "prototype_room" }
+  | { kind: "not_found" }
   | { kind: "sign_in_required" }
   | { kind: "forbidden" }
   | { kind: "allowed"; hostAccountId: string };
@@ -13,7 +13,7 @@ export async function resolveProductRoomHostAccess(
 ): Promise<ProductRoomHostAccess> {
   const room = await deps.store.getRoom(roomId);
   if (!room) {
-    return { kind: "prototype_room" };
+    return { kind: "not_found" };
   }
 
   if (!session) {

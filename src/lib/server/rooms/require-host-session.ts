@@ -10,8 +10,8 @@ export async function requireProductRoomHostSession(cookies: Cookies, roomId: st
     store: getRoomStore(),
   });
 
-  if (access.kind === "prototype_room") {
-    return null;
+  if (access.kind === "not_found") {
+    redirect(303, session ? "/dashboard" : "/login");
   }
 
   if (access.kind === "sign_in_required") {
