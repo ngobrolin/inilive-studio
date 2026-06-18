@@ -87,13 +87,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install the built plugin into the arm64 multiarch GStreamer plugin directory.
 COPY --from=plugin-builder /out/libgstrswebrtc.so /usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstrswebrtc.so
 
-# Fail the image build if whipserversrc is not actually available.
-RUN gst-inspect-1.0 rswebrtc && gst-inspect-1.0 whipserversrc
+# Fail the image build if the required ingest/output elements are unavailable.
+RUN gst-inspect-1.0 rswebrtc && gst-inspect-1.0 whipserversrc && gst-inspect-1.0 rtmp2sink
 
 WORKDIR /app
 COPY package.json ./
 COPY src ./src
 
 EXPOSE 8787 8788 8790-8810/udp
+
+ENV BRIDGE_LISTEN_HOST=0.0.0.0
 
 CMD ["node", "src/server.mjs"]

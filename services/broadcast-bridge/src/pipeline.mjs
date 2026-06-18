@@ -36,11 +36,13 @@ export function buildGstLaunchArgs({ whipPort, rtmpLocation }) {
     "!",
     "queue",
     "!",
-    "decodebin",
+    "video/x-raw",
     "!",
     "videoconvert",
     "!",
     "videoscale",
+    "!",
+    "videorate",
     "!",
     `video/x-raw,width=${profile.width},height=${profile.height},framerate=${profile.frameRate}/1`,
     "!",
@@ -60,7 +62,7 @@ export function buildGstLaunchArgs({ whipPort, rtmpLocation }) {
     "!",
     "queue",
     "!",
-    "decodebin",
+    "audio/x-raw",
     "!",
     "audioconvert",
     "!",
@@ -78,7 +80,13 @@ export function buildGstLaunchArgs({ whipPort, rtmpLocation }) {
     "name=mux",
     "streamable=true",
     "!",
-    "rtmpsink",
+    "rtmp2sink",
+    "name=rtmp",
+    // Defer the RTMP connect until the first muxed buffer arrives (after WHIP
+    // ingest starts) instead of connecting eagerly on state change. This keeps
+    // the pipeline alive while the Host browser is still negotiating WHIP, and
+    // surfaces real connection errors only once media is actually flowing.
+    "async-connect=false",
     `location=${rtmpLocation}`,
   ];
 }
