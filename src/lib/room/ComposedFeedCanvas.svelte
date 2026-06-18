@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomParticipant, RoomScreenShare } from '$lib/server/room-presence';
+	import { createCompleteWhipOfferSdp, preferPlainWhipCodecs } from './whip-offer';
 
 	let {
 		participants,
@@ -138,9 +139,12 @@
 			for (const track of publishStream.getTracks()) {
 				peerConnection.addTrack(track, input.composedStream);
 			}
+			preferPlainWhipCodecs(peerConnection, {
+				video: RTCRtpSender.getCapabilities('video'),
+				audio: RTCRtpSender.getCapabilities('audio'),
+			});
 
-			const offer = await peerConnection.createOffer();
-			await peerConnection.setLocalDescription(offer);
+			const offerSdp = await createCompleteWhipOfferSdp(peerConnection);
 
 			const response = await fetch(input.grant.whipUrl, {
 				method: 'POST',
@@ -148,7 +152,7 @@
 					Authorization: `Bearer ${input.grant.bearerToken}`,
 					'Content-Type': 'application/sdp',
 				},
-				body: offer.sdp ?? '',
+				body: offerSdp,
 			});
 
 			if (!response.ok) {
