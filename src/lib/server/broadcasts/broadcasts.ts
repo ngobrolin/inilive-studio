@@ -26,6 +26,35 @@ export type MarkBroadcastFailedResult = {
   error: "not_found" | "invalid_state" | "missing_message" | null;
 };
 
+export async function recoverInterruptedBroadcast(
+  input: {
+    roomId: string;
+    hasActiveRuntimeBroadcast: boolean;
+    now?: number;
+  },
+  deps: { store: BroadcastStore },
+): Promise<{ recovered: boolean }> {
+  if (input.hasActiveRuntimeBroadcast) {
+    return { recovered: false };
+  }
+
+  const active = await deps.store.getActiveBroadcast(input.roomId);
+  if (!active) {
+    return { recovered: false };
+  }
+
+  if (active.state === "countdown") {
+    return { recovered: await deps.store.deleteBroadcast(active.id) };
+  }
+
+  const recovered = await deps.store.markBroadcastFailed(
+    active.id,
+    "Broadcast interrupted by an application restart.",
+    new Date(input.now ?? Date.now()),
+  );
+  return { recovered: recovered !== null };
+}
+
 export async function startBroadcastCountdown(
   input: { roomId: string; now?: number },
   deps: { store: BroadcastStore },

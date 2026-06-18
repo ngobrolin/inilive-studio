@@ -4,6 +4,7 @@ import {
   completeBroadcastCountdown,
   markBroadcastEnded,
   markBroadcastFailed,
+  recoverInterruptedBroadcast,
   startBroadcastCountdown,
 } from "./broadcasts";
 import { clearBroadcastStoreForTests, setBroadcastStoreForTests } from "./runtime";
@@ -120,5 +121,29 @@ describe("product-backed broadcasts", () => {
 
     expect(retry.error).toBeNull();
     expect(retry.broadcast?.state).toBe("countdown");
+  });
+
+  it("recovers a durable Broadcasting record after process-local Room state is lost", async () => {
+    const store = createInMemoryBroadcastStore();
+    const first = await startBroadcastCountdown({ roomId: "room-1", now: 1_000 }, { store });
+    const broadcasting = await completeBroadcastCountdown(
+      { broadcastId: first.broadcast!.id, now: 6_000 },
+      { store },
+    );
+
+    const result = await recoverInterruptedBroadcast(
+      { roomId: "room-1", hasActiveRuntimeBroadcast: false, now: 7_000 },
+      { store },
+    );
+
+    expect(result.recovered).toBe(true);
+    expect(await store.getBroadcastById(broadcasting.broadcast!.id)).toMatchObject({
+      state: "failed",
+      failureMessage: "Broadcast interrupted by an application restart.",
+      endedAt: new Date(7_000),
+    });
+    await expect(
+      startBroadcastCountdown({ roomId: "room-1", now: 8_000 }, { store }),
+    ).resolves.toMatchObject({ error: null });
   });
 });

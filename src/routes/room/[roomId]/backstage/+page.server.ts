@@ -4,6 +4,7 @@ import { startBridgeSession, stopBridgeSession } from "$lib/server/bridge-client
 import {
   cancelBroadcastCountdown,
   completeBroadcastCountdown,
+  recoverInterruptedBroadcast,
   startBroadcastCountdown,
   syncProductBroadcastTerminalState,
 } from "$lib/server/broadcasts/broadcasts";
