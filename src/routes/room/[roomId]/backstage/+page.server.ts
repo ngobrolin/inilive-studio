@@ -1,5 +1,6 @@
 import { createMediaJoinGrant } from "$lib/server/media-join";
 import { ensureBridgeClientConfigured } from "$lib/server/bridge-env";
+import { resolveBridgeCallbackOrigin } from "$lib/server/bridge-callback-origin";
 import { startBridgeSession, stopBridgeSession } from "$lib/server/bridge-client";
 import {
   cancelBroadcastCountdown,
@@ -56,7 +57,7 @@ async function startBridgeForRoom(input: {
     roomId: input.roomId,
     rtmpServerUrl: input.rtmpServerUrl,
     streamKey: input.streamKey,
-    callbackUrl: new URL(callbackGrant.callbackUrl, input.origin).toString(),
+    callbackUrl: new URL(callbackGrant.callbackUrl, resolveBridgeCallbackOrigin(input.origin)).toString(),
     callbackBearerToken: callbackGrant.bearerToken,
   });
 }
@@ -182,6 +183,15 @@ export const actions: Actions = {
       const streamKey = String(formData.get("streamKey") ?? "");
 
       if (productRoom) {
+        const runtimeBroadcast = getRoomBroadcastView(params.roomId);
+        await recoverInterruptedBroadcast(
+          {
+            roomId: params.roomId,
+            hasActiveRuntimeBroadcast:
+              runtimeBroadcast.state === "countdown" || runtimeBroadcast.state === "broadcasting",
+          },
+          { store: broadcastStore },
+        );
         const countdown = await startBroadcastCountdown({ roomId: params.roomId }, { store: broadcastStore });
         if (countdown.error) {
           return fail(400, { error: "A Broadcast is already active in this Room." });

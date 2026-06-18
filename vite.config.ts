@@ -16,6 +16,13 @@ export default defineConfig({
       adapter: adapter(),
     }),
   ],
+  server: {
+    allowedHosts: ["host.containers.internal"],
+  },
+  preview: {
+    // Podman/Docker bridge health callbacks reach the app via this host on macOS.
+    allowedHosts: ["host.containers.internal"],
+  },
   test: {
     expect: { requireAssertions: true },
     projects: [

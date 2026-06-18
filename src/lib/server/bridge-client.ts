@@ -11,13 +11,20 @@ const defaultConfig: BridgeClientConfig = {
 };
 
 let config: BridgeClientConfig = { ...defaultConfig };
+let explicitlyConfigured = false;
 
 export function configureBridgeClient(next: Partial<BridgeClientConfig>): void {
   config = { ...config, ...next };
+  explicitlyConfigured = true;
 }
 
 export function clearBridgeClientConfig(): void {
   config = { ...defaultConfig };
+  explicitlyConfigured = false;
+}
+
+export function isBridgeClientExplicitlyConfigured(): boolean {
+  return explicitlyConfigured;
 }
 
 export function readBridgeClientConfig(): BridgeClientConfig {

@@ -4,17 +4,21 @@ import {
   getRoomBroadcastIngestGrant,
   startRoomBroadcast,
 } from "$lib/server/broadcast-state";
+import { clearBridgeEnvConfig } from "$lib/server/bridge-env";
 import * as bridgeClient from "$lib/server/bridge-client";
 import { POST } from "./+server";
 
 describe("WHIP ingest endpoint", () => {
   beforeEach(() => {
     clearBroadcastState();
+    clearBridgeEnvConfig();
+    bridgeClient.configureBridgeClient({ enabled: false });
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
     bridgeClient.clearBridgeClientConfig();
+    clearBridgeEnvConfig();
   });
 
   it("rejects missing or invalid bearer tokens before accepting ingest", async () => {
