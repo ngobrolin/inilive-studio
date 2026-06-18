@@ -22,5 +22,5 @@ export async function requireProductRoomHostSession(cookies: Cookies, roomId: st
     redirect(303, "/dashboard");
   }
 
-  return session;
+  return { hostAccountId: access.hostAccountId, hostEmail: session!.hostEmail };
 }
