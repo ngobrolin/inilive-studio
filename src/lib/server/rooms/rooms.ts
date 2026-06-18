@@ -67,3 +67,20 @@ export async function regenerateGuestInvite(
 
   return { guestInviteToken, error: null };
 }
+
+export async function getGuestInvitePathForHost(
+  input: { hostAccountId: string; roomId: string },
+  deps: { store: RoomStore },
+): Promise<string | null> {
+  const room = await deps.store.getRoom(input.roomId);
+  if (!room || room.hostAccountId !== input.hostAccountId) {
+    return null;
+  }
+
+  const token = await deps.store.getActiveGuestInviteToken(input.roomId);
+  if (!token) {
+    return null;
+  }
+
+  return `/room/${input.roomId}/invite/${token}`;
+}

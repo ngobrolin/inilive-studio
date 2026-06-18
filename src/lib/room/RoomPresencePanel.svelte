@@ -14,6 +14,7 @@
 		broadcast,
 		hostWhipIngestGrant,
 		isProductRoom = false,
+		guestInvitePath = null,
 	}: {
 		presence: RoomPresence;
 		chatMessages: RoomChatMessage[];
@@ -22,6 +23,7 @@
 		broadcast: RoomBroadcastView;
 		hostWhipIngestGrant: BroadcastIngestGrant | null;
 		isProductRoom?: boolean;
+		guestInvitePath?: string | null;
 	} = $props();
 	const visibleParticipants = $derived(
 		presence.participants.filter((participant) => !participant.removed),
@@ -113,6 +115,28 @@
 			restored after restart.
 		</p>
 	</header>
+
+	{#if activeHost && guestInvitePath}
+		<section
+			class="mt-6 rounded-md border border-slate-300 bg-white p-5 shadow-sm"
+			data-testid="guest-invite-controls"
+		>
+			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Guest Invite</p>
+			<p class="mt-2 text-sm leading-6 text-slate-700">
+				Share this link with Guests. The legacy <code class="font-mono text-xs">/invite/demo</code>
+				path no longer works for product Rooms.
+			</p>
+			<label class="mt-4 block text-xs font-medium text-slate-600">
+				Guest Invite link
+				<input
+					class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs"
+					data-testid="guest-invite-link"
+					readonly
+					value={guestInvitePath}
+				/>
+			</label>
+		</section>
+	{/if}
 
 	<section
 		class="mt-6 rounded-md border border-cyan-300 bg-cyan-50 p-5 text-cyan-950 shadow-sm"

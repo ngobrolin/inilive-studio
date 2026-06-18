@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createHostRoom, listHostRooms, validateGuestInvite } from "./rooms";
+import { createHostRoom, getGuestInvitePathForHost, listHostRooms, validateGuestInvite } from "./rooms";
 import { hashToken } from "$lib/server/auth/tokens";
 import { createInMemoryRoomStore } from "./store";
 
@@ -65,5 +65,21 @@ describe("host rooms", () => {
     await expect(validateGuestInvite({ roomId: room.id, token: "demo" }, { store })).resolves.toBe(
       "invalid",
     );
+  });
+
+  it("returns the active Guest Invite path for the Room owner", async () => {
+    const store = createInMemoryRoomStore();
+    const result = await createHostRoom(
+      { hostAccountId: "host-1", title: "Weekly show" },
+      { store },
+    );
+    const room = result.room!;
+
+    await expect(
+      getGuestInvitePathForHost({ hostAccountId: "host-1", roomId: room.id }, { store }),
+    ).resolves.toBe(`/room/${room.id}/invite/${room.guestInviteToken}`);
+    await expect(
+      getGuestInvitePathForHost({ hostAccountId: "host-2", roomId: room.id }, { store }),
+    ).resolves.toBeNull();
   });
 });

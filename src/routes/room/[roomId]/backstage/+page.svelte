@@ -1,7 +1,7 @@
 <script lang="ts">
 	import RoomPresencePanel from '$lib/room/RoomPresencePanel.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 </script>
 
 <svelte:head>
@@ -10,8 +10,10 @@
 
 <RoomPresencePanel
 	activeParticipantId={data.activeParticipantId}
+	actionError={form?.error ?? null}
 	broadcast={data.broadcast}
 	chatMessages={data.chatMessages}
+	guestInvitePath={data.guestInvitePath}
 	hostWhipIngestGrant={data.hostWhipIngestGrant}
 	isProductRoom={data.isProductRoom}
 	mediaGrant={data.mediaGrant}

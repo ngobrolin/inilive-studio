@@ -108,6 +108,17 @@ export function createPostgresRoomStore(db: Kysely<Database>): RoomStore {
       return Boolean(row);
     },
 
+    async getActiveGuestInviteToken(roomId) {
+      const row = await db
+        .selectFrom("guest_invites")
+        .select("token_hash")
+        .where("room_id", "=", roomId)
+        .where("revoked_at", "is", null)
+        .executeTakeFirst();
+
+      return row?.token_hash ?? null;
+    },
+
     async regenerateGuestInvite(hostAccountId, roomId, guestInviteTokenHash) {
       return db.transaction().execute(async (trx) => {
         const room = await trx

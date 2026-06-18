@@ -31,6 +31,8 @@ import {
   stopRoomScreenShare,
 } from "$lib/server/room-presence";
 import { getRoomStore } from "$lib/server/rooms/runtime";
+import { getGuestInvitePathForHost } from "$lib/server/rooms/rooms";
+import { getHostSessionFromCookies } from "$lib/server/auth/host-session";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -58,7 +60,7 @@ async function startBridgeForRoom(input: {
   });
 }
 
-export const load: PageServerLoad = async ({ params, url }) => {
+export const load: PageServerLoad = async ({ params, url, cookies }) => {
   const activeParticipantId = url.searchParams.get("participant") ?? "";
   const presence = getRoomPresence(params.roomId);
   const activeParticipant = presence.participants.find(
@@ -73,6 +75,16 @@ export const load: PageServerLoad = async ({ params, url }) => {
       })
     : null;
 
+  const productRoom = await isProductRoom(params.roomId);
+  const hostSession = await getHostSessionFromCookies(cookies);
+  const guestInvitePath =
+    productRoom && activeParticipant?.role === "host" && hostSession
+      ? await getGuestInvitePathForHost(
+          { hostAccountId: hostSession.hostAccountId, roomId: params.roomId },
+          { store: getRoomStore() },
+        )
+      : null;
+
   return {
     presence,
     chatMessages: getRoomChatMessages(params.roomId),
@@ -83,7 +95,8 @@ export const load: PageServerLoad = async ({ params, url }) => {
     }),
     hostWhipIngestGrant:
       activeParticipant?.role === "host" ? getRoomBroadcastIngestGrant(params.roomId) : null,
-    isProductRoom: await isProductRoom(params.roomId),
+    isProductRoom: productRoom,
+    guestInvitePath,
   };
 };
 

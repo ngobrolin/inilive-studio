@@ -13,6 +13,7 @@ export type RoomStore = {
   getRoom(roomId: string): Promise<HostRoom | null>;
   roomExists(roomId: string): Promise<boolean>;
   hasActiveGuestInvite(roomId: string, tokenHash: string): Promise<boolean>;
+  getActiveGuestInviteToken(roomId: string): Promise<string | null>;
   regenerateGuestInvite(
     hostAccountId: string,
     roomId: string,
@@ -59,6 +60,10 @@ export function createInMemoryRoomStore(): RoomStore {
 
     async hasActiveGuestInvite(roomId, tokenHash) {
       return activeGuestInviteHashes.get(roomId) === tokenHash;
+    },
+
+    async getActiveGuestInviteToken(roomId) {
+      return rooms.get(roomId)?.guestInviteToken ?? null;
     },
 
     async regenerateGuestInvite(hostAccountId, roomId, guestInviteTokenHash) {

@@ -70,6 +70,23 @@ test("signed-in Room owner can enter Join Check and Backstage for a product Room
   await expect(page.getByRole("heading", { name: "Room presence" })).toBeVisible();
 });
 
+test("Host sees the active Guest Invite link on Backstage", async ({ page, request }) => {
+  await signInHost(page, request, "shell-backstage-invite@example.com");
+  const roomHref = await createProductRoom(page, "Backstage invite episode");
+  const dashboardInviteLink = await page
+    .getByLabel("Guest Invite link for Backstage invite episode")
+    .inputValue();
+
+  await page.goto(`${roomHref}/join`);
+  await page.getByLabel("Display Name").fill("Host One");
+  await page.getByRole("button", { name: "Enter Room" }).click();
+  await expect(page).toHaveURL(/\/backstage/);
+
+  await expect(page.getByTestId("guest-invite-controls")).toBeVisible();
+  await expect(page.getByTestId("guest-invite-link")).toHaveValue(dashboardInviteLink);
+  expect(dashboardInviteLink).not.toContain("/invite/demo");
+});
+
 test("signed-out Guest can still enter a product Room through a valid Guest Invite", async ({
   page,
   request,
