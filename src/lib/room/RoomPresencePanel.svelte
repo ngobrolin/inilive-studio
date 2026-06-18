@@ -35,6 +35,9 @@
 		presence.participants.find((participant) => participant.id === activeParticipantId),
 	);
 	const activeHost = $derived(activeParticipant?.role === 'host' ? activeParticipant : null);
+	const broadcastActionUrl = $derived(
+		`?/broadcast&participant=${encodeURIComponent(activeParticipantId)}`,
+	);
 	let liveBroadcastOverride = $state<RoomBroadcastView | null>(null);
 	const liveBroadcast = $derived(liveBroadcastOverride ?? broadcast);
 	const isBroadcasting = $derived(liveBroadcast.state === 'broadcasting');
@@ -242,7 +245,7 @@
 				Going live in {countdownSecondsRemaining} second{countdownSecondsRemaining === 1 ? '' : 's'}.
 			</p>
 			{#if activeHost}
-				<form class="mt-4" method="POST" action="?/broadcast">
+				<form class="mt-4" method="POST" action={broadcastActionUrl}>
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 					<button
 						class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold"
@@ -253,7 +256,7 @@
 						Cancel Countdown
 					</button>
 				</form>
-				<form bind:this={completeCountdownForm} class="hidden" method="POST" action="?/broadcast">
+				<form bind:this={completeCountdownForm} class="hidden" method="POST" action={broadcastActionUrl}>
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 					<input name="broadcastAction" type="hidden" value="complete-countdown" />
 				</form>
@@ -280,7 +283,7 @@
 
 			{#if isBroadcasting}
 				<div class="mt-4 flex flex-wrap gap-3">
-					<form method="POST" action="?/broadcast">
+					<form method="POST" action={broadcastActionUrl}>
 						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 						<button
 							class="rounded-md bg-rose-700 px-4 py-3 text-sm font-semibold text-white"
@@ -291,7 +294,7 @@
 							End Broadcast
 						</button>
 					</form>
-					<form method="POST" action="?/broadcast">
+					<form method="POST" action={broadcastActionUrl}>
 						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 						<button
 							class="rounded-md border border-rose-300 px-4 py-3 text-sm font-semibold text-rose-950"
@@ -304,7 +307,7 @@
 					</form>
 				</div>
 			{:else if !isCountdown}
-				<form class="mt-4 grid gap-4" method="POST" action="?/broadcast">
+				<form class="mt-4 grid gap-4" method="POST" action={broadcastActionUrl}>
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 					<div>
 						<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
