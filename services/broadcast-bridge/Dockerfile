@@ -54,14 +54,65 @@ WORKDIR /build
 # endpoint returns 403 without a User-Agent. Each step must fail loudly: do not
 # wrap this in `|| true`, which previously masked a 403 and produced an image
 # with no plugin.
+#
+# Version 0.13.6 hardcodes ULP_RED on every receive transceiver, including
+# plain Opus. GStreamer then creates rtpulpfecdec with payload 0 and rejects
+# valid Opus RTP. The Host offer deliberately excludes RED/ULPFEC, so receive
+# FEC is patched off in this pinned plugin build.
 RUN curl -fsSL -A "inilive-bridge-build/1.0" \
     "https://static.crates.io/crates/gst-plugin-webrtc/gst-plugin-webrtc-${GST_PLUGIN_WEBRTC_VERSION}.crate" \
     -o gst-plugin-webrtc.crate \
     && tar -xzf gst-plugin-webrtc.crate \
     && cd "gst-plugin-webrtc-${GST_PLUGIN_WEBRTC_VERSION}" \
+    && sed -i \
+      's/WebRTCFECType::UlpRed/WebRTCFECType::None/' \
+      src/webrtcsrc/imp.rs \
+    && grep -q 'set_property("fec-type", gst_webrtc::WebRTCFECType::None)' \
+      src/webrtcsrc/imp.rs \
     && cargo build -j1 --no-default-features --features "whip,v1_22" \
     && install -D -m 0755 target/debug/libgstrswebrtc.so /out/libgstrswebrtc.so \
     && strip --strip-debug /out/libgstrswebrtc.so
+
+# Ubuntu's GStreamer 1.24.2 webrtcbin always returns rtpulpfecdec from its
+# request-fec-decoder-full callback, even when the negotiated transceiver has no
+# RED/ULPFEC payload. The decoder remains configured with payload 0 and rejects
+# the real Opus payload. Build only the matching webrtc plugin with that callback
+# disabled; all other GStreamer libraries continue to come from Ubuntu.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    meson \
+    ninja-build \
+    libnice-dev \
+    libsrtp2-dev \
+    libusrsctp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL \
+    "https://gstreamer.freedesktop.org/src/gst-plugins-bad/gst-plugins-bad-1.24.2.tar.xz" \
+    -o gst-plugins-bad.tar.xz \
+    && tar -xJf gst-plugins-bad.tar.xz \
+    && cd gst-plugins-bad-1.24.2 \
+    && sed -i \
+      's|  ret = gst_element_factory_make ("rtpulpfecdec", NULL);|  return NULL; /* FEC is not negotiated by this bridge. */|' \
+      ext/webrtc/gstwebrtcbin.c \
+    && grep -q 'FEC is not negotiated by this bridge' \
+      ext/webrtc/gstwebrtcbin.c \
+    && meson setup build \
+      --prefix=/usr \
+      --libdir=lib/aarch64-linux-gnu \
+      -Dauto_features=disabled \
+      -Dwebrtc=enabled \
+      -Ddtls=enabled \
+      -Dsrtp=enabled \
+      -Dsctp=enabled \
+      -Dsctp-internal-usrsctp=disabled \
+      -Dintrospection=disabled \
+      -Dexamples=disabled \
+      -Dtests=disabled \
+    && ninja -C build ext/webrtc/libgstwebrtc.so \
+    && install -D -m 0755 \
+      build/ext/webrtc/libgstwebrtc.so \
+      /out/libgstwebrtc.so \
+    && strip --strip-debug /out/libgstwebrtc.so
 
 # Stage 2: bridge runtime with GStreamer C plugins + the built Rust plugin.
 FROM docker.io/library/ubuntu:24.04 AS runtime
@@ -86,6 +137,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Install the built plugin into the arm64 multiarch GStreamer plugin directory.
 COPY --from=plugin-builder /out/libgstrswebrtc.so /usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstrswebrtc.so
+COPY --from=plugin-builder /out/libgstwebrtc.so /usr/lib/aarch64-linux-gnu/gstreamer-1.0/libgstwebrtc.so
 
 # Fail the image build if the required ingest/output elements are unavailable.
 RUN gst-inspect-1.0 rswebrtc && gst-inspect-1.0 whipserversrc && gst-inspect-1.0 rtmp2sink

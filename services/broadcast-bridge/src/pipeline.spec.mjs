@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 import { buildGstLaunchArgs } from "./pipeline.mjs";
 
 describe("Broadcast Bridge GStreamer pipeline", () => {
-  it("requests plain VP8 and Opus RTP pads from WHIP", () => {
+  it("does not insert RTP recovery decoders for the plain VP8 and Opus offer", () => {
+    const args = buildGstLaunchArgs({
+      whipPort: 8790,
+      rtmpLocation: "rtmp://test.example/live/secret",
+    });
+
+    expect(args).toContain("do-retransmission=false");
+  });
+
+  it("depaylods the plain VP8 and Opus RTP streams after WebRTC receive", () => {
     const args = buildGstLaunchArgs({
       whipPort: 8790,
       rtmpLocation: "rtmp://test.example/live/secret",
@@ -10,11 +19,20 @@ describe("Broadcast Bridge GStreamer pipeline", () => {
 
     expect(args).toContain("application/x-rtp,media=video,encoding-name=VP8,clock-rate=90000");
     expect(args).toContain("application/x-rtp,media=audio,encoding-name=OPUS,clock-rate=48000");
-    expect(args).not.toContain("video-codecs=<H264>");
-    expect(args).not.toContain("decodebin");
+    expect(args).toContain("rtpvp8depay");
+    expect(args).toContain("rtpopusdepay");
   });
 
-  it("recovers VP8 decoding at the next keyframe after packet loss", () => {
+  it("declares the Opus branch before VP8 to match the Host offer order", () => {
+    const args = buildGstLaunchArgs({
+      whipPort: 8790,
+      rtmpLocation: "rtmp://test.example/live/secret",
+    });
+
+    expect(args.indexOf("rtpopusdepay")).toBeLessThan(args.indexOf("rtpvp8depay"));
+  });
+
+  it("drops corrupted VP8 frames and requests a replacement sync point", () => {
     const args = buildGstLaunchArgs({
       whipPort: 8790,
       rtmpLocation: "rtmp://test.example/live/secret",
@@ -23,10 +41,11 @@ describe("Broadcast Bridge GStreamer pipeline", () => {
     const depayIndex = args.indexOf("rtpvp8depay");
     const decoderIndex = args.indexOf("vp8dec");
 
-    expect(depayIndex).toBeGreaterThan(-1);
-    expect(args.slice(depayIndex, decoderIndex)).toContain("request-keyframe=true");
-    expect(args.slice(depayIndex, decoderIndex)).toContain("wait-for-keyframe=true");
-    expect(decoderIndex).toBeGreaterThan(depayIndex);
+    expect(args[depayIndex + 1]).toBe("request-keyframe=true");
+    expect(args[depayIndex + 2]).toBe("wait-for-keyframe=true");
+    expect(decoderIndex).toBeGreaterThan(-1);
+    expect(args[decoderIndex + 1]).toBe("automatic-request-sync-points=true");
+    expect(args[decoderIndex + 2]).toBe("discard-corrupted-frames=true");
   });
 
   it("normalizes an unspecified WebRTC framerate to the 30fps RTMP profile", () => {
