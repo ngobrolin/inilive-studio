@@ -18,4 +18,23 @@ ERROR webrtcsrc session "abc" not found
       "WHIP ingest failed: streaming stopped, reason not-negotiated (-4)",
     );
   });
+
+  it("ignores verbose diagnostic lines when selecting the terminal failure", () => {
+    expect(
+      classifyPipelineFailure(`
+0:00:00.926 DEBUG webrtcsrc handle_webrtc_src_pad:<ws> NO decoding for session:0
+0:00:00.926 WARN GST_CAPS <rtpulpfecdec0:sink> caps application/x-rtp not accepted
+streaming stopped, reason not-negotiated (-4)
+`),
+    ).toBe("WHIP ingest failed: streaming stopped, reason not-negotiated (-4)");
+  });
+
+  it("prioritizes the terminal negotiation reason over a truncated caps diagnostic", () => {
+    expect(
+      classifyPipelineFailure(`
+(string\\)audio\\, payload\\=\\(int\\)111\\, clock-rate\\=\\(int\\)48000
+streaming stopped, reason not-negotiated (-4)
+`),
+    ).toBe("WHIP ingest failed: streaming stopped, reason not-negotiated (-4)");
+  });
 });

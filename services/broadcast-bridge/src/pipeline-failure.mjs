@@ -20,8 +20,15 @@ export function classifyPipelineFailure(stderrTail) {
     return `RTMP destination connection failed: ${clip(rtmpLine)}`;
   }
 
+  const negotiationLine =
+    lines.find((line) => /not-negotiated/i.test(line)) ??
+    lines.find((line) => /not accepted/i.test(line));
+  if (negotiationLine) {
+    return `WHIP ingest failed: ${clip(negotiationLine)}`;
+  }
+
   const whipLine = lines.find((line) =>
-    /whip|webrtc|ice|dtls|signall|not-negotiated/i.test(line),
+    /whip|webrtc|ice|dtls|signall/i.test(line),
   );
   if (whipLine) {
     return `WHIP ingest failed: ${clip(whipLine)}`;
@@ -37,6 +44,7 @@ function meaningfulLines(stderrTail) {
     /^Redistribute latency/i,
     /^Freeing pipeline/i,
     /^Got EOS/i,
+    /\b(?:DEBUG|INFO|LOG)\b/i,
   ];
 
   return stderrTail
