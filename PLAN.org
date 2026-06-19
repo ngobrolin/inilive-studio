@@ -938,6 +938,19 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
     plain Opus and VP8. The decoder was left at payload 0 and rejected valid Opus payload 111.
   - The pinned Rust plugin now sets receive FEC to `None`, and the matching GStreamer 1.24.2
     `webrtcbin` plugin disables its unconditional receive-FEC callback.
+- 2026-06-19: Stabilized YouTube output after it reported an 11,039.54 Kbps burst followed by
+  insufficient-video buffering.
+  - Replaced the foreground-only `requestAnimationFrame` compositor clock with a Worker-backed
+    30fps clock, retaining requestAnimationFrame as the unsupported-browser fallback. This keeps
+    canvas frames flowing when the Host switches tabs to inspect YouTube Studio.
+  - Made the x264 YouTube profile explicitly strict CBR with `pass=cbr`, a 600ms VBV buffer, and
+    `nal-hrd=cbr`. Runtime inspection confirmed `vbv_maxrate=4000`, `nal_hrd=cbr`, and `filler=1`.
+  - Regression tests passed for the background compositor clock and strict 4 Mbps encoder args.
+  - Composition Playwright coverage passed (6 tests), `npm run check` passed, and the strict bridge
+    verifier passed.
+  - Final `./init.sh` passed with 116 unit tests and 58 Playwright tests.
+  - Rebuilt the pinned bridge image and restarted `inilive-bridge-dev`; the running container
+    contains the strict-CBR pipeline.
   - A second dynamic-link hazard remained: the SDP lists Opus first, while both source templates
     initially advertise generic RTP. The pipeline now declares the media-specific Opus branch
     before VP8 and keeps both caps filters directly next to their `ws.` references.

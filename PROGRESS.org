@@ -2502,3 +2502,65 @@ Fix the live Broadcast failure:
 
 Retry the same Broadcast with the live YouTube URL and stream key, then inspect the bridge logs
 and YouTube preview for at least 30 seconds.
+
+* 2026-06-19 bridge-005 stabilize YouTube bitrate and frame cadence
+
+*** Goal
+
+Fix the live YouTube warning that measured 11,039.54 Kbps and then reported:
+`YouTube is not receiving enough video to maintain smooth streaming.`
+
+*** Root cause
+
+- Runtime x264 inspection proved the checked-in encoder was already capped at a 4 Mbps
+  `vbv_maxrate`; the target was not being ignored by the running bridge image.
+- The browser compositor was driven only by `requestAnimationFrame`. Chromium throttles that
+  clock when the Live Studio tab is backgrounded, so switching to YouTube Studio could starve the
+  WHIP video track and later produce an apparent catch-up burst.
+- The x264 rate control was CBR internally, but the output did not declare CBR HRD or insert filler
+  data, leaving the transport less constant than YouTube's ingest contract expects.
+
+*** Completed
+
+- Added a Worker-backed 30fps compositor clock with a requestAnimationFrame fallback.
+- Changed the Composed Room Feed to use that clock instead of foreground-only animation frames.
+- Made the H.264 profile explicitly strict CBR:
+  - `bitrate=4000`
+  - `pass=cbr`
+  - `vbv-buf-capacity=600`
+  - `option-string=nal-hrd=cbr`
+- Rebuilt the pinned bridge image and restarted `inilive-bridge-dev`.
+
+*** Verification run
+
+- TDD red state:
+  - compositor clock spec failed because the module did not exist.
+  - pipeline spec failed because strict-CBR arguments were absent.
+- `npx vitest run services/broadcast-bridge/src/pipeline.spec.mjs
+  src/lib/room/compositor-clock.spec.ts`: 10 passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npx playwright test composition-preview.e2e.ts --workers=1`: 6 passed.
+- `node scripts/verify/bridge-003-gstreamer.mjs`: passed with GStreamer 1.24,
+  required bridge elements, and control API lifecycle.
+- Final `./init.sh`: passed with 116 unit tests and 58 Playwright tests.
+- Direct x264 runtime inspection reported:
+  - `rc=cbr`
+  - `bitrate=4000`
+  - `vbv_maxrate=4000`
+  - `vbv_bufsize=2400`
+  - `nal_hrd=cbr`
+  - `filler=1`
+- The restarted bridge container contains `option-string=nal-hrd=cbr`.
+
+*** Known risk or unresolved issue
+
+- YouTube-side confirmation remains HITL. The next real Broadcast must remain active for at least
+  30 seconds while the Host switches between Live Studio and YouTube Studio.
+- Baseline `./init.sh` initially reached 113 passing unit tests but its Playwright phase was blocked
+  by a stale preview process on port 4173. The stale process was removed before focused browser
+  verification.
+
+*** Next best step
+
+Retry the live Broadcast, switch to YouTube Studio for at least 30 seconds, and confirm the
+reported bitrate remains near 4 Mbps without the insufficient-video warning.

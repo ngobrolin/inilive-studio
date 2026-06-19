@@ -2,6 +2,7 @@
 	import { onDestroy } from 'svelte';
 	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomParticipant, RoomScreenShare } from '$lib/server/room-presence';
+	import { startCompositorClock } from './compositor-clock';
 	import { createCompleteWhipOfferSdp, preferPlainWhipCodecs } from './whip-offer';
 	import { getAudioSources, getVideoSource, subscribeAudioSources } from './media-registry';
 
@@ -49,7 +50,6 @@
 		captureStatus = capture.stream ? 'Composed feed stream ready' : 'captureStream unavailable';
 		let localLastFpsSample = performance.now();
 		let localFrameCount = 0;
-		let localAnimationFrame = 0;
 
 		function draw(now: number) {
 			if (!context) {
@@ -67,14 +67,13 @@
 				localLastFpsSample = now;
 			}
 
-			localAnimationFrame = requestAnimationFrame(draw);
 		}
 
-		localAnimationFrame = requestAnimationFrame(draw);
+		const compositorClock = startCompositorClock({ draw, frameRate: 30 });
 
 		return {
 			destroy() {
-				cancelAnimationFrame(localAnimationFrame);
+				compositorClock.stop();
 			},
 		};
 	}

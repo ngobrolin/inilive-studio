@@ -61,6 +61,22 @@ describe("Broadcast Bridge GStreamer pipeline", () => {
     expect(outputCapsIndex).toBeGreaterThan(videoRateIndex);
   });
 
+  it("uses a strict 4 Mbps CBR encoder profile for YouTube", () => {
+    const args = buildGstLaunchArgs({
+      whipPort: 8790,
+      rtmpLocation: "rtmp://test.example/live/secret",
+    });
+
+    const encoderIndex = args.indexOf("x264enc");
+    const outputCapsIndex = args.indexOf("video/x-h264,profile=main");
+    const encoderArgs = args.slice(encoderIndex, outputCapsIndex);
+
+    expect(encoderArgs).toContain("bitrate=4000");
+    expect(encoderArgs).toContain("pass=cbr");
+    expect(encoderArgs).toContain("vbv-buf-capacity=600");
+    expect(encoderArgs).toContain("option-string=nal-hrd=cbr");
+  });
+
   it("uses the modern rtmp2sink and defers the RTMP connect until media flows", () => {
     const args = buildGstLaunchArgs({
       whipPort: 8790,
