@@ -2438,3 +2438,67 @@ and included `Backstage Broadcast Preview · Not live` in the audience output.
 
 Retry Broadcast from the Host browser with real YouTube credentials and inspect at
 least 30 seconds of motion for corruption or delayed keyframe recovery.
+
+* 2026-06-19 bridge-005 fix WHIP dynamic-pad negotiation
+
+*** Goal
+
+Fix the live Broadcast failure:
+`GstNiceSrc ... Internal data stream error`, with
+`streaming stopped, reason not-negotiated (-4)`.
+
+*** Root cause
+
+- The running bridge image matched the checked-in source, ruling out another stale-image issue.
+- GStreamer 1.24.2 unconditionally requested `rtpulpfecdec` for the receive stream even though the
+  Host offer contained no RED or ULPFEC payload. The decoder remained configured with payload 0
+  and rejected valid Opus payload 111.
+- Chromium offered Opus audio first and VP8 video second.
+- Both `whipserversrc` source templates initially advertise generic `application/x-rtp`; declaring
+  the VP8 branch first allowed the first Opus pad to attach to the wrong delayed link.
+
+*** Completed
+
+- Patched the pinned Rust `gst-plugin-webrtc` build to set receive FEC to `None`.
+- Built the matching GStreamer 1.24.2 `libgstwebrtc.so` with its unconditional receive-FEC callback
+  disabled, while keeping the rest of the Ubuntu GStreamer runtime unchanged.
+- Declared the Opus RTP branch before VP8 to match the Host SDP order and kept both media-specific
+  caps filters directly after their `ws.` dynamic-pad references.
+- Kept explicit `rtpvp8depay request-keyframe=true wait-for-keyframe=true`, VP8 decode, Opus
+  depayload/decode, and the existing H.264/AAC RTMP output profile.
+- Added regression assertions for FEC disabling, explicit RTP depayloading, and Opus-before-VP8
+  branch ordering.
+- Improved terminal failure selection so verbose GStreamer caps/debug lines do not replace the
+  actionable `not-negotiated` reason shown to the Host.
+- Rebuilt and restarted the local `inilive-bridge-dev` container.
+
+*** Verification run
+
+- The Opus-before-VP8 regression test failed against the previous ordering and passed after the
+  minimal pipeline change.
+- `npx vitest run services/broadcast-bridge/src/pipeline.spec.mjs
+  services/broadcast-bridge/src/pipeline-failure.spec.mjs src/lib/room/whip-offer.spec.ts`:
+  3 files passed, 13 tests passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `node scripts/verify/bridge-003-gstreamer.mjs`: passed with container GStreamer 1.24,
+  all required bridge elements, and the control API lifecycle.
+- Rebuilt image:
+  `a580b148eb2df298ccf4d02bd9e61cd8c38f2bef5af7f62be3196071c9428f12`.
+- Two browser-to-bridge replays completed WHIP SDP negotiation without `not accepted`,
+  `not-negotiated`, or pipeline exit.
+- Both local replays stopped at ICE checking because GStreamer selected a random UDP media port
+  inside Podman that was not part of the fixed host port mapping. This harness limitation prevented
+  the intended disposable RTMP connection-refusal proof.
+
+*** Known risk or unresolved issue
+
+- Real Host media and YouTube reception remain HITL and must be retried from the Host browser.
+- The local synthetic harness does not currently constrain GStreamer's ICE media port range, so it
+  cannot replace the real Browser-to-YouTube verification.
+- The previous raw-pad implementation avoided this negotiation issue but caused corrupted video;
+  it was not restored.
+
+*** Next best step
+
+Retry the same Broadcast with the live YouTube URL and stream key, then inspect the bridge logs
+and YouTube preview for at least 30 seconds.
