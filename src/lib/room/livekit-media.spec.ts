@@ -1,7 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  applyRefreshedLiveKitRoomToken,
   formatLiveKitConnectionError,
   liveKitSessionKey,
+  liveKitTokenRefreshDelayMs,
+  startLiveKitTokenRefresh,
   withMediaSetupTimeout,
 } from "./livekit-media";
 
@@ -35,5 +38,56 @@ describe("livekit media helpers", () => {
       "permission denied",
     );
     expect(formatLiveKitConnectionError("broken")).toBe("Unable to start Room media");
+  });
+
+  it("schedules refresh ten minutes before the grant expires", () => {
+    const now = 1_700_000_000_000;
+    const expiresAt = now + 60 * 60 * 1000;
+
+    expect(liveKitTokenRefreshDelayMs(expiresAt, now)).toBe(50 * 60 * 1000);
+    expect(liveKitTokenRefreshDelayMs(now + 5 * 60 * 1000, now)).toBe(0);
+  });
+
+  it("stores refreshed tokens on the connected LiveKit room engine", () => {
+    const room = {
+      engine: { token: "old-token" },
+      regionUrlProvider: { updateToken: vi.fn() },
+    };
+
+    applyRefreshedLiveKitRoomToken(room, "new-token");
+
+    expect(room.engine.token).toBe("new-token");
+    expect(room.regionUrlProvider.updateToken).toHaveBeenCalledWith("new-token");
+  });
+
+  describe("startLiveKitTokenRefresh", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("fetches and applies a refreshed token before expiry", async () => {
+      const fetchToken = vi
+        .fn()
+        .mockResolvedValueOnce({ token: "refreshed-token", expiresAt: 2_000_000 });
+      const onToken = vi.fn();
+      const now = 1_000_000;
+      const handle = startLiveKitTokenRefresh({
+        expiresAt: now + 60 * 60 * 1000,
+        fetchToken,
+        onToken,
+        now: () => now,
+      });
+
+      await vi.advanceTimersByTimeAsync(50 * 60 * 1000);
+      await Promise.resolve();
+
+      expect(fetchToken).toHaveBeenCalledTimes(1);
+      expect(onToken).toHaveBeenCalledWith("refreshed-token", 2_000_000);
+      handle.cancel();
+    });
   });
 });
