@@ -2564,3 +2564,33 @@ Fix the live YouTube warning that measured 11,039.54 Kbps and then reported:
 
 Retry the live Broadcast, switch to YouTube Studio for at least 30 seconds, and confirm the
 reported bitrate remains near 4 Mbps without the insufficient-video warning.
+
+* 2026-06-19 media-002 LiveKit token refresh for long broadcasts
+** Goal
+
+Remove the one-hour LiveKit grant ceiling that could interrupt long YouTube broadcasts.
+
+** Completed
+
+- TDD cycle 1: extended LiveKit grant TTL from 1h to 6h and added `expiresAt` on issued grants.
+- TDD cycle 2: added `GET /room/[roomId]/media-token` to re-issue grants for active participants.
+- TDD cycle 3: added client-side refresh scheduling in `LiveKitMediaSession.svelte` that fetches a
+  new grant ten minutes before expiry and updates the connected LiveKit room token.
+- Updated `docs/spikes/media-001-managed-sfu-choice.md` risk note.
+
+** Verification run
+
+- `npm run test:unit -- --run` -> 125 passed, 3 skipped.
+- `npm run check` -> 0 errors.
+
+** Evidence captured
+
+- Server grant module: ~/code/inilive-studio/src/lib/server/livekit-hub.ts
+- Refresh endpoint: ~/code/inilive-studio/src/routes/room/[roomId]/media-token/+server.ts
+- Client refresh helpers: ~/code/inilive-studio/src/lib/room/livekit-media.ts
+- Browser wiring: ~/code/inilive-studio/src/lib/room/LiveKitMediaSession.svelte
+
+** Next best step
+
+Retry a live Broadcast longer than one hour and confirm Room media stays connected without a
+manual reload.

@@ -43,4 +43,4 @@ Run this with real LiveKit Cloud credentials before marking media-001 fully clos
 ## Risks
 
 - Doc review alone does not prove latency, reconnect, or Android Guest behavior.
-- LiveKit token TTL is one hour in the current prototype; refresh handling belongs to a later slice.
+- LiveKit token TTL is six hours; Backstage refreshes grants ten minutes before expiry through `/room/[roomId]/media-token`.
