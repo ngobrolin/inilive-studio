@@ -20,6 +20,7 @@
 		listRemoteTiles,
 		type RemoteTrackKind,
 	} from '$lib/room/remote-participants';
+	import { registerAudioSource, registerVideoSource } from '$lib/room/media-registry';
 
 	let {
 		grant,
@@ -44,6 +45,9 @@
 	let remoteScreenShare = $state<{ identity: string; name: string; active: boolean } | null>(null);
 	let remoteParticipants = $state(emptyRemoteParticipants());
 	let localCameraTrack = $state<LocalVideoTrack | null>(null);
+	let localScreenShareVideo = $state<HTMLVideoElement | null>(null);
+	let localScreenShareTrack = $state<LocalVideoTrack | null>(null);
+	let localMicrophoneTrack = $state<MediaStreamTrack | null>(null);
 
 	const remoteTiles = $derived(listRemoteTiles(remoteParticipants));
 	const sessionKey = $derived(
@@ -64,10 +68,17 @@
 	const remoteAudioElements = new Map<string, HTMLAudioElement>();
 	const pendingVideoTracks = new Map<string, RemoteTrack>();
 	const pendingAudioTracks = new Map<string, RemoteTrack>();
+	const remoteAudioUnregister = new Map<string, () => void>();
 	let pendingScreenShareTrack: RemoteTrack | null = null;
+
+	function unregisterRemoteAudio(identity: string) {
+		remoteAudioUnregister.get(identity)?.();
+		remoteAudioUnregister.delete(identity);
+	}
 
 	function registerRemoteVideo(element: HTMLVideoElement, identity: string) {
 		remoteVideoElements.set(identity, element);
+		const unregisterCompositorSource = registerVideoSource(identity, 'camera', element);
 		const pending = pendingVideoTracks.get(identity);
 		if (pending) {
 			pending.attach(element);
@@ -76,6 +87,7 @@
 		return {
 			destroy() {
 				remoteVideoElements.delete(identity);
+				unregisterCompositorSource();
 			},
 		};
 	}
@@ -131,11 +143,60 @@
 			return;
 		}
 
-		localCameraTrack.attach(localVideo);
+		const element = localVideo;
+		const track = localCameraTrack;
+		track.attach(element);
 
 		return () => {
-			localCameraTrack?.detach();
+			track.detach(element);
 		};
+	});
+
+	// Expose the local participant's own camera, screen share, and microphone to
+	// the Composed Room Feed compositor, which lives in a separate panel.
+	$effect(() => {
+		if (!localVideo) {
+			return;
+		}
+
+		return registerVideoSource(grant.participantIdentity, 'camera', localVideo);
+	});
+
+	$effect(() => {
+		const element = localScreenShareVideo;
+		const track = localScreenShareTrack;
+		if (!element || !track) {
+			return;
+		}
+
+		track.attach(element);
+		const unregisterCompositorSource = registerVideoSource(
+			grant.participantIdentity,
+			'screen',
+			element,
+		);
+
+		return () => {
+			track.detach(element);
+			unregisterCompositorSource();
+		};
+	});
+
+	$effect(() => {
+		const track = localMicrophoneTrack;
+		if (!track) {
+			return;
+		}
+
+		return registerAudioSource(grant.participantIdentity, track);
+	});
+
+	$effect(() => {
+		if (!screenShareVideo || !remoteScreenShare) {
+			return;
+		}
+
+		return registerVideoSource(remoteScreenShare.identity, 'screen', screenShareVideo);
 	});
 
 	$effect(() => {
@@ -184,15 +245,18 @@
 						15_000,
 						'Camera setup timed out. Close other apps using the camera and reload Backstage.',
 					);
-					await withMediaSetupTimeout(
+					const microphonePublication = await withMediaSetupTimeout(
 						room.localParticipant.setMicrophoneEnabled(microphoneEnabled),
 						15_000,
 						'Microphone setup timed out. Close other apps using the microphone and reload Backstage.',
 					);
 					if (canScreenShare && screenShareActive) {
-						await room.localParticipant.setScreenShareEnabled(true);
+						const screenSharePublication = await room.localParticipant.setScreenShareEnabled(true);
+						localScreenShareTrack =
+							(screenSharePublication?.track as LocalVideoTrack | undefined) ?? null;
 						screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
 					} else {
+						localScreenShareTrack = null;
 						screenShareLabel = 'Screen Share inactive';
 					}
 
@@ -202,6 +266,7 @@
 					}
 
 					localCameraTrack = (cameraPublication?.track as LocalVideoTrack | undefined) ?? null;
+					localMicrophoneTrack = microphonePublication?.track?.mediaStreamTrack ?? null;
 					connectionStatus = 'Connected · LiveKit';
 					connectionLabel = cameraEnabled
 						? 'Publishing camera and microphone choices into this prototype Room'
@@ -223,6 +288,7 @@
 				}
 
 				localStream = stream;
+				localMicrophoneTrack = stream.getAudioTracks()[0] ?? null;
 				connectionLabel = grant.stub
 					? 'Local preview ready · configure LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET for Room media'
 					: 'Connecting to LiveKit Cloud';
@@ -258,6 +324,7 @@
 			remoteAudioElements.delete(participant.identity);
 			pendingVideoTracks.delete(participant.identity);
 			pendingAudioTracks.delete(participant.identity);
+			unregisterRemoteAudio(participant.identity);
 		}
 
 		function handleTrackSubscribed(
@@ -305,6 +372,11 @@
 				} else {
 					pendingAudioTracks.set(participant.identity, track);
 				}
+				unregisterRemoteAudio(participant.identity);
+				remoteAudioUnregister.set(
+					participant.identity,
+					registerAudioSource(participant.identity, track.mediaStreamTrack),
+				);
 			}
 		}
 
@@ -327,6 +399,10 @@
 				return;
 			}
 
+			if (kind === 'microphone') {
+				unregisterRemoteAudio(participant.identity);
+			}
+
 			track.detach();
 			remoteParticipants = applyRemoteEvent(remoteParticipants, {
 				type: 'trackOff',
@@ -340,6 +416,8 @@
 		return () => {
 			cancelled = true;
 			localCameraTrack = null;
+			localScreenShareTrack = null;
+			localMicrophoneTrack = null;
 			const activeRoom = room;
 			room = null;
 			void activeRoom?.localParticipant.setScreenShareEnabled(false);
@@ -348,6 +426,10 @@
 			remoteAudioElements.clear();
 			pendingVideoTracks.clear();
 			pendingAudioTracks.clear();
+			for (const unregister of remoteAudioUnregister.values()) {
+				unregister();
+			}
+			remoteAudioUnregister.clear();
 			pendingScreenShareTrack = null;
 		};
 	});
@@ -383,6 +465,20 @@
 			playsinline
 		></video>
 	</div>
+
+	<!--
+		Offscreen sink for the host's own Screen Share so the Composed Room Feed
+		compositor can draw it. Kept playing (not display:none) so the browser does
+		not suspend frame decoding.
+	-->
+	<!-- svelte-ignore a11y_media_has_caption -->
+	<video
+		bind:this={localScreenShareVideo}
+		autoplay
+		class="pointer-events-none absolute h-px w-px opacity-0"
+		muted
+		playsinline
+	></video>
 
 	{#if remoteScreenShare}
 		<div

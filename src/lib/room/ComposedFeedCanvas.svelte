@@ -3,6 +3,7 @@
 	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { RoomParticipant, RoomScreenShare } from '$lib/server/room-presence';
 	import { createCompleteWhipOfferSdp, preferPlainWhipCodecs } from './whip-offer';
+	import { getAudioSources, getVideoSource, subscribeAudioSources } from './media-registry';
 
 	let {
 		participants,
@@ -24,7 +25,10 @@
 		stream: null as MediaStream | null,
 	};
 	let audioContext: AudioContext | null = null;
-	let silentAudioTrack: MediaStreamTrack | null = null;
+	let audioDestination: MediaStreamAudioDestinationNode | null = null;
+	let audioSourceNodes: MediaStreamAudioSourceNode[] = [];
+	let silentOscillator: OscillatorNode | null = null;
+	let unsubscribeAudio: (() => void) | null = null;
 	let currentWhipConnection: RTCPeerConnection | null = null;
 	let currentWhipPublishKey = '';
 
@@ -77,10 +81,15 @@
 
 	onDestroy(() => {
 		stopWhipPublisher();
+		unsubscribeAudio?.();
+		for (const node of audioSourceNodes) {
+			node.disconnect();
+		}
+		audioSourceNodes = [];
+		silentOscillator?.stop();
 		for (const track of capture.stream?.getTracks() ?? []) {
 			track.stop();
 		}
-		silentAudioTrack?.stop();
 		void audioContext?.close();
 	});
 
@@ -118,7 +127,59 @@
 		}
 
 		const nextStream = sourceCanvas.captureStream(30);
+		const audioTrack = ensureMixedAudioTrack();
+		if (audioTrack) {
+			nextStream.addTrack(audioTrack);
+		}
 		return nextStream;
+	}
+
+	// One long-lived mixed audio track is added to the captured stream before WHIP
+	// starts. We rebuild the source-node connections when participant audio
+	// changes, but never swap the published track, so the WHIP sender stays valid.
+	function ensureMixedAudioTrack(): MediaStreamTrack | null {
+		if (typeof AudioContext === 'undefined') {
+			return null;
+		}
+
+		if (!audioContext) {
+			audioContext = new AudioContext();
+			audioDestination = audioContext.createMediaStreamDestination();
+
+			const silentGain = audioContext.createGain();
+			silentGain.gain.value = 0;
+			silentOscillator = audioContext.createOscillator();
+			silentOscillator.connect(silentGain).connect(audioDestination);
+			silentOscillator.start();
+
+			void audioContext.resume().catch(() => {});
+			unsubscribeAudio = subscribeAudioSources(rebuildAudioMix);
+			rebuildAudioMix();
+		}
+
+		return audioDestination?.stream.getAudioTracks()[0] ?? null;
+	}
+
+	function rebuildAudioMix() {
+		if (!audioContext || !audioDestination) {
+			return;
+		}
+
+		for (const node of audioSourceNodes) {
+			node.disconnect();
+		}
+		audioSourceNodes = [];
+
+		for (const track of getAudioSources()) {
+			if (track.readyState !== 'live') {
+				continue;
+			}
+			const source = audioContext.createMediaStreamSource(new MediaStream([track]));
+			source.connect(audioDestination);
+			audioSourceNodes.push(source);
+		}
+
+		void audioContext.resume().catch(() => {});
 	}
 
 	async function startWhipPublisher(input: {
@@ -135,8 +196,7 @@
 		whipStatus = 'WHIP ingest connecting';
 
 		try {
-			const publishStream = withSilentAudio(input.composedStream);
-			for (const track of publishStream.getTracks()) {
+			for (const track of input.composedStream.getTracks()) {
 				peerConnection.addTrack(track, input.composedStream);
 			}
 			preferPlainWhipCodecs(peerConnection, {
@@ -180,25 +240,57 @@
 		currentWhipConnection = null;
 	}
 
-	function withSilentAudio(videoStream: MediaStream): MediaStream {
-		if (videoStream.getAudioTracks().length > 0) {
-			return videoStream;
-		}
+	function isDrawableVideo(video: HTMLVideoElement | null): video is HTMLVideoElement {
+		return (
+			!!video &&
+			video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+			video.videoWidth > 0 &&
+			video.videoHeight > 0
+		);
+	}
 
-		audioContext ??= new AudioContext();
-		const gain = audioContext.createGain();
-		const oscillator = audioContext.createOscillator();
-		const destination = audioContext.createMediaStreamDestination();
-		gain.gain.value = 0;
-		oscillator.connect(gain).connect(destination);
-		oscillator.start();
+	function drawVideoCover(
+		context: CanvasRenderingContext2D,
+		video: HTMLVideoElement,
+		x: number,
+		y: number,
+		boxWidth: number,
+		boxHeight: number,
+	) {
+		const scale = Math.max(boxWidth / video.videoWidth, boxHeight / video.videoHeight);
+		const sourceWidth = boxWidth / scale;
+		const sourceHeight = boxHeight / scale;
+		const sourceX = (video.videoWidth - sourceWidth) / 2;
+		const sourceY = (video.videoHeight - sourceHeight) / 2;
+		context.drawImage(
+			video,
+			sourceX,
+			sourceY,
+			sourceWidth,
+			sourceHeight,
+			x,
+			y,
+			boxWidth,
+			boxHeight,
+		);
+	}
 
-		silentAudioTrack = destination.stream.getAudioTracks()[0] ?? null;
-		if (silentAudioTrack) {
-			videoStream.addTrack(silentAudioTrack);
-		}
-
-		return videoStream;
+	function drawVideoContain(
+		context: CanvasRenderingContext2D,
+		video: HTMLVideoElement,
+		x: number,
+		y: number,
+		boxWidth: number,
+		boxHeight: number,
+	) {
+		const scale = Math.min(boxWidth / video.videoWidth, boxHeight / video.videoHeight);
+		const drawWidth = video.videoWidth * scale;
+		const drawHeight = video.videoHeight * scale;
+		const offsetX = x + (boxWidth - drawWidth) / 2;
+		const offsetY = y + (boxHeight - drawHeight) / 2;
+		context.fillStyle = '#000000';
+		context.fillRect(x, y, boxWidth, boxHeight);
+		context.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
 	}
 
 	function drawFrame(context: CanvasRenderingContext2D, now: number) {
@@ -210,8 +302,6 @@
 		} else {
 			drawParticipantGrid(context, visibleParticipants);
 		}
-
-		drawBroadcastChrome(context);
 	}
 
 	function drawScreenShareLayout(
@@ -220,21 +310,35 @@
 		roomParticipants: RoomParticipant[],
 		now: number,
 	) {
-		context.fillStyle = '#083344';
-		context.fillRect(32, 32, 1216, 536);
-		context.strokeStyle = '#67e8f9';
-		context.lineWidth = 4;
-		context.strokeRect(32, 32, 1216, 536);
+		const screenVideo = getVideoSource(screenShare.participantId, 'screen');
+		if (isDrawableVideo(screenVideo)) {
+			drawVideoContain(context, screenVideo, 32, 32, 1216, 536);
+			context.strokeStyle = '#67e8f9';
+			context.lineWidth = 4;
+			context.strokeRect(32, 32, 1216, 536);
 
-		context.fillStyle = '#ecfeff';
-		context.font = '700 52px system-ui, sans-serif';
-		context.fillText(`${screenShare.displayName} Screen Share`, 80, 130);
-		context.font = '500 28px system-ui, sans-serif';
-		context.fillText('Primary visual source for the Composed Room Feed', 80, 180);
+			context.fillStyle = 'rgb(0 0 0 / 0.55)';
+			context.fillRect(32, 32, 1216, 56);
+			context.fillStyle = '#ecfeff';
+			context.font = '700 32px system-ui, sans-serif';
+			context.fillText(`${screenShare.displayName} Screen Share`, 56, 72);
+		} else {
+			context.fillStyle = '#083344';
+			context.fillRect(32, 32, 1216, 536);
+			context.strokeStyle = '#67e8f9';
+			context.lineWidth = 4;
+			context.strokeRect(32, 32, 1216, 536);
 
-		const pulse = Math.round(24 + Math.sin(now / 180) * 10);
-		context.fillStyle = `rgb(34 211 238 / ${0.55 + pulse / 100})`;
-		context.fillRect(80, 248, 1120, 168);
+			context.fillStyle = '#ecfeff';
+			context.font = '700 52px system-ui, sans-serif';
+			context.fillText(`${screenShare.displayName} Screen Share`, 80, 130);
+			context.font = '500 28px system-ui, sans-serif';
+			context.fillText('Primary visual source for the Composed Room Feed', 80, 180);
+
+			const pulse = Math.round(24 + Math.sin(now / 180) * 10);
+			context.fillStyle = `rgb(34 211 238 / ${0.55 + pulse / 100})`;
+			context.fillRect(80, 248, 1120, 168);
+		}
 
 		roomParticipants.forEach((participant, index) => {
 			const tileWidth = 280;
@@ -275,15 +379,34 @@
 		tileHeight: number,
 		compact: boolean,
 	) {
-		context.fillStyle = participant.cameraEnabled ? '#164e63' : '#171717';
-		context.fillRect(x, y, tileWidth, tileHeight);
+		const cameraVideo = participant.cameraEnabled ? getVideoSource(participant.id, 'camera') : null;
+
+		if (isDrawableVideo(cameraVideo)) {
+			drawVideoCover(context, cameraVideo, x, y, tileWidth, tileHeight);
+		} else {
+			context.fillStyle = participant.cameraEnabled ? '#164e63' : '#171717';
+			context.fillRect(x, y, tileWidth, tileHeight);
+
+			context.fillStyle = participant.cameraEnabled ? '#a5f3fc' : '#d4d4d4';
+			context.font = compact ? '700 24px system-ui, sans-serif' : '700 38px system-ui, sans-serif';
+			context.fillText(
+				participant.cameraEnabled
+					? 'Camera on'
+					: participant.displayName.slice(0, 1).toUpperCase(),
+				x + 28,
+				y + tileHeight / 2,
+			);
+		}
+
 		context.strokeStyle = '#404040';
 		context.lineWidth = 2;
 		context.strokeRect(x, y, tileWidth, tileHeight);
 
-		context.fillStyle = participant.cameraEnabled ? '#a5f3fc' : '#d4d4d4';
-		context.font = compact ? '700 24px system-ui, sans-serif' : '700 38px system-ui, sans-serif';
-		context.fillText(participant.cameraEnabled ? 'Camera on' : participant.displayName.slice(0, 1).toUpperCase(), x + 28, y + tileHeight / 2);
+		// Name label overlay so the composed feed still identifies participants on
+		// top of live video.
+		const labelHeight = compact ? 44 : 64;
+		context.fillStyle = 'rgb(0 0 0 / 0.55)';
+		context.fillRect(x, y + tileHeight - labelHeight, tileWidth, labelHeight);
 
 		context.fillStyle = '#ffffff';
 		context.font = compact ? '700 20px system-ui, sans-serif' : '700 28px system-ui, sans-serif';
@@ -293,13 +416,6 @@
 		context.fillText(participant.role === 'host' ? 'Host' : 'Guest', x + 28, y + tileHeight - 14);
 	}
 
-	function drawBroadcastChrome(context: CanvasRenderingContext2D) {
-		context.fillStyle = 'rgb(0 0 0 / 0.55)';
-		context.fillRect(0, 0, width, 48);
-		context.fillStyle = '#fef3c7';
-		context.font = '700 20px system-ui, sans-serif';
-		context.fillText('Backstage Broadcast Preview · Not live', 32, 32);
-	}
 </script>
 
 <section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm" data-testid="composed-feed">

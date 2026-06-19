@@ -2317,3 +2317,124 @@ bridge settings leaked into unit and Playwright verification.
 
 Retry the Broadcast from the Host browser with real YouTube credentials and confirm
 YouTube receives the 720p30 feed.
+
+* 2026-06-18 compose-002 fix composited media reaching the canvas
+
+*** Goal
+
+Fix the confirmed high-severity bug where the Composed Room Feed (published to
+YouTube via WHIP) painted placeholder rectangles/text instead of real LiveKit
+camera/screen video, and replaced participant audio with silence.
+
+*** Root cause
+
+LiveKitMediaSession.svelte held the live media (local camera, remote camera
+video elements, screen share, audio tracks) in a non-reactive map, while
+ComposedFeedCanvas.svelte received only participant metadata props. The two
+components are mounted in different panels and shared no path, so drawFrame had
+no video to draw and only painted placeholders; audio was a gain-0 oscillator.
+
+*** Completed
+
+- Ran ./init.sh baseline before changes; baseline passed (97 Vitest, 57 Playwright).
+- Added a process-local shared media-source registry at src/lib/room/media-registry.ts
+  with separate camera/screen video maps, token-guarded unregisters, and an
+  audio-track set with change notifications. Media objects stay out of Svelte
+  reactive state. A narrow browser hook is exposed for e2e injection.
+- Wired LiveKitMediaSession.svelte to register local camera, local screen share
+  (via a new offscreen playing sink element), local microphone, remote camera
+  elements, remote screen share, and remote microphone audio, with cleanup on
+  unsubscribe/disconnect/session teardown. Local camera/screen detach now targets
+  the specific element.
+- Reworked ComposedFeedCanvas.svelte to draw real registry video into participant
+  tiles (object-fit cover) and the screen-share region (object-fit contain) with
+  drawImage(), keeping placeholders as fallback and adding a name-label overlay.
+- Replaced the silent oscillator with one long-lived mixed-audio destination track
+  added to the captured stream before WHIP starts; source-node connections rebuild
+  on registry audio changes via subscription, and the published track is never
+  swapped (keeps the WHIP sender valid). Removed withSilentAudio.
+- Added registry unit tests (camera/screen coexistence, token-guarded unregister,
+  audio notify) and a Playwright regression test that injects a synthetic magenta
+  camera source and asserts magenta pixels at the host tile center of the composed
+  canvas (would fail against the old placeholder fill).
+
+*** Verification run
+
+- npm run check: passed with 0 errors and 0 warnings.
+- npm run lint: passed with 0 errors (4 pre-existing warnings in unrelated files).
+- npx playwright test composition-preview.e2e.ts --workers=1: 6 passed, including
+  the new live-camera regression test.
+- npm run fmt:check on touched files: passed after fmt.
+- ./init.sh final: passed (110 Vitest, 58 Playwright). 28fps gate and WHIP/broadcast
+  e2e still pass.
+
+*** Evidence captured
+
+- Shared registry: src/lib/room/media-registry.ts
+- Registry unit tests: src/lib/room/media-registry.spec.ts
+- Media session registration: src/lib/room/LiveKitMediaSession.svelte
+- Canvas compositing + audio mix: src/lib/room/ComposedFeedCanvas.svelte
+- Regression test: src/routes/room/[roomId]/composition-preview.e2e.ts
+
+*** Known risk or unresolved issue
+
+- Real LiveKit-to-canvas pixel fidelity and YouTube-side reception remain HITL
+  (bridge-005) and were not exercised; hermetic e2e proves the compositor path.
+- bridge-005 still needs live-enabled YouTube credentials.
+
+*** Next best step
+
+During the next live retry (bridge-005), confirm real camera/screen frames and
+mixed audio reach YouTube, not just the synthetic hermetic proof.
+
+* 2026-06-19 bridge-005 fix corrupted video and remove backstage output label
+
+*** Goal
+
+Fix the first YouTube-received video, which showed severe inter-frame corruption
+and included `Backstage Broadcast Preview · Not live` in the audience output.
+
+*** Root cause
+
+- The label was explicitly painted into every Composed Room Feed canvas frame.
+- The bridge requested already-decoded raw video from `whipserversrc`, leaving its
+  internal VP8 depayloader at defaults that did not request or wait for a replacement
+  keyframe after packet loss. Damaged VP8 reference frames could therefore propagate
+  as the macroblock corruption visible in the YouTube recording.
+
+*** Completed
+
+- Removed backstage status chrome from the Composed Room Feed canvas while preserving
+  the status in the surrounding Backstage UI.
+- Changed the bridge to request plain VP8 and Opus RTP pads explicitly.
+- Added `rtpvp8depay request-keyframe=true wait-for-keyframe=true` before VP8 decode.
+- Added explicit Opus RTP depayload/decode.
+- Hardened H.264 output with `tune=zerolatency` and
+  `h264parse config-interval=-1`.
+- Expanded the strict bridge verifier to require the new RTP depay/decode elements.
+- Rebuilt and restarted the local `inilive-bridge-dev` container.
+
+*** Verification run
+
+- Regression tests failed before implementation and passed afterward.
+- `npx vitest --run services/broadcast-bridge/src/pipeline.spec.mjs`: 5 passed.
+- `npx playwright test composition-preview.e2e.ts --workers=1`: 6 passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `node scripts/verify/bridge-003-gstreamer.mjs`: passed with container GStreamer
+  1.24, all explicit RTP depay/decode elements, and control API lifecycle.
+- The exact revised GStreamer command parsed and entered PLAYING in the pinned image.
+- A temporary browser-to-bridge capture harness completed WHIP signaling. ICE media
+  remained in checking because the Podman container advertised its internal address,
+  so local FLV decode verification could not replace the real YouTube HITL check.
+
+*** Known risk or unresolved issue
+
+- The next real YouTube attempt must confirm clean moving video and absence of the
+  backstage label.
+- bridge-005 remains in progress until YouTube-side 720p30 reception, clean ending,
+  and wrong-credential behavior are verified.
+
+*** Next best step
+
+Retry Broadcast from the Host browser with real YouTube credentials and inspect at
+least 30 seconds of motion for corruption or delayed keyframe recovery.

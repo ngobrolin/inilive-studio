@@ -65,6 +65,26 @@ test("Composed Room Feed renders a 720p captureStream canvas", async ({ page, re
   await expect
     .poll(async () => Number(await page.getByTestId("composition-fps").textContent()))
     .toBeGreaterThanOrEqual(28);
+
+  const hasBackstageChromeBurnedIntoOutput = await canvas.evaluate((element) => {
+    const output = element as HTMLCanvasElement;
+    const context = output.getContext("2d");
+    if (!context) {
+      throw new Error("composition canvas context is unavailable");
+    }
+
+    const pixels = context.getImageData(0, 0, output.width, 48).data;
+    for (let index = 0; index < pixels.length; index += 4) {
+      const red = pixels[index] ?? 0;
+      const green = pixels[index + 1] ?? 0;
+      const blue = pixels[index + 2] ?? 0;
+      if (red > 180 && green > 140 && blue < 160) {
+        return true;
+      }
+    }
+    return false;
+  });
+  expect(hasBackstageChromeBurnedIntoOutput).toBe(false);
 });
 
 test("Composed Room Feed captureStream exposes a playable 720p video track", async ({
@@ -111,6 +131,88 @@ test("Composed Room Feed captureStream exposes a playable 720p video track", asy
   expect(trackInfo?.readyState).toBe("live");
   expect(trackInfo?.width).toBe(1280);
   expect(trackInfo?.height).toBe(720);
+});
+
+test("Composed Room Feed draws a live camera source into the canvas", async ({ page, request }) => {
+  const room = await setupProductRoom(page, request, {
+    email: "composition-live-camera@example.com",
+    title: "Live camera composition episode",
+  });
+
+  const backstageUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+  const participantId = new URL(backstageUrl).searchParams.get("participant");
+  if (!participantId) {
+    throw new Error("expected a participant id in the backstage URL");
+  }
+
+  await expect(page.getByTestId("capture-stream-status")).toContainText(
+    "Composed feed stream ready",
+  );
+
+  // Inject a synthetic, continuously repainting magenta camera source into the
+  // shared media registry under the host's identity. In hermetic stub mode there
+  // is no real LiveKit track, so this proves the compositor draws a registered
+  // camera video element into the composed canvas with drawImage().
+  await page.evaluate(async (identity) => {
+    const registry = (
+      window as unknown as {
+        __iniliveRoomMediaRegistry?: {
+          registerVideoSource: (
+            id: string,
+            kind: "camera" | "screen",
+            element: HTMLVideoElement,
+          ) => () => void;
+        };
+      }
+    ).__iniliveRoomMediaRegistry;
+    if (!registry) {
+      throw new Error("media registry hook is not available");
+    }
+
+    const source = document.createElement("canvas");
+    source.width = 320;
+    source.height = 180;
+    const sourceContext = source.getContext("2d")!;
+    const paint = () => {
+      sourceContext.fillStyle = "rgb(255, 0, 255)";
+      sourceContext.fillRect(0, 0, source.width, source.height);
+      requestAnimationFrame(paint);
+    };
+    paint();
+
+    const stream = source.captureStream(30);
+    const video = document.createElement("video");
+    video.srcObject = stream;
+    video.muted = true;
+    video.playsInline = true;
+    await video.play();
+
+    // Keep references alive so the synthetic source is not garbage collected.
+    (
+      window as unknown as { __iniliveTestCameraVideo?: HTMLVideoElement }
+    ).__iniliveTestCameraVideo = video;
+    registry.registerVideoSource(identity, "camera", video);
+  }, participantId);
+
+  // Magenta camera pixels at the center of the host tile, not the neutral
+  // "Camera on" placeholder fill (#164e63).
+  await expect
+    .poll(
+      async () =>
+        page.evaluate(() => {
+          const canvas = document.querySelector(
+            '[data-testid="composition-canvas"]',
+          ) as HTMLCanvasElement | null;
+          const context = canvas?.getContext("2d");
+          if (!context) {
+            return false;
+          }
+          const [r, g, b] = context.getImageData(640, 360, 1, 1).data;
+          return r > 200 && g < 90 && b > 200;
+        }),
+      { timeout: 10_000 },
+    )
+    .toBe(true);
 });
 
 test("Composed Room Feed makes Screen Share the primary source", async ({ page, request }) => {

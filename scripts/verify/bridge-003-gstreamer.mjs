@@ -16,7 +16,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "../..");
 const bridgeDir = path.join(repoRoot, "services/broadcast-bridge");
 const imageName = "inilive-broadcast-bridge:bridge-003";
-const requiredGStreamerElements = ["whipserversrc", "x264enc", "avenc_aac", "flvmux", "rtmp2sink"];
+const requiredGStreamerElements = [
+  "whipserversrc",
+  "rtpvp8depay",
+  "vp8dec",
+  "rtpopusdepay",
+  "opusdec",
+  "x264enc",
+  "avenc_aac",
+  "flvmux",
+  "rtmp2sink",
+];
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

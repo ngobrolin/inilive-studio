@@ -586,7 +586,7 @@ Render the final Composed Room Feed into a browser canvas and produce a MediaStr
 *** Notes
 
 - M1 requires at least 28fps. The product target of 720p30 is validated end-to-end in Milestone 2.
-- The current canvas renders prototype placeholders rather than compositing actual LiveKit video tracks into the canvas.
+- 2026-06-18: Fixed the high-severity bug where the canvas only rendered placeholders. A shared media-source registry (~/code/inilive-studio/src/lib/room/media-registry.ts) now bridges LiveKitMediaSession and ComposedFeedCanvas: live camera/screen video elements are drawn into the canvas with drawImage(), and participant audio is mixed into the captured stream instead of silence. Regression coverage proves a registered camera source reaches the composed canvas pixels (~/code/inilive-studio/src/routes/room/[roomId]/composition-preview.e2e.ts).
 
 ** TODO qa-001 - Write manual media test script
 :PROPERTIES:
@@ -914,6 +914,25 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
     `rtmp2sink`; the disposable local RTMP endpoint failed with the expected connection refusal.
   - Failure classification now preserves the primary RTMP error instead of reporting later
     WebRTC session-cleanup noise.
+- 2026-06-19: Fixed the two defects visible in the first YouTube-received video.
+  - Removed the canvas-painted `Backstage Broadcast Preview · Not live` banner. Backstage
+    status remains in the surrounding product UI and is no longer part of the Composed Room Feed.
+  - Changed bridge ingest from internally decoded raw WHIP pads to explicit VP8/Opus RTP
+    depayload/decode stages.
+  - `rtpvp8depay` now requests a keyframe after packet loss and waits for that keyframe before
+    resuming decoded output, preventing damaged inter-frames from producing persistent macroblock
+    corruption.
+  - H.264 output uses zero-latency tuning and repeats SPS/PPS at every IDR frame for downstream
+    decoder recovery.
+  - Pipeline regression tests passed (5 tests), including RTP codec selection, VP8 keyframe
+    recovery, 30fps normalization, RTMP sink behavior, and repeated H.264 codec headers.
+  - Composition Playwright coverage passed (6 tests), including a pixel-level assertion that
+    backstage chrome is not burned into the output canvas.
+  - The strict bridge verifier passed with GStreamer 1.24 and the explicit RTP depay/decode
+    elements; the rebuilt pipeline parsed and entered PLAYING in the pinned container.
+  - A local browser-to-container capture harness completed WHIP signaling but could not establish
+    ICE media because Podman advertised its internal address. Final visual confirmation therefore
+    remains the real YouTube HITL retry.
 
 *** Notes
 
