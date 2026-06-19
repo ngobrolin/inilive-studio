@@ -1,6 +1,7 @@
 import { env } from "$env/dynamic/private";
 import type { LiveKitMediaJoinGrant } from "$lib/server/livekit-hub";
 import { issueLiveKitMediaJoinGrant, parseLiveKitTtlMs } from "$lib/server/livekit-hub";
+import { getRoomPresence } from "$lib/server/room-presence";
 
 export type MediaJoinGrant = LiveKitMediaJoinGrant & {
   provider: "livekit";
@@ -62,4 +63,30 @@ export async function createMediaJoinGrant(
     provider: "livekit",
     stub: false,
   };
+}
+
+export async function refreshActiveParticipantMediaGrant(
+  input: {
+    roomId: string;
+    participantId: string;
+  },
+  credentials: LiveKitCredentials = readLiveKitCredentials(),
+): Promise<MediaJoinGrant | null> {
+  const activeParticipant = getRoomPresence(input.roomId).participants.find(
+    (participant) => participant.id === input.participantId,
+  );
+
+  if (!activeParticipant) {
+    return null;
+  }
+
+  return createMediaJoinGrant(
+    {
+      roomId: input.roomId,
+      participantId: activeParticipant.id,
+      displayName: activeParticipant.displayName,
+      role: activeParticipant.role,
+    },
+    credentials,
+  );
 }
