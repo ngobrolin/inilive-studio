@@ -10,9 +10,12 @@
 		Room as LiveKitRoom,
 	} from 'livekit-client';
 	import {
+		applyRefreshedLiveKitRoomToken,
 		formatLiveKitConnectionError,
 		liveKitSessionKey,
+		startLiveKitTokenRefresh,
 		withMediaSetupTimeout,
+		type LiveKitTokenRefreshHandle,
 	} from '$lib/room/livekit-media';
 	import {
 		applyRemoteEvent,
@@ -203,6 +206,29 @@
 		const activeSessionKey = sessionKey;
 		let cancelled = false;
 		let room: LiveKitRoom | null = null;
+		let tokenRefresh: LiveKitTokenRefreshHandle | null = null;
+
+		async function fetchRefreshedToken() {
+			const response = await fetch(
+				`/room/${grant.roomName}/media-token?participant=${encodeURIComponent(grant.participantIdentity)}`,
+			);
+			if (!response.ok) {
+				throw new Error('LiveKit token refresh failed.');
+			}
+
+			return (await response.json()) as { token: string; expiresAt: number };
+		}
+
+		function startTokenRefresh(activeRoom: LiveKitRoom) {
+			tokenRefresh?.cancel();
+			tokenRefresh = startLiveKitTokenRefresh({
+				expiresAt: grant.expiresAt,
+				fetchToken: fetchRefreshedToken,
+				onToken: (token) => {
+					applyRefreshedLiveKitRoomToken(activeRoom, token);
+				},
+			});
+		}
 
 		async function startPreview() {
 			try {
@@ -271,6 +297,7 @@
 					connectionLabel = cameraEnabled
 						? 'Publishing camera and microphone choices into this prototype Room'
 						: 'Connected with camera off · microphone choice published into this prototype Room';
+					startTokenRefresh(room);
 
 					return;
 				}
@@ -415,6 +442,8 @@
 
 		return () => {
 			cancelled = true;
+			tokenRefresh?.cancel();
+			tokenRefresh = null;
 			localCameraTrack = null;
 			localScreenShareTrack = null;
 			localMicrophoneTrack = null;
