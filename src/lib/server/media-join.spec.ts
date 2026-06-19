@@ -13,7 +13,7 @@ describe("media join grants", () => {
       { apiKey: undefined, apiSecret: undefined, serverUrl: undefined },
     );
 
-    expect(grant).toEqual({
+    expect(grant).toMatchObject({
       provider: "livekit",
       stub: true,
       roomName: "demo",
@@ -23,6 +23,7 @@ describe("media join grants", () => {
       displayName: "Host One",
       role: "host",
     });
+    expect(grant?.expiresAt).toBeGreaterThan(Date.now());
   });
 
   it("returns a non-stub grant when LiveKit credentials are configured", async () => {
@@ -51,6 +52,7 @@ describe("media join grants", () => {
     });
     expect(grant?.token).toBeTruthy();
     expect(grant?.token).not.toBe("stub-token");
+    expect(grant?.expiresAt).toBeGreaterThan(Date.now());
   });
 
   it("returns null when the participant id is missing", async () => {

@@ -1,6 +1,6 @@
 import { env } from "$env/dynamic/private";
 import type { LiveKitMediaJoinGrant } from "$lib/server/livekit-hub";
-import { issueLiveKitMediaJoinGrant } from "$lib/server/livekit-hub";
+import { issueLiveKitMediaJoinGrant, parseLiveKitTtlMs } from "$lib/server/livekit-hub";
 
 export type MediaJoinGrant = LiveKitMediaJoinGrant & {
   provider: "livekit";
@@ -46,6 +46,7 @@ export async function createMediaJoinGrant(
       serverUrl: "wss://stub.livekit.cloud",
       displayName: input.displayName,
       role: input.role,
+      expiresAt: Date.now() + parseLiveKitTtlMs("6h"),
     };
   }
 
