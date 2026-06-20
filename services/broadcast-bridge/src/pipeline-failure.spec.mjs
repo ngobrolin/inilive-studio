@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 import { classifyPipelineFailure } from "./pipeline-failure.mjs";
 
 describe("classifyPipelineFailure", () => {
+  it("reports rejected stream credentials instead of raw RTMP publish errors", () => {
+    expect(
+      classifyPipelineFailure(`
+ERROR: from element /GstPipeline:pipeline0/GstRtmp2Sink:rtmp: Failed to connect: 'publish' cmd failed: connection closed remotely
+ERROR webrtcsrc session "abc" not found
+`),
+    ).toBe("YouTube rejected the stream credentials.");
+  });
+
   it("reports the primary RTMP failure instead of later WHIP cleanup noise", () => {
     expect(
       classifyPipelineFailure(`
@@ -9,7 +18,7 @@ ERROR: from element /GstPipeline:pipeline0/GstRtmp2Sink:rtmp: Connection refused
 ERROR webrtcsrc session "abc" not found
 `),
     ).toBe(
-      "RTMP destination connection failed: ERROR: from element /GstPipeline:pipeline0/GstRtmp2Sink:rtmp: Connection refused",
+      "Could not reach the RTMP server. Check the server URL and network connection.",
     );
   });
 

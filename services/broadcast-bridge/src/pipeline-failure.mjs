@@ -1,3 +1,10 @@
+const YOUTUBE_CREDENTIALS_REJECTED_MESSAGE =
+  "YouTube rejected the stream credentials.";
+const RTMP_SERVER_UNREACHABLE_MESSAGE =
+  "Could not reach the RTMP server. Check the server URL and network connection.";
+const RTMP_CONNECTION_FAILED_MESSAGE =
+  "Could not connect to the Broadcast Destination. Check the RTMP server URL and stream key.";
+
 export function classifyPipelineFailure(stderrTail) {
   const lines = meaningfulLines(stderrTail);
   if (lines.length === 0) {
@@ -17,7 +24,13 @@ export function classifyPipelineFailure(stderrTail) {
     ),
   );
   if (rtmpLine) {
-    return `RTMP destination connection failed: ${clip(rtmpLine)}`;
+    if (isRtmpCredentialsRejected(rtmpLine)) {
+      return YOUTUBE_CREDENTIALS_REJECTED_MESSAGE;
+    }
+    if (isRtmpConnectionRefused(rtmpLine)) {
+      return RTMP_SERVER_UNREACHABLE_MESSAGE;
+    }
+    return RTMP_CONNECTION_FAILED_MESSAGE;
   }
 
   const negotiationLine =
@@ -57,4 +70,14 @@ function meaningfulLines(stderrTail) {
 
 function clip(line) {
   return line.length > 400 ? `${line.slice(0, 397)}...` : line;
+}
+
+function isRtmpCredentialsRejected(line) {
+  return /publish.*cmd failed|connection closed remotely|netconnection\.connect\.rejected|invalid stream|access denied|authentication failed/i.test(
+    line,
+  );
+}
+
+function isRtmpConnectionRefused(line) {
+  return /connection refused/i.test(line);
 }
