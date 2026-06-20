@@ -873,10 +873,10 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 
 *** Acceptance criteria
 
-- [ ] Host can paste valid YouTube stream credentials.
-- [ ] YouTube receives a 720p30 H.264 feed from the bridge.
-- [ ] Broadcast can be ended cleanly.
-- [ ] Wrong credentials show actionable Host failure copy.
+- [X] Host can paste valid YouTube stream credentials.
+- [X] YouTube receives a 720p30 H.264 feed from the bridge.
+- [X] Broadcast can be ended cleanly.
+- [X] Wrong credentials show actionable Host failure copy.
 - [ ] Bridge reports terminal state to SvelteKit within the required timing.
 - [ ] Evidence includes YouTube-side confirmation and bridge/SvelteKit logs with secrets redacted.
 
@@ -1358,3 +1358,144 @@ Remove or protect every authless Milestone 1 prototype route so the production p
 *** Notes
 
 - This is required before considering the Product Shell milestone complete.
+
+* Milestone 4 - YouTube Managed Broadcasts
+:PROPERTIES:
+:MILESTONE_ID: m4-youtube-managed-broadcasts
+:STATUS: not_started
+:END:
+
+Goal: replace pasted RTMP credentials with API-managed YouTube broadcasts so the audience sees a real LIVE badge, latency/DVR are controllable, and the Host goes live in one click. Follows ADR 0026 and supersedes the credential-entry path from ADR 0006. The Broadcast Bridge is reused unchanged; only the source of the ingestion address and stream key changes.
+
+** TODO yt-001 - Link a Host YouTube channel through Google OAuth
+:PROPERTIES:
+:FEATURE_ID: yt-001
+:TYPE: HITL
+:PRIORITY: 25
+:AREA: youtube-api
+:STATUS: not_started
+:BLOCKED_BY: bridge-005
+:END:
+
+*** What to build
+
+Add Google OAuth account linking so a signed-in Host can connect their YouTube channel. Store and refresh the channel's OAuth refresh token securely, scoped per Host Account. Requires a Google Cloud project, an OAuth consent screen, and the `https://www.googleapis.com/auth/youtube` scope.
+
+*** Acceptance criteria
+
+- [ ] Host can start the Google OAuth flow from the dashboard and return linked.
+- [ ] The `youtube` scope is requested and the granted channel is recorded against the Host Account.
+- [ ] Refresh tokens are stored encrypted at rest and never logged or exposed to the browser.
+- [ ] Host can unlink a channel, which revokes and deletes the stored token.
+- [ ] Access tokens are refreshed automatically before API calls.
+
+*** Verification
+
+1. Link a real test channel through the OAuth consent screen.
+2. Confirm the refresh token is persisted encrypted and the channel id is recorded.
+3. Unlink and confirm the token is revoked and removed.
+4. Inspect logs for absence of token material.
+
+*** Notes
+
+- HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
+
+** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
+:PROPERTIES:
+:FEATURE_ID: yt-002
+:TYPE: AFK
+:PRIORITY: 26
+:AREA: youtube-api
+:STATUS: not_started
+:BLOCKED_BY: yt-001
+:END:
+
+*** What to build
+
+When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP ingestion) and a `liveBroadcast` (public event) through the YouTube Data API v3, bind them, and use the API-issued ingestion address and stream key as the Broadcast Bridge RTMP target instead of pasted credentials. Set title, visibility, latency mode, and `monitorStream` from product settings.
+
+*** Acceptance criteria
+
+- [ ] Starting a Broadcast on a linked channel creates and binds a liveStream and liveBroadcast.
+- [ ] The bridge receives the API-issued ingestion address and stream key, not pasted values.
+- [ ] Title, visibility, and latency mode are set from product settings with sensible defaults.
+- [ ] API quota errors and missing live permissions surface as actionable Host failure copy.
+- [ ] Stream keys from the API are never persisted or logged.
+
+*** Verification
+
+1. Start a Broadcast on a linked channel and confirm the event appears in YouTube Studio.
+2. Confirm the bridge connects to the API-issued ingestion endpoint.
+3. Force a quota/permission error and verify Host-visible failure copy.
+4. Inspect logs and storage for absence of stream keys.
+
+*** Notes
+
+- The pasted-credential path may remain as a fallback for non-YouTube RTMP destinations.
+
+** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
+:PROPERTIES:
+:FEATURE_ID: yt-003
+:TYPE: AFK
+:PRIORITY: 27
+:AREA: youtube-api
+:STATUS: not_started
+:BLOCKED_BY: yt-002
+:END:
+
+*** What to build
+
+Transition the API-managed broadcast through its lifecycle in step with Broadcast State: wait for the ingestion stream to report active, transition `testing` then `live` to produce the LIVE badge, and transition `complete` when the Host ends the Broadcast. Reconcile YouTube lifecycle status with product Broadcast records and Broadcast Health.
+
+*** Acceptance criteria
+
+- [ ] Broadcast goes live only after YouTube reports the bound stream active.
+- [ ] The audience player shows the LIVE badge at the live edge once transitioned.
+- [ ] Ending a Broadcast transitions the YouTube broadcast to complete.
+- [ ] YouTube lifecycle errors map to product Failed state with actionable copy.
+- [ ] Product Broadcast records reflect the YouTube broadcast id and final status.
+
+*** Verification
+
+1. Start to finish a Broadcast and confirm testing -> live -> complete transitions.
+2. Confirm the LIVE badge appears in the public player.
+3. End the Broadcast and confirm the YouTube event completes and archives.
+4. Simulate a transition failure and verify product Failed handling.
+
+*** Notes
+
+- Reuses the existing Broadcast Bridge and Broadcast Health callbacks unchanged.
+
+** TODO yt-004 - Verify managed YouTube broadcast end-to-end
+:PROPERTIES:
+:FEATURE_ID: yt-004
+:TYPE: HITL
+:PRIORITY: 28
+:AREA: youtube-api
+:STATUS: not_started
+:BLOCKED_BY: yt-003
+:END:
+
+*** What to build
+
+Validate the full managed path on a real channel: link, one-click go-live, LIVE badge visible to the audience, a broadcast longer than one hour without interruption, controllable latency, and clean completion with an archived recording.
+
+*** Acceptance criteria
+
+- [ ] Host links a channel and goes live in one click without using YouTube Studio.
+- [ ] Audience sees the LIVE badge and live-edge playback.
+- [ ] A broadcast runs longer than one hour without media or stream interruption.
+- [ ] Latency mode behaves as configured.
+- [ ] Ending the Broadcast completes the event and leaves a clean YouTube archive.
+- [ ] Evidence is recorded with stream keys and tokens redacted.
+
+*** Verification
+
+1. Run a real >1 hour broadcast on a live-enabled channel.
+2. Capture audience-side evidence of the LIVE badge and live edge.
+3. Confirm clean completion and archive.
+4. Record evidence without exposing secrets.
+
+*** Notes
+
+- HITL because it requires a live-enabled YouTube channel and human audience-side confirmation.
