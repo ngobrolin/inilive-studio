@@ -2631,3 +2631,48 @@ broadcasts (real LIVE badge, controllable latency, >1h broadcasts), per user req
 
 Run the bridge-005 HITL retry (>1h, inspect LIVE badge) to close V1, then start yt-001
 once a Google Cloud project and OAuth consent screen are available.
+
+* 2026-06-20 bridge-005 preserve terminal callback through Host End
+
+** Goal
+
+Fix the live Host End path after the bridge terminal callback received HTTP 401 and no
+`ended` Broadcast Health event was persisted.
+
+** Root cause
+
+- `endRoomBroadcast` marked the Room Broadcast Ended and deleted the per-attempt callback grant.
+- The action then stopped the bridge, which asynchronously posted its authenticated `ended`
+  callback using the now-invalid grant.
+- The product Broadcast was already Ended, but PostgreSQL contained only `connecting` and
+  `connected` health events for that attempt.
+
+** Completed
+
+- Added a route-level regression test for Host End followed by the bridge `ended` callback.
+- Confirmed the regression test failed with HTTP 401 before the fix.
+- Host End now removes RTMP credentials and WHIP access immediately while retaining the callback
+  grant until terminal confirmation.
+- The callback path accepts an idempotent `ended` confirmation for a Host-ended Broadcast,
+  persists the Broadcast Health event, and clears the callback grant.
+
+** Verification run
+
+- `npx vitest run 'src/routes/bridge/[roomId]/events/server.spec.ts'
+  src/lib/server/broadcast-state.spec.ts`: passed, 14 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `git diff --check`: passed.
+- Final `./init.sh`: passed.
+  - Vitest: 131 passed, 3 skipped.
+  - Playwright: 59 passed.
+
+** Known risk or unresolved issue
+
+- The final bridge-005 evidence checkbox remains HITL. A short real YouTube retry must confirm
+  the bridge terminal callback returns 202, PostgreSQL records an `ended` health event, and the
+  YouTube/bridge/SvelteKit evidence contains no stream keys or tokens.
+
+** Next best step
+
+Run one short real YouTube Broadcast, end it from Live Studio, capture the YouTube screenshot and
+redacted logs, and query the latest Broadcast Health events for an `ended` row.

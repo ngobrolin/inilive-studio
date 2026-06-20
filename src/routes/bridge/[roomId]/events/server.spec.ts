@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   clearBroadcastState,
+  endRoomBroadcast,
   getRoomBroadcastCallbackGrant,
   getRoomBroadcastView,
   startRoomBroadcast,
@@ -109,6 +110,43 @@ describe("bridge Broadcast Health callback endpoint", () => {
       message: "RTMP output is degraded.",
     });
     expect(JSON.stringify(events[0]?.payload)).not.toContain("secret-stream-key");
+  });
+
+  it("accepts and persists the bridge ended callback after the Host ends a Broadcast", async () => {
+    startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+      productBroadcastId: "broadcast-42",
+    });
+    const callbackGrant = getRoomBroadcastCallbackGrant("demo");
+
+    const endResult = endRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+    });
+    expect(endResult.error).toBeNull();
+
+    const response = await postBridgeEvent(
+      "demo",
+      `Bearer ${callbackGrant?.bearerToken}`,
+      {
+        status: "ended",
+        message: "Broadcast Bridge ended the Broadcast.",
+      },
+      hmacSecret,
+    );
+
+    expect(response.status).toBe(202);
+    const { getHealthEventStore } = await import("$lib/server/health/runtime");
+    const events = await getHealthEventStore().listEventsForBroadcast("broadcast-42");
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      status: "ended",
+      message: "Broadcast Bridge ended the Broadcast.",
+    });
+    expect(getRoomBroadcastCallbackGrant("demo")).toBeNull();
   });
 });
 

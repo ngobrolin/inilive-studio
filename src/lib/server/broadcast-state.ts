@@ -134,7 +134,9 @@ export function recordBridgeBroadcastHealth(input: {
     return { error: "Unauthorized", status: 401 };
   }
 
-  if (!record || record.state !== "broadcasting") {
+  const confirmsHostEndedBroadcast = input.status === "ended" && record?.state === "ended";
+
+  if (!record || (record.state !== "broadcasting" && !confirmsHostEndedBroadcast)) {
     return { error: "No active Broadcast is running in this Room.", status: 409 };
   }
 
@@ -349,7 +351,6 @@ export function endRoomBroadcast(input: { roomId: string; hostParticipantId: str
   });
   credentials.delete(input.roomId);
   ingestGrants.delete(input.roomId);
-  callbackGrants.delete(input.roomId);
 
   return { error: null };
 }

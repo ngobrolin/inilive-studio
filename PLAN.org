@@ -877,7 +877,7 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 - [X] YouTube receives a 720p30 H.264 feed from the bridge.
 - [X] Broadcast can be ended cleanly.
 - [X] Wrong credentials show actionable Host failure copy.
-- [ ] Bridge reports terminal state to SvelteKit within the required timing.
+- [X] Bridge reports terminal state to SvelteKit within the required timing.
 - [ ] Evidence includes YouTube-side confirmation and bridge/SvelteKit logs with secrets redacted.
 
 *** Verification
@@ -963,6 +963,19 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
   - Two post-fix browser replays completed SDP negotiation without caps rejection or
     `not-negotiated`. Local media could not cross Podman's random ICE UDP port, so final RTMP and
     YouTube reception remain the required HITL retry.
+- 2026-06-20: Fixed Host End rejecting the bridge terminal callback.
+  - A live attempt showed the product Broadcast persisted as Ended while the bridge's terminal
+    health callback received HTTP 401, leaving no persisted `ended` Broadcast Health event.
+  - Host End now clears RTMP credentials and WHIP access immediately but retains the per-attempt
+    callback grant until the authenticated bridge `ended` callback consumes it.
+  - The callback endpoint accepts that idempotent terminal confirmation, persists the `ended`
+    health event, and clears the remaining callback grant.
+  - Route regression test failed with 401 before the fix and passed with 202 after it.
+  - Targeted callback and Broadcast state tests passed (14 tests).
+  - `npm run check` passed with 0 errors and 0 warnings.
+  - Final `./init.sh` passed with 131 unit tests and 59 Playwright tests.
+  - A short real YouTube retry is still required to capture the terminal callback and redacted
+    logs for the final evidence checkbox.
 
 *** Notes
 
