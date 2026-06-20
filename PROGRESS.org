@@ -2594,3 +2594,40 @@ Remove the one-hour LiveKit grant ceiling that could interrupt long YouTube broa
 
 Retry a live Broadcast longer than one hour and confirm Room media stays connected without a
 manual reload.
+
+* 2026-06-20 planning - V1 audit and YouTube Data API ADR/plan
+** Goal
+
+Audit V1 completion status, then draft an ADR and PLAN entry for API-managed YouTube
+broadcasts (real LIVE badge, controllable latency, >1h broadcasts), per user request.
+
+** V1 audit result
+
+- ./init.sh passed: 132 Vitest passed (43 files), 59 Playwright passed. Working tree clean.
+- Milestone 1 (Local Room Prototype): done. All features passing.
+- Milestone 3 (Product Shell): done. All features passing.
+- Milestone 2 (Broadcast Bridge Spike): active. bridge-001..004 passing; bridge-005
+  (HITL real YouTube 720p30 end-to-end) still in_progress with all acceptance boxes
+  unchecked. This is the only open V1 item and is the human-verification step.
+- Symptom mapping: the one-hour cut maps to the former LiveKit 1h grant ceiling
+  addressed by the media-002 token-refresh commits (6h TTL + refresh, not yet HITL
+  verified >1h); the missing LIVE badge is a structural limit of ADR 0006 (no managed
+  liveBroadcast) and motivates ADR 0026.
+
+** Artifacts added (not committed)
+
+- docs/adr/0026-adopt-youtube-data-api-for-managed-broadcasts.md
+- PLAN.org Milestone 4 - YouTube Managed Broadcasts (yt-001 OAuth link HITL,
+  yt-002 create/bind via Data API AFK, yt-003 lifecycle/LIVE transition AFK,
+  yt-004 end-to-end verify HITL).
+
+** Known risk or unresolved issue
+
+- V1 is not fully closed: bridge-005 HITL remains in_progress pending a real YouTube
+  retry by the Host (now expected to clear the 1h limit after the LiveKit token fix).
+- Milestone 4 is planning only; no implementation started.
+
+** Next best step
+
+Run the bridge-005 HITL retry (>1h, inspect LIVE badge) to close V1, then start yt-001
+once a Google Cloud project and OAuth consent screen are available.
