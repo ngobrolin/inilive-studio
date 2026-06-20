@@ -60,8 +60,6 @@
 			serverUrl: grant.serverUrl,
 			cameraEnabled,
 			microphoneEnabled,
-			screenShareActive,
-			canScreenShare,
 		}),
 	);
 

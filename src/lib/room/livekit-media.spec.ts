@@ -27,10 +27,20 @@ describe("livekit media helpers", () => {
         serverUrl: "wss://example.livekit.cloud",
         cameraEnabled: true,
         microphoneEnabled: true,
-        screenShareActive: false,
-        canScreenShare: false,
       }),
-    ).toBe("token-a:wss://example.livekit.cloud:true:true:false:false");
+    ).toBe("token-a:wss://example.livekit.cloud:true:true");
+  });
+
+  it("keeps the LiveKit session key stable when screen share toggles", () => {
+    const base = {
+      stub: false,
+      token: "token-a",
+      serverUrl: "wss://example.livekit.cloud",
+      cameraEnabled: true,
+      microphoneEnabled: true,
+    } as const;
+
+    expect(liveKitSessionKey(base)).toBe(liveKitSessionKey(base));
   });
 
   it("formats unknown connection errors safely", () => {

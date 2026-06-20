@@ -104,8 +104,6 @@ export function liveKitSessionKey(input: {
   serverUrl: string;
   cameraEnabled: boolean;
   microphoneEnabled: boolean;
-  screenShareActive: boolean;
-  canScreenShare: boolean;
 }): string {
   if (input.stub) {
     return "stub";
@@ -116,8 +114,6 @@ export function liveKitSessionKey(input: {
     input.serverUrl,
     input.cameraEnabled,
     input.microphoneEnabled,
-    input.screenShareActive,
-    input.canScreenShare,
   ].join(":");
 }
 
