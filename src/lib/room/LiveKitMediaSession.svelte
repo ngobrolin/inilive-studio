@@ -24,6 +24,10 @@
 		type RemoteTrackKind,
 	} from '$lib/room/remote-participants';
 	import { registerAudioSource, registerVideoSource } from '$lib/room/media-registry';
+	import {
+		registerScreenSharePublisher,
+		type ScreenSharePublisher,
+	} from '$lib/room/livekit-screen-share';
 
 	let {
 		grant,
@@ -62,6 +66,7 @@
 			microphoneEnabled,
 		}),
 	);
+	const shouldPublishScreenShare = $derived(canScreenShare && screenShareActive);
 
 	// Keep the actual remote media elements out of reactive state so attaching
 	// tracks never triggers a re-render loop.
@@ -71,6 +76,8 @@
 	const pendingAudioTracks = new Map<string, RemoteTrack>();
 	const remoteAudioUnregister = new Map<string, () => void>();
 	let pendingScreenShareTrack: RemoteTrack | null = null;
+	let connectedRoom: LiveKitRoom | null = null;
+	let appliedScreenShareActive: boolean | null = null;
 
 	function unregisterRemoteAudio(identity: string) {
 		remoteAudioUnregister.get(identity)?.();
@@ -200,6 +207,37 @@
 		return registerVideoSource(remoteScreenShare.identity, 'screen', screenShareVideo);
 	});
 
+	async function applyScreenShareState(room: LiveKitRoom, enabled: boolean) {
+		if (enabled) {
+			const screenSharePublication = await room.localParticipant.setScreenShareEnabled(true);
+			localScreenShareTrack =
+				(screenSharePublication?.track as LocalVideoTrack | undefined) ?? null;
+			screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
+			return;
+		}
+
+		await room.localParticipant.setScreenShareEnabled(false);
+		localScreenShareTrack = null;
+		screenShareLabel = 'Screen Share inactive';
+	}
+
+	$effect(() => {
+		const enabled = shouldPublishScreenShare;
+		const room = connectedRoom;
+
+		if (!room || grant.stub || appliedScreenShareActive === enabled) {
+			return;
+		}
+
+		appliedScreenShareActive = enabled;
+		void applyScreenShareState(room, enabled).catch((error) => {
+			if (appliedScreenShareActive === enabled) {
+				appliedScreenShareActive = null;
+			}
+			connectionLabel = formatLiveKitConnectionError(error);
+		});
+	});
+
 	$effect(() => {
 		const activeSessionKey = sessionKey;
 		let cancelled = false;
@@ -244,6 +282,10 @@
 					room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
 
 					await room.connect(grant.serverUrl, grant.token);
+					connectedRoom = room;
+					registerScreenSharePublisher({
+						setEnabled: (enabled) => applyScreenShareState(room!, enabled),
+					} satisfies ScreenSharePublisher);
 
 					if (cancelled || activeSessionKey !== sessionKey) {
 						await room.disconnect();
@@ -274,15 +316,6 @@
 						15_000,
 						'Microphone setup timed out. Close other apps using the microphone and reload Backstage.',
 					);
-					if (canScreenShare && screenShareActive) {
-						const screenSharePublication = await room.localParticipant.setScreenShareEnabled(true);
-						localScreenShareTrack =
-							(screenSharePublication?.track as LocalVideoTrack | undefined) ?? null;
-						screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
-					} else {
-						localScreenShareTrack = null;
-						screenShareLabel = 'Screen Share inactive';
-					}
 
 					if (cancelled || activeSessionKey !== sessionKey) {
 						await room.disconnect();
@@ -447,6 +480,9 @@
 			localMicrophoneTrack = null;
 			const activeRoom = room;
 			room = null;
+			connectedRoom = null;
+			appliedScreenShareActive = null;
+			registerScreenSharePublisher(null);
 			void activeRoom?.localParticipant.setScreenShareEnabled(false);
 			void activeRoom?.disconnect();
 			remoteVideoElements.clear();
