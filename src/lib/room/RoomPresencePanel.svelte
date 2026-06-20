@@ -4,7 +4,9 @@
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
 	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
-	import type { RoomChatMessage, RoomPresence } from '$lib/server/room-presence';
+	import type { RoomChatMessage, RoomPresence, RoomScreenShare } from '$lib/server/room-presence';
+	import { deserialize } from '$app/forms';
+	import { requestScreenShareToggle } from '$lib/room/livekit-screen-share';
 
 	let {
 		presence,
@@ -41,7 +43,15 @@
 		`?/broadcast&participant=${encodeURIComponent(activeParticipantId)}`,
 	);
 	let liveBroadcastOverride = $state<RoomBroadcastView | null>(null);
+	let activeScreenShareOverride = $state<RoomScreenShare | null | undefined>(undefined);
+	let screenShareError = $state<string | null>(null);
+	let screenShareBusy = $state(false);
 	const liveBroadcast = $derived(liveBroadcastOverride ?? broadcast);
+	const activeScreenShare = $derived(
+		activeScreenShareOverride !== undefined
+			? activeScreenShareOverride
+			: presence.activeScreenShare,
+	);
 	const isBroadcasting = $derived(liveBroadcast.state === 'broadcasting');
 	const isCountdown = $derived(liveBroadcast.state === 'countdown');
 	let countdownTick = $state(Date.now());
@@ -74,6 +84,50 @@
 						? 'Ended'
 						: 'Connecting',
 	);
+
+	async function submitScreenShareAction(action: 'start' | 'stop') {
+		if (!activeHost || screenShareBusy) {
+			return;
+		}
+
+		screenShareBusy = true;
+		screenShareError = null;
+
+		const mediaResult = await requestScreenShareToggle(action === 'start');
+		if (!mediaResult.ok) {
+			screenShareError = mediaResult.error ?? 'Screen Share failed.';
+			screenShareBusy = false;
+			return;
+		}
+
+		const formData = new FormData();
+		formData.set('participantId', activeHost.id);
+		formData.set('screenShareAction', action);
+
+		const response = await fetch('?/screenShare', {
+			method: 'POST',
+			body: formData,
+		});
+		const result = deserialize(await response.text());
+
+		if (result.type === 'failure') {
+			if (action === 'start') {
+				await requestScreenShareToggle(false);
+			}
+			screenShareError = String(result.data?.error ?? 'Screen Share failed.');
+			screenShareBusy = false;
+			return;
+		}
+
+		activeScreenShareOverride =
+			action === 'start'
+				? {
+						participantId: activeHost.id,
+						displayName: activeHost.displayName,
+					}
+				: null;
+		screenShareBusy = false;
+	}
 	onMount(() => {
 		const refreshBroadcastState = async () => {
 			const response = await fetch(
@@ -169,9 +223,9 @@
 		data-testid="screen-share-status"
 	>
 		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Screen Share</p>
-		{#if presence.activeScreenShare}
+		{#if activeScreenShare}
 			<h2 class="mt-2 text-2xl font-semibold">
-				{presence.activeScreenShare.displayName} is sharing their screen.
+				{activeScreenShare.displayName} is sharing their screen.
 			</h2>
 			<p class="mt-2 text-sm leading-6">
 				Screen Share is active and becomes the primary source for later Composed Room Feed work.
@@ -184,28 +238,30 @@
 		{/if}
 
 		{#if activeHost}
-			<form class="mt-4" method="POST" action="?/screenShare">
-				<input name="participantId" type="hidden" value={activeHost.id} />
-				{#if presence.activeScreenShare}
+			<div class="mt-4 flex flex-wrap gap-3">
+				{#if activeScreenShare}
 					<button
-						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white"
-						name="screenShareAction"
-						type="submit"
-						value="stop"
+						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+						disabled={screenShareBusy}
+						onclick={() => void submitScreenShareAction('stop')}
+						type="button"
 					>
 						Stop Screen Share
 					</button>
 				{:else}
 					<button
-						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white"
-						name="screenShareAction"
-						type="submit"
-						value="start"
+						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+						disabled={screenShareBusy}
+						onclick={() => void submitScreenShareAction('start')}
+						type="button"
 					>
 						Start Screen Share
 					</button>
 				{/if}
-			</form>
+			</div>
+			{#if screenShareError}
+				<p class="mt-3 text-sm font-semibold text-rose-800">{screenShareError}</p>
+			{/if}
 		{/if}
 	</section>
 
@@ -521,7 +577,7 @@
 
 		<aside class="grid content-start gap-4">
 			<ComposedFeedCanvas
-				activeScreenShare={presence.activeScreenShare}
+				activeScreenShare={activeScreenShare}
 				broadcast={liveBroadcast}
 				{hostWhipIngestGrant}
 				participants={visibleParticipants}
@@ -548,14 +604,14 @@
 				</div>
 				<div class="mt-4 overflow-hidden rounded-md bg-neutral-950 p-3 text-white">
 					<div class="aspect-video">
-						{#if presence.activeScreenShare}
+						{#if activeScreenShare}
 							<div class="flex h-full flex-col justify-between bg-cyan-950 p-4">
 								<div>
 									<p class="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">
 										Screen Share source
 									</p>
 									<p class="mt-1 text-lg font-semibold">
-										{presence.activeScreenShare.displayName}
+										{activeScreenShare.displayName}
 									</p>
 								</div>
 								<p class="text-xs text-cyan-100">
@@ -609,7 +665,7 @@
 				cameraEnabled={activeParticipant?.cameraEnabled ?? true}
 				grant={mediaGrant}
 				microphoneEnabled={activeParticipant?.microphoneEnabled ?? true}
-				screenShareActive={presence.activeScreenShare?.participantId === activeParticipant?.id}
+				screenShareActive={activeScreenShare?.participantId === activeParticipant?.id}
 			/>
 
 			<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm">

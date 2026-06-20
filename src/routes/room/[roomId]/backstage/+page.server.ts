@@ -168,7 +168,7 @@ export const actions: Actions = {
       return fail(400, { error: result.error });
     }
 
-    redirect(303, `/room/${params.roomId}/backstage?participant=${participantId}`);
+    return { success: true };
   },
   broadcast: async ({ params, request, url }) => {
     ensureBridgeClientConfigured();
