@@ -1,4 +1,4 @@
-import { createCipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 import { env } from "$env/dynamic/private";
 import { generateSecureToken } from "$lib/server/auth/tokens";
 import { createDatabase } from "$lib/server/db/database";
@@ -8,12 +8,14 @@ import { createInMemoryYouTubeStore, type YouTubeStore } from "./store";
 export type GoogleYouTubeClient = {
   exchangeCode(code: string): Promise<{ accessToken: string; refreshToken: string | null }>;
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
+  refreshAccessToken(refreshToken: string): Promise<string>;
 };
 
 let youtubeStore: YouTubeStore | null = null;
 let inMemoryYouTubeStore: YouTubeStore | null = null;
 let googleClient: GoogleYouTubeClient | null = null;
 let refreshTokenEncrypter: ((refreshToken: string) => string) | null = null;
+let refreshTokenDecrypter: ((refreshTokenCiphertext: string) => string) | null = null;
 
 export function getYouTubeStore(): YouTubeStore {
   if (youtubeStore) {
@@ -94,6 +96,34 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
 
       return { id: channel.id, title: channel.snippet.title };
     },
+    async refreshAccessToken(refreshToken) {
+      const clientSecret = env.GOOGLE_CLIENT_SECRET;
+      if (!clientSecret) {
+        throw new Error("GOOGLE_CLIENT_SECRET is required to refresh a YouTube access token");
+      }
+
+      const response = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          client_id: getYouTubeOAuthConfig().clientId,
+          client_secret: clientSecret,
+          grant_type: "refresh_token",
+          refresh_token: refreshToken,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Google OAuth access-token refresh failed");
+      }
+
+      const body = (await response.json()) as { access_token?: string };
+      if (!body.access_token) {
+        throw new Error("Google OAuth refresh response did not include an access token");
+      }
+
+      return body.access_token;
+    },
   };
 }
 
@@ -122,6 +152,38 @@ export function encryptYouTubeRefreshToken(refreshToken: string): string {
   return `dev-encrypted:${refreshToken}`;
 }
 
+export function decryptYouTubeRefreshToken(refreshTokenCiphertext: string): string {
+  if (refreshTokenDecrypter) {
+    return refreshTokenDecrypter(refreshTokenCiphertext);
+  }
+
+  if (refreshTokenCiphertext.startsWith("dev-encrypted:") && !env.DATABASE_URL) {
+    return refreshTokenCiphertext.slice("dev-encrypted:".length);
+  }
+
+  const keyValue = env.YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY;
+  if (!keyValue) {
+    throw new Error("YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY is required to decrypt refresh tokens");
+  }
+
+  const [algorithm, ivValue, tagValue, ciphertextValue] = refreshTokenCiphertext.split(":");
+  if (algorithm !== "aes-256-gcm" || !ivValue || !tagValue || !ciphertextValue) {
+    throw new Error("Stored YouTube refresh token has an invalid format");
+  }
+
+  const key = Buffer.from(keyValue, "base64");
+  if (key.byteLength !== 32) {
+    throw new Error("YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY must be a base64-encoded 32-byte key");
+  }
+
+  const decipher = createDecipheriv("aes-256-gcm", key, Buffer.from(ivValue, "base64"));
+  decipher.setAuthTag(Buffer.from(tagValue, "base64"));
+  return Buffer.concat([
+    decipher.update(Buffer.from(ciphertextValue, "base64")),
+    decipher.final(),
+  ]).toString("utf8");
+}
+
 export function setYouTubeStoreForTests(store: YouTubeStore | null) {
   youtubeStore = store;
 }
@@ -130,14 +192,17 @@ export function setYouTubeRuntimeForTests(input: {
   store?: YouTubeStore | null;
   googleClient?: GoogleYouTubeClient | null;
   encryptRefreshToken?: ((refreshToken: string) => string) | null;
+  decryptRefreshToken?: ((refreshTokenCiphertext: string) => string) | null;
 }) {
   youtubeStore = input.store ?? null;
   googleClient = input.googleClient ?? null;
   refreshTokenEncrypter = input.encryptRefreshToken ?? null;
+  refreshTokenDecrypter = input.decryptRefreshToken ?? null;
 }
 
 export function clearYouTubeRuntimeForTests() {
   youtubeStore = null;
   googleClient = null;
   refreshTokenEncrypter = null;
+  refreshTokenDecrypter = null;
 }

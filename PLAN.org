@@ -1441,12 +1441,25 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
     - `npm run check`
     - `git diff --check`
     - Final `./init.sh` passed with 141 Vitest tests and 61 Playwright tests.
+- 2026-06-20: Added the access-token refresh helper required by yt-002.
+  - Added `getYouTubeAccessToken(hostAccountId)`, which loads the Host's linked channel, decrypts
+    the stored refresh token server-side, and returns a newly refreshed Google access token.
+  - Added the Google OAuth `refresh_token` grant against `https://oauth2.googleapis.com/token`.
+  - Added AES-256-GCM refresh-token decryption matching the existing encrypted storage format.
+  - Unlinked Hosts fail before any Google request; access tokens are returned transiently and are
+    not added to storage.
+  - Focused verification passed:
+    - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/routes/youtube/callback/server.spec.ts src/routes/youtube/link/server.spec.ts src/lib/server/youtube/oauth.spec.ts`
+    - `npm run check`
+    - `npm run lint` completed with four unrelated existing warnings.
+    - `git diff --check`
+    - Final `./init.sh` passed with 145 Vitest tests and 61 Playwright tests.
 
 *** Notes
 
 - HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
-- Real Google account linking still requires HITL credentials/configuration. Unlink/revoke and
-  automatic access-token refresh are still unfinished.
+- Real Google account linking still requires HITL credentials/configuration. Unlink/revoke remains
+  unfinished. The access-token helper is ready for yt-002 to call before YouTube Data API requests.
 
 ** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
 :PROPERTIES:

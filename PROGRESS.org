@@ -2793,3 +2793,55 @@ channel record in the product store.
 
 Run the real OAuth manual test with Google credentials. If it passes, continue yt-001 with unlink /
 revoke. If it fails, inspect the safe dashboard failure and server logs without exposing tokens.
+
+* 2026-06-20 yt-001 access-token refresh helper
+
+** Goal
+
+Add the server-side access-token refresh helper needed by yt-002 before creating and binding
+YouTube liveBroadcast and liveStream resources.
+
+** Completed
+
+- TDD cycle 1: added `getYouTubeAccessToken(hostAccountId)` and verified that a linked Host receives
+  a newly refreshed access token using the decrypted stored refresh token.
+- TDD cycle 2: verified an unlinked Host fails locally without calling Google.
+- Added AES-256-GCM decryption matching the existing refresh-token encryption format.
+- Added the real Google OAuth `refresh_token` grant against `https://oauth2.googleapis.com/token`.
+- Kept access tokens transient; no access-token field or persistence path was added.
+
+** Verification run
+
+- Baseline `./init.sh`:
+  - Vitest passed with 141 tests.
+  - Playwright had one transient magic-link assertion failure; the isolated rerun passed.
+- Focused YouTube tests passed: 11 tests across access-token, callback, link, and OAuth modules.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run lint`: completed with four unrelated existing warnings.
+- `git diff --check`: passed.
+- Final `./init.sh`: passed.
+  - Vitest: 145 passed.
+  - Playwright: 61 passed.
+
+** Evidence captured
+
+- Access-token helper: ~/code/inilive-studio/src/lib/server/youtube/access-token.ts
+- Helper and protocol tests: ~/code/inilive-studio/src/lib/server/youtube/access-token.spec.ts
+- Google refresh client and refresh-token decryption:
+  ~/code/inilive-studio/src/lib/server/youtube/runtime.ts
+- Google OAuth web-server documentation confirms the refresh request uses the token endpoint with
+  `grant_type=refresh_token`, the refresh token, and configured client credentials.
+
+** Known risk or unresolved issue
+
+- Real Google OAuth linking remains HITL.
+- yt-001 unlink/revoke is still unfinished.
+- The helper is not yet wired into YouTube Data API calls; yt-002 will consume it.
+- A failed protocol-test assertion printed configured Google OAuth client credential values into
+  local test output. Rotate `GOOGLE_CLIENT_SECRET`; no credential value was written to repository
+  files.
+
+** Next best step
+
+Start yt-002 with a TDD slice that uses `getYouTubeAccessToken(hostAccountId)` to create a
+liveStream, then create and bind the liveBroadcast without persisting or logging the stream key.

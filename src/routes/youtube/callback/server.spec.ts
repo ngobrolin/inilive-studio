@@ -14,6 +14,7 @@ describe("YouTube OAuth callback endpoint", () => {
       googleClient: {
         exchangeCode: async () => ({ accessToken: "access-token", refreshToken: "refresh-token" }),
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
+        refreshAccessToken: async () => "unused",
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });
@@ -54,6 +55,7 @@ describe("YouTube OAuth callback endpoint", () => {
       googleClient: {
         exchangeCode: async () => ({ accessToken: "access-token", refreshToken: null }),
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
+        refreshAccessToken: async () => "unused",
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });
@@ -78,6 +80,7 @@ describe("YouTube OAuth callback endpoint", () => {
           throw new Error("invalid_grant");
         },
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
+        refreshAccessToken: async () => "unused",
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });
