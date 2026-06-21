@@ -5,11 +5,14 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: none in Milestone 3 Product Shell; bridge-005 "Verify YouTube 720p30 end-to-end broadcast" remains HITL.
+- Current highest-priority unfinished AFK feature: yt-002 "Create and bind liveBroadcast and
+  liveStream via the Data API."
 - cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
+- yt-001 "Link a Host YouTube channel through Google OAuth" is passing after real Google OAuth
+  link/unlink HITL verification on 2026-06-21.
 
 * Session Log
 
@@ -2910,3 +2913,36 @@ stored YouTube channel link without exposing OAuth token material.
 After rotating `GOOGLE_CLIENT_SECRET`, run a real Google OAuth link/unlink cycle with a test YouTube
 channel. Confirm the dashboard link disappears, Google consent is revoked, the Postgres link row is
 removed, and logs contain no token material. Keep yt-001 open until that evidence is captured.
+
+* 2026-06-21 yt-001 real Google OAuth HITL verification
+** Goal
+
+Close yt-001 after a real Host links and unlinks a YouTube channel through Google OAuth.
+
+** Completed
+
+- The Host completed the Google consent flow with a real YouTube channel and returned linked.
+- The linked channel appeared on the Host dashboard.
+- The Host confirmed encrypted-at-rest persistence before unlinking.
+- The Host used the dashboard unlink control and confirmed Google access revocation.
+- The dashboard returned to the unlinked state.
+- Marked every yt-001 acceptance criterion complete and changed its PLAN.org status from
+  `in_progress` to `passing`.
+
+** Verification run
+
+- User-confirmed real Google OAuth link and unlink flow: passed.
+- Live Postgres query for `rizafahmi@gmail.com`: `youtube_channel_links` count returned `0`.
+- Captured application log scan found no access-token, refresh-token, client-secret, bearer-token,
+  `ya29`, or Google refresh-token patterns.
+- No secret or token values were written to PLAN.org or PROGRESS.org.
+
+** Known risk or unresolved issue
+
+- None for yt-001.
+- Real YouTube Data API broadcast creation and lifecycle behavior remain in yt-002 and later issues.
+
+** Next best step
+
+Start yt-002: create and bind the YouTube `liveStream` and `liveBroadcast` using the verified
+Host-scoped OAuth access-token helper.

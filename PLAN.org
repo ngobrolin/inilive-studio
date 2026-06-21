@@ -1386,7 +1386,7 @@ Goal: replace pasted RTMP credentials with API-managed YouTube broadcasts so the
 :TYPE: HITL
 :PRIORITY: 25
 :AREA: youtube-api
-:STATUS: in_progress
+:STATUS: passing
 :BLOCKED_BY: bridge-005
 :END:
 
@@ -1396,11 +1396,11 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
 
 *** Acceptance criteria
 
-- [ ] Host can start the Google OAuth flow from the dashboard and return linked.
-- [ ] The `youtube` scope is requested and the granted channel is recorded against the Host Account.
-- [ ] Refresh tokens are stored encrypted at rest and never logged or exposed to the browser.
-- [ ] Host can unlink a channel, which revokes and deletes the stored token.
-- [ ] Access tokens are refreshed automatically before API calls.
+- [X] Host can start the Google OAuth flow from the dashboard and return linked.
+- [X] The `youtube` scope is requested and the granted channel is recorded against the Host Account.
+- [X] Refresh tokens are stored encrypted at rest and never logged or exposed to the browser.
+- [X] Host can unlink a channel, which revokes and deletes the stored token.
+- [X] Access tokens are refreshed automatically before API calls.
 
 *** Verification
 
@@ -1475,14 +1475,24 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
     - Touched-file `oxfmt --check` and `git diff --check` passed.
     - Final `./init.sh` passed with 150 Vitest tests passing, 4 skipped Postgres
       integration tests without `DATABASE_URL`, and 62 Playwright tests passing.
+- 2026-06-21: Real Google OAuth HITL verification passed.
+  - The Host completed Google consent with a real YouTube channel and returned to the dashboard
+    linked.
+  - The dashboard displayed the granted channel, and the Host confirmed encrypted-at-rest
+    persistence before unlinking.
+  - The Host used `Unlink YouTube channel`; Google access was revoked and the dashboard returned to
+    the unlinked state.
+  - Live Postgres verification for the active Host returned `0` rows in
+    `youtube_channel_links` after unlink.
+  - The captured application log had no matches for access-token, refresh-token, client-secret, or
+    bearer-token patterns.
+  - No credential or token values were recorded in repository artifacts.
 
 *** Notes
 
 - HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
-- Real Google account linking and unlink/revoke still require HITL evidence with a test channel.
-  Rotate the previously exposed `GOOGLE_CLIENT_SECRET` before that verification. Do not record secret
-  values in repository artifacts. The access-token helper is ready for yt-002 to call before YouTube
-  Data API requests.
+- Real Google account linking and unlink/revoke passed HITL verification on 2026-06-21. The
+  access-token helper is ready for yt-002 to call before YouTube Data API requests.
 
 ** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
 :PROPERTIES:
