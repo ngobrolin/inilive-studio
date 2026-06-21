@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { GET as getYouTubeCallback } from "./+server";
 import { createInMemoryYouTubeStore } from "$lib/server/youtube/store";
-import { clearYouTubeRuntimeForTests, setYouTubeRuntimeForTests } from "$lib/server/youtube/runtime";
+import {
+  clearYouTubeRuntimeForTests,
+  setYouTubeRuntimeForTests,
+} from "$lib/server/youtube/runtime";
 
 describe("YouTube OAuth callback endpoint", () => {
   let store: ReturnType<typeof createInMemoryYouTubeStore>;
@@ -15,6 +18,7 @@ describe("YouTube OAuth callback endpoint", () => {
         exchangeCode: async () => ({ accessToken: "access-token", refreshToken: "refresh-token" }),
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
         refreshAccessToken: async () => "unused",
+        revokeToken: async () => undefined,
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });
@@ -56,6 +60,7 @@ describe("YouTube OAuth callback endpoint", () => {
         exchangeCode: async () => ({ accessToken: "access-token", refreshToken: null }),
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
         refreshAccessToken: async () => "unused",
+        revokeToken: async () => undefined,
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });
@@ -81,6 +86,7 @@ describe("YouTube OAuth callback endpoint", () => {
         },
         getOwnChannel: async () => ({ id: "youtube-channel-1", title: "Live Channel" }),
         refreshAccessToken: async () => "unused",
+        revokeToken: async () => undefined,
       },
       encryptRefreshToken: (refreshToken) => `encrypted:${refreshToken}`,
     });

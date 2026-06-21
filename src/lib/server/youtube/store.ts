@@ -16,6 +16,7 @@ export type YouTubeStore = {
   consumeOAuthState(state: string): Promise<YouTubeOAuthState | null>;
   saveChannelLink(link: YouTubeChannelLink): Promise<void>;
   getChannelLinkForHost(hostAccountId: string): Promise<YouTubeChannelLink | null>;
+  deleteChannelLinkForHost(hostAccountId: string): Promise<void>;
 };
 
 export function createInMemoryYouTubeStore(): YouTubeStore {
@@ -43,6 +44,10 @@ export function createInMemoryYouTubeStore(): YouTubeStore {
 
     async getChannelLinkForHost(hostAccountId) {
       return linksByHost.get(hostAccountId) ?? null;
+    },
+
+    async deleteChannelLinkForHost(hostAccountId) {
+      linksByHost.delete(hostAccountId);
     },
   };
 }

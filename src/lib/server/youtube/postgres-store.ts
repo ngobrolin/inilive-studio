@@ -86,5 +86,12 @@ export function createPostgresYouTubeStore(db: Kysely<Database>): YouTubeStore {
         refreshTokenCiphertext: row.refresh_token_ciphertext,
       };
     },
+
+    async deleteChannelLinkForHost(hostAccountId) {
+      await db
+        .deleteFrom("youtube_channel_links")
+        .where("host_account_id", "=", hostAccountId)
+        .execute();
+    },
   };
 }

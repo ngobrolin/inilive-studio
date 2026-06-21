@@ -9,6 +9,7 @@ export type GoogleYouTubeClient = {
   exchangeCode(code: string): Promise<{ accessToken: string; refreshToken: string | null }>;
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
   refreshAccessToken(refreshToken: string): Promise<string>;
+  revokeToken(refreshToken: string): Promise<void>;
 };
 
 let youtubeStore: YouTubeStore | null = null;
@@ -123,6 +124,17 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       }
 
       return body.access_token;
+    },
+    async revokeToken(refreshToken) {
+      const response = await fetch("https://oauth2.googleapis.com/revoke", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Google OAuth token revocation failed");
+      }
     },
   };
 }

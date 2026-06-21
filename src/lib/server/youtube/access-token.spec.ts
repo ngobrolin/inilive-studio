@@ -34,6 +34,7 @@ describe("YouTube access tokens", () => {
         exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
         getOwnChannel: async () => ({ id: "channel-1", title: "Live Channel" }),
         refreshAccessToken,
+        revokeToken: async () => undefined,
       },
       decryptRefreshToken: () => "stored-refresh-token",
     });
@@ -50,6 +51,7 @@ describe("YouTube access tokens", () => {
         exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
         getOwnChannel: async () => ({ id: "channel-1", title: "Live Channel" }),
         refreshAccessToken,
+        revokeToken: async () => undefined,
       },
       decryptRefreshToken: () => "stored-refresh-token",
     });
@@ -61,10 +63,7 @@ describe("YouTube access tokens", () => {
   });
 
   it("decrypts the encrypted refresh token only on the server", () => {
-    vi.stubEnv(
-      "YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY",
-      Buffer.alloc(32, 7).toString("base64"),
-    );
+    vi.stubEnv("YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY", Buffer.alloc(32, 7).toString("base64"));
 
     const ciphertext = encryptYouTubeRefreshToken("stored-refresh-token");
 
@@ -79,18 +78,37 @@ describe("YouTube access tokens", () => {
     );
     vi.stubGlobal("fetch", fetchGoogle);
 
-    await expect(
-      getGoogleYouTubeClient().refreshAccessToken("stored-refresh-token"),
-    ).resolves.toBe("fresh-access-token");
+    await expect(getGoogleYouTubeClient().refreshAccessToken("stored-refresh-token")).resolves.toBe(
+      "fresh-access-token",
+    );
 
     expect(fetchGoogle).toHaveBeenCalledOnce();
     const [url, init] = fetchGoogle.mock.calls[0] ?? [];
     expect(url).toBe("https://oauth2.googleapis.com/token");
     expect(init?.method).toBe("POST");
     const body = init?.body as URLSearchParams;
-    expect(body.get("client_id")).toBeTruthy();
-    expect(body.get("client_secret")).toBeTruthy();
+    expect(body.has("client_id")).toBe(true);
+    expect(body.has("client_secret")).toBe(true);
     expect(body.get("grant_type")).toBe("refresh_token");
     expect(body.get("refresh_token")).toBe("stored-refresh-token");
+  });
+
+  it("uses Google's OAuth revocation endpoint", async () => {
+    const fetchGoogle = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        new Response(null, { status: 200 }),
+    );
+    vi.stubGlobal("fetch", fetchGoogle);
+
+    await expect(
+      getGoogleYouTubeClient().revokeToken("stored-refresh-token"),
+    ).resolves.toBeUndefined();
+
+    expect(fetchGoogle).toHaveBeenCalledOnce();
+    const [url, init] = fetchGoogle.mock.calls[0] ?? [];
+    expect(url).toBe("https://oauth2.googleapis.com/revoke");
+    expect(init?.method).toBe("POST");
+    const body = init?.body as URLSearchParams;
+    expect(body.get("token")).toBe("stored-refresh-token");
   });
 });
