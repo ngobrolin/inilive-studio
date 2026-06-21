@@ -1,5 +1,5 @@
 #+TITLE: PLAN
-#+LAST_UPDATED: 2026-06-15
+#+LAST_UPDATED: 2026-06-20
 
 * Project
   :PROPERTIES:
@@ -878,7 +878,7 @@ Validate the full Milestone 2 path with a real YouTube Broadcast Destination: Co
 - [X] Broadcast can be ended cleanly.
 - [X] Wrong credentials show actionable Host failure copy.
 - [X] Bridge reports terminal state to SvelteKit within the required timing.
-- [ ] Evidence includes YouTube-side confirmation and bridge/SvelteKit logs with secrets redacted.
+- [X] Evidence includes YouTube-side confirmation and bridge/SvelteKit logs with secrets redacted.
 
 *** Verification
 
@@ -1375,7 +1375,7 @@ Remove or protect every authless Milestone 1 prototype route so the production p
 * Milestone 4 - YouTube Managed Broadcasts
 :PROPERTIES:
 :MILESTONE_ID: m4-youtube-managed-broadcasts
-:STATUS: not_started
+:STATUS: active
 :END:
 
 Goal: replace pasted RTMP credentials with API-managed YouTube broadcasts so the audience sees a real LIVE badge, latency/DVR are controllable, and the Host goes live in one click. Follows ADR 0026 and supersedes the credential-entry path from ADR 0006. The Broadcast Bridge is reused unchanged; only the source of the ingestion address and stream key changes.
@@ -1386,7 +1386,7 @@ Goal: replace pasted RTMP credentials with API-managed YouTube broadcasts so the
 :TYPE: HITL
 :PRIORITY: 25
 :AREA: youtube-api
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: bridge-005
 :END:
 
@@ -1409,9 +1409,28 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
 3. Unlink and confirm the token is revoked and removed.
 4. Inspect logs for absence of token material.
 
+*** Evidence
+
+- 2026-06-20: Started yt-001 with TDD product-side OAuth linking slices.
+  - Added a signed-in Host dashboard section with a `Link YouTube channel` control.
+  - Added `POST /youtube/link`, which requires a Host session and redirects to Google OAuth.
+  - OAuth start requests `https://www.googleapis.com/auth/youtube`, `access_type=offline`, and
+    `prompt=consent`, and stores a host-bound state with 15-minute expiry.
+  - Added Postgres schema for `youtube_oauth_states` and `youtube_channel_links`; refresh tokens
+    are represented as `refresh_token_ciphertext` and are not exposed to the browser.
+  - Serialized migration application with a Postgres advisory lock after the new migration exposed
+    a parallel integration-test race.
+  - Focused verification passed:
+    - `npm run test:unit -- --run src/lib/server/db/migrations.spec.ts src/lib/server/youtube/oauth.spec.ts src/routes/youtube/link/server.spec.ts`
+    - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube channel" --workers=1`
+    - `npm run check`
+    - Final `./init.sh` passed with 137 Vitest tests and 60 Playwright tests.
+
 *** Notes
 
 - HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
+- The real Google callback, encrypted refresh-token storage implementation, unlink/revoke, and
+  automatic access-token refresh are still unfinished.
 
 ** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
 :PROPERTIES:

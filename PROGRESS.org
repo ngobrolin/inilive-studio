@@ -2676,3 +2676,61 @@ Fix the live Host End path after the bridge terminal callback received HTTP 401 
 
 Run one short real YouTube Broadcast, end it from Live Studio, capture the YouTube screenshot and
 redacted logs, and query the latest Broadcast Health events for an `ended` row.
+
+* 2026-06-20 yt-001 YouTube OAuth linking starter slices
+
+** Goal
+
+Continue with TDD by starting Milestone 4's YouTube channel linking work without waiting for real
+Google credentials.
+
+** Completed
+
+- TDD cycle 1: added the public OAuth-start helper that builds a Google authorization URL for the
+  `youtube` scope, offline access, consent prompt, and host-bound state.
+- TDD cycle 2: added `POST /youtube/link`, requiring a signed-in Host session and redirecting to
+  Google OAuth.
+- TDD cycle 3: added ordered SQL migration coverage and schema for `youtube_oauth_states` and
+  `youtube_channel_links`.
+- TDD cycle 4: added a Host dashboard `YouTube channel` section with a `Link YouTube channel`
+  control.
+- Wired YouTube OAuth state storage to Postgres when `DATABASE_URL` is configured and to an
+  in-memory store in hermetic/dev mode.
+- Fixed the migration runner with a Postgres advisory lock after full verification exposed a
+  parallel integration-test race while applying the new migration.
+
+** Verification run
+
+- Baseline `./init.sh`: passed before changes.
+  - Vitest: 134 passed.
+  - Playwright: 59 passed.
+- `npm run test:unit -- --run src/lib/server/db/migrations.spec.ts src/lib/server/youtube/oauth.spec.ts src/routes/youtube/link/server.spec.ts`: passed, 4 tests.
+- `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube channel" --workers=1`: passed, 1 test.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `git diff --check`: passed.
+- Final `./init.sh`: passed after the migration-lock fix.
+  - Vitest: 137 passed.
+  - Playwright: 60 passed.
+
+** Evidence captured
+
+- OAuth helper and state contract: ~/code/inilive-studio/src/lib/server/youtube/oauth.ts
+- YouTube stores: ~/code/inilive-studio/src/lib/server/youtube/store.ts and
+  ~/code/inilive-studio/src/lib/server/youtube/postgres-store.ts
+- Link endpoint: ~/code/inilive-studio/src/routes/youtube/link/+server.ts
+- Dashboard entry point: ~/code/inilive-studio/src/routes/dashboard/+page.svelte
+- Schema migration: ~/code/inilive-studio/src/lib/server/db/migrations/0004_youtube_channel_links.sql
+- Migration serialization: ~/code/inilive-studio/src/lib/server/db/migrations.ts
+
+** Known risk or unresolved issue
+
+- yt-001 remains in_progress/HITL. Real Google OAuth callback handling, encrypted refresh-token
+  storage implementation, unlink/revoke, and automatic access-token refresh are not done yet.
+- A real Google Cloud project, OAuth consent screen, and test YouTube channel are still required
+  before yt-001 can be marked passing.
+
+** Next best step
+
+Continue yt-001 with the callback slice: validate and consume OAuth state, exchange the Google
+authorization code for tokens, fetch the granted channel id/title, and persist the encrypted refresh
+token without exposing token material to the browser or logs.

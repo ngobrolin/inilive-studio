@@ -5,6 +5,7 @@ import { sql, type Generated, type Kysely } from "kysely";
 import type { Database } from "./database";
 
 const migrationsDirectory = join(dirname(fileURLToPath(import.meta.url)), "migrations");
+const migrationLockId = 7_204_202_406;
 
 export type SqlMigration = {
   name: string;
@@ -23,27 +24,32 @@ export async function readMigrationFiles(directory = migrationsDirectory): Promi
 }
 
 export async function migrateDatabase(db: Kysely<Database>): Promise<void> {
-  await db.schema
-    .createTable("schema_migrations")
-    .ifNotExists()
-    .addColumn("name", "text", (column) => column.primaryKey())
-    .addColumn("applied_at", "timestamptz", (column) => column.notNull().defaultTo(db.fn("now")))
-    .execute();
+  await sql`SELECT pg_advisory_lock(${migrationLockId})`.execute(db);
+  try {
+    await db.schema
+      .createTable("schema_migrations")
+      .ifNotExists()
+      .addColumn("name", "text", (column) => column.primaryKey())
+      .addColumn("applied_at", "timestamptz", (column) => column.notNull().defaultTo(db.fn("now")))
+      .execute();
 
-  for (const migration of await readMigrationFiles()) {
-    const applied = await db
-      .selectFrom("schema_migrations")
-      .select("name")
-      .where("name", "=", migration.name)
-      .executeTakeFirst();
+    for (const migration of await readMigrationFiles()) {
+      const applied = await db
+        .selectFrom("schema_migrations")
+        .select("name")
+        .where("name", "=", migration.name)
+        .executeTakeFirst();
 
-    if (applied) {
-      continue;
+      if (applied) {
+        continue;
+      }
+
+      await db.transaction().execute(async (transaction) => {
+        await sql.raw(migration.sql).execute(transaction);
+        await transaction.insertInto("schema_migrations").values({ name: migration.name }).execute();
+      });
     }
-
-    await db.transaction().execute(async (transaction) => {
-      await sql.raw(migration.sql).execute(transaction);
-      await transaction.insertInto("schema_migrations").values({ name: migration.name }).execute();
-    });
+  } finally {
+    await sql`SELECT pg_advisory_unlock(${migrationLockId})`.execute(db);
   }
 }

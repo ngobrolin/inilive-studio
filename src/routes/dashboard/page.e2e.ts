@@ -34,6 +34,16 @@ test("signed-in Host can create a reusable Room from the dashboard", async ({ pa
   );
 });
 
+test("signed-in Host can start linking a YouTube channel from the dashboard", async ({
+  page,
+  request,
+}) => {
+  await signInHost(page, request, "dashboard-youtube-link@example.com");
+
+  await expect(page.getByRole("heading", { name: "YouTube channel" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Link YouTube channel" })).toBeVisible();
+});
+
 test("signed-out Guest can open a valid product Guest Invite", async ({ page, request }) => {
   await signInHost(page, request, "dashboard-guest-invite@example.com");
 

@@ -71,6 +71,19 @@
 	</p>
 
 	<section class="mt-8 rounded-xl border border-slate-200 p-6">
+		<h2 class="text-lg font-medium">YouTube channel</h2>
+		<p class="mt-2 text-sm text-slate-600">
+			Link the Host YouTube channel used for managed Broadcasts. Google will ask for YouTube
+			permission before returning to Live Studio.
+		</p>
+		<form class="mt-4" method="POST" action="/youtube/link">
+			<button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white" type="submit">
+				Link YouTube channel
+			</button>
+		</form>
+	</section>
+
+	<section class="mt-8 rounded-xl border border-slate-200 p-6">
 		<h2 class="text-lg font-medium">Create a Room</h2>
 		<form class="mt-4 flex flex-col gap-3 sm:flex-row" onsubmit={createRoom}>
 			<label class="flex-1 text-sm font-medium text-slate-700">

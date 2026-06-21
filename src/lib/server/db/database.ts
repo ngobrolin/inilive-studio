@@ -59,6 +59,22 @@ export type Database = {
     payload: unknown;
     created_at: Generated<Date>;
   };
+  youtube_oauth_states: {
+    state: string;
+    host_account_id: string;
+    expires_at: Date;
+    consumed_at: Date | null;
+    created_at: Generated<Date>;
+  };
+  youtube_channel_links: {
+    id: Generated<string>;
+    host_account_id: string;
+    youtube_channel_id: string;
+    youtube_channel_title: string;
+    refresh_token_ciphertext: string;
+    created_at: Generated<Date>;
+    updated_at: Generated<Date>;
+  };
 };
 
 const { Pool } = pg;
