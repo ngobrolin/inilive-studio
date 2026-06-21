@@ -77,19 +77,54 @@
 		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
 			YouTube channel linking failed. Please try again.
 		</p>
+	{:else if data.youtubeLinkStatus === "unlinked"}
+		<p class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+			YouTube channel unlinked and Google access revoked.
+		</p>
+	{:else if data.youtubeLinkStatus === "not-linked"}
+		<p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+			No linked YouTube channel was found. Link a channel before trying to unlink it.
+		</p>
+	{:else if data.youtubeLinkStatus === "unlink-failed"}
+		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+			Could not revoke Google access. The channel remains linked; please try again.
+		</p>
+	{:else if data.youtubeLinkStatus === "unlink-cleanup-failed"}
+		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+			Google access was revoked, but Live Studio could not remove the saved channel link. Please
+			try again or contact support.
+		</p>
 	{/if}
 
 	<section class="mt-8 rounded-xl border border-slate-200 p-6">
 		<h2 class="text-lg font-medium">YouTube channel</h2>
-		<p class="mt-2 text-sm text-slate-600">
-			Link the Host YouTube channel used for managed Broadcasts. Google will ask for YouTube
-			permission before returning to Live Studio.
-		</p>
-		<form class="mt-4" method="POST" action="/youtube/link">
-			<button class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white" type="submit">
-				Link YouTube channel
-			</button>
-		</form>
+		{#if data.youtubeChannel}
+			<p class="mt-2 text-sm text-slate-600">
+				Linked as <strong>{data.youtubeChannel.title}</strong>. Unlinking revokes Live Studio's
+				Google access and removes the stored channel link.
+			</p>
+			<form class="mt-4" method="POST" action="/youtube/unlink">
+				<button
+					class="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
+					type="submit"
+				>
+					Unlink YouTube channel
+				</button>
+			</form>
+		{:else}
+			<p class="mt-2 text-sm text-slate-600">
+				Link the Host YouTube channel used for managed Broadcasts. Google will ask for YouTube
+				permission before returning to Live Studio.
+			</p>
+			<form class="mt-4" method="POST" action="/youtube/link">
+				<button
+					class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white"
+					type="submit"
+				>
+					Link YouTube channel
+				</button>
+			</form>
+		{/if}
 	</section>
 
 	<section class="mt-8 rounded-xl border border-slate-200 p-6">

@@ -52,6 +52,32 @@ test("dashboard confirms when a Host returns from YouTube linking", async ({ pag
   await expect(page.getByText("YouTube channel linked.")).toBeVisible();
 });
 
+test("dashboard explains safe YouTube unlink outcomes", async ({ page, request }) => {
+  await signInHost(page, request, "dashboard-youtube-unlink-feedback@example.com");
+
+  await page.goto("/dashboard?youtube=unlinked");
+  await expect(page.getByText("YouTube channel unlinked and Google access revoked.")).toBeVisible();
+
+  await page.goto("/dashboard?youtube=not-linked");
+  await expect(
+    page.getByText(
+      "No linked YouTube channel was found. Link a channel before trying to unlink it.",
+    ),
+  ).toBeVisible();
+
+  await page.goto("/dashboard?youtube=unlink-failed");
+  await expect(
+    page.getByText("Could not revoke Google access. The channel remains linked; please try again."),
+  ).toBeVisible();
+
+  await page.goto("/dashboard?youtube=unlink-cleanup-failed");
+  await expect(
+    page.getByText(
+      "Google access was revoked, but Live Studio could not remove the saved channel link. Please try again or contact support.",
+    ),
+  ).toBeVisible();
+});
+
 test("signed-out Guest can open a valid product Guest Invite", async ({ page, request }) => {
   await signInHost(page, request, "dashboard-guest-invite@example.com");
 
