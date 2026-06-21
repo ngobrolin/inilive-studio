@@ -3001,3 +3001,43 @@ the API-issued RTMP ingestion credentials to the existing Broadcast Bridge path.
 
 Add route-level or browser coverage for linked-Host managed start, then persist YouTube resource IDs
 with the product Broadcast record so yt-003 can transition testing -> live -> complete.
+
+* 2026-06-21 local Broadcast Bridge startup repair
+
+** Goal
+
+Resolve local broadcast start failure: "Broadcast Bridge is not reachable at http://127.0.0.1:8787."
+
+** Completed
+
+- Confirmed `./init.sh` passed before the fix.
+- Found the runtime check was correct: with `BRIDGE_ENABLED=1`, SvelteKit starts a bridge session by
+  calling the control API at `http://127.0.0.1:8787/sessions`.
+- Found the local startup gap: `compose.yaml` only defined Postgres, while `.env.example` told
+  developers to start a manually constructed bridge container.
+- Added a profiled `broadcast-bridge` service to `compose.yaml` with the pinned bridge image/build,
+  control and WHIP TCP ports, and the WHIP UDP media port range.
+- Updated `.env.example` and `README.md` to use
+  `podman compose --profile bridge up -d broadcast-bridge`.
+- Started the local bridge container successfully.
+
+** Verification run
+
+- `./init.sh`: passed before changes.
+- `podman compose --profile bridge config`: passed and included the `broadcast-bridge` service.
+- `podman compose --profile bridge up -d broadcast-bridge`: passed.
+- `curl -i --max-time 5 http://127.0.0.1:8787/sessions`: returned HTTP 404 instead of connection
+  failure, proving the control API port is reachable.
+- `podman logs --tail 20 inilive-studio_broadcast-bridge_1`: showed control API listening on
+  `0.0.0.0:8787` and WHIP proxy listening on `0.0.0.0:8788`.
+- `npm run fmt:check -- README.md .env.example compose.yaml`: passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+
+** Known risk or unresolved issue
+
+- The bridge container is now reachable locally, but the next live broadcast attempt still needs the
+  normal HITL YouTube-side confirmation.
+
+** Next best step
+
+Retry Start Broadcasting with `BRIDGE_ENABLED=1` while `inilive-studio_broadcast-bridge_1` is up.

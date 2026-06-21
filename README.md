@@ -53,3 +53,19 @@ npm run db:smoke
 ```
 
 Migrations live in `src/lib/server/db/migrations/` and are intentionally plain SQL. Stream keys and Room Chat messages are not part of the persisted v1 schema.
+
+## Local Broadcast Bridge
+
+Live broadcasting with `BRIDGE_ENABLED=1` requires the separate Broadcast Bridge container. Start it before pressing **Start Broadcasting**:
+
+```sh
+podman compose --profile bridge up -d broadcast-bridge
+```
+
+The first run builds the pinned GStreamer image and can take several minutes. The bridge listens on:
+
+- Control API: `http://127.0.0.1:8787`
+- WHIP proxy: `http://127.0.0.1:8788`
+- WebRTC media UDP ports: `8790-8810`
+
+For local macOS Podman callbacks, set `BRIDGE_CALLBACK_ORIGIN=http://host.containers.internal:5173` when running `npm run dev`.
