@@ -27,6 +27,12 @@ type PendingBroadcastAttempt = BroadcastCredentials & {
   hostParticipantId: string;
 };
 
+export type RoomManagedYouTubeBroadcast = {
+  hostAccountId: string;
+  youtubeBroadcastId: string;
+  youtubeStreamId: string;
+};
+
 export type BroadcastIngestGrant = {
   whipUrl: string;
   bearerToken: string;
@@ -48,6 +54,7 @@ export type BroadcastHealthView = {
 const broadcasts = new Map<string, RoomBroadcastRecord>();
 const credentials = new Map<string, BroadcastCredentials>();
 const pendingBroadcastAttempts = new Map<string, PendingBroadcastAttempt>();
+const managedYouTubeBroadcasts = new Map<string, RoomManagedYouTubeBroadcast>();
 const ingestGrants = new Map<string, BroadcastIngestGrant>();
 const callbackGrants = new Map<string, BroadcastCallbackGrant>();
 const INGEST_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -57,6 +64,7 @@ export function clearBroadcastState(): void {
   broadcasts.clear();
   credentials.clear();
   pendingBroadcastAttempts.clear();
+  managedYouTubeBroadcasts.clear();
   ingestGrants.clear();
   callbackGrants.clear();
 }
@@ -157,6 +165,7 @@ export function recordBridgeBroadcastHealth(input: {
     credentials.delete(input.roomId);
     ingestGrants.delete(input.roomId);
     callbackGrants.delete(input.roomId);
+    managedYouTubeBroadcasts.delete(input.roomId);
     return { error: null, status: 202 };
   }
 
@@ -170,6 +179,7 @@ export function recordBridgeBroadcastHealth(input: {
     credentials.delete(input.roomId);
     ingestGrants.delete(input.roomId);
     callbackGrants.delete(input.roomId);
+    managedYouTubeBroadcasts.delete(input.roomId);
     return { error: null, status: 202 };
   }
 
@@ -187,6 +197,17 @@ export function getRoomProductBroadcastId(roomId: string): string | null {
 
 export function getPendingBroadcastAttempt(roomId: string): PendingBroadcastAttempt | null {
   return pendingBroadcastAttempts.get(roomId) ?? null;
+}
+
+export function getRoomManagedYouTubeBroadcast(roomId: string): RoomManagedYouTubeBroadcast | null {
+  return managedYouTubeBroadcasts.get(roomId) ?? null;
+}
+
+export function setRoomManagedYouTubeBroadcast(
+  roomId: string,
+  managedBroadcast: RoomManagedYouTubeBroadcast,
+): void {
+  managedYouTubeBroadcasts.set(roomId, managedBroadcast);
 }
 
 export function startRoomBroadcastCountdown(input: {
@@ -246,11 +267,14 @@ export function cancelRoomBroadcastCountdown(input: {
 
   broadcasts.delete(input.roomId);
   pendingBroadcastAttempts.delete(input.roomId);
+  managedYouTubeBroadcasts.delete(input.roomId);
 
   return { error: null };
 }
 
-export function completeRoomBroadcastCountdown(input: { roomId: string }): { error: string | null } {
+export function completeRoomBroadcastCountdown(input: { roomId: string }): {
+  error: string | null;
+} {
   const record = broadcasts.get(input.roomId);
   const pending = pendingBroadcastAttempts.get(input.roomId);
 
@@ -351,6 +375,7 @@ export function endRoomBroadcast(input: { roomId: string; hostParticipantId: str
   });
   credentials.delete(input.roomId);
   ingestGrants.delete(input.roomId);
+  managedYouTubeBroadcasts.delete(input.roomId);
 
   return { error: null };
 }
@@ -382,6 +407,7 @@ export function failRoomBroadcast(input: { roomId: string; failureMessage: strin
   credentials.delete(input.roomId);
   ingestGrants.delete(input.roomId);
   callbackGrants.delete(input.roomId);
+  managedYouTubeBroadcasts.delete(input.roomId);
 
   return { error: null };
 }

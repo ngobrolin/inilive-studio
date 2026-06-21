@@ -3041,3 +3041,53 @@ Resolve local broadcast start failure: "Broadcast Bridge is not reachable at htt
 ** Next best step
 
 Retry Start Broadcasting with `BRIDGE_ENABLED=1` while `inilive-studio_broadcast-bridge_1` is up.
+
+* 2026-06-21 managed YouTube Broadcast live transition
+
+** Goal
+
+Fix the live retry where Broadcast Health reached Connected but the managed YouTube broadcast did not
+show the composed video as live on YouTube.
+
+** Completed
+
+- Confirmed the bridge process had an active GStreamer session and was configured with the
+  API-issued YouTube RTMP endpoint.
+- Identified the implementation gap: yt-002 created a `liveStream`, created a `liveBroadcast`, and
+  bound them, but did not transition the YouTube broadcast lifecycle after media ingest became
+  active.
+- Added YouTube Data API client support for `liveStreams.list(part=status)` and
+  `liveBroadcasts.transition`.
+- Added `transitionManagedYouTubeBroadcastLive`, which waits for the bound stream to become
+  `active`, then transitions the broadcast to `testing` and `live`.
+- Stored the managed YouTube broadcast ids in room-scoped runtime broadcast state.
+- Wired the bridge `connected` health callback to trigger the managed YouTube transition.
+- If YouTube transition fails, the room broadcast is marked Failed with Host-visible failure copy
+  instead of remaining misleadingly Connected.
+
+** Verification run
+
+- Focused tests passed: `npx vitest run src/lib/server/youtube/managed-broadcast.spec.ts
+  src/routes/bridge/[roomId]/events/server.spec.ts src/lib/server/broadcast-state.spec.ts`.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run fmt:check -- src/lib/server/youtube/managed-broadcast.ts
+  src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/runtime.ts
+  src/lib/server/broadcast-state.ts src/routes/room/[roomId]/backstage/+page.server.ts
+  src/routes/bridge/[roomId]/events/+server.ts`: passed.
+- `./init.sh`: passed after changes.
+  - Vitest: 152 passed, 4 skipped.
+  - Playwright: 62 passed.
+
+** Known risk or unresolved issue
+
+- The already-running live attempt will not transition because its bridge `connected` callback fired
+  before this code was loaded. End it and start a fresh broadcast to exercise the new path.
+- Full YouTube-side confirmation remains HITL.
+- Follow-up hardening: the GStreamer child process currently receives the RTMP sink location as a
+  process argument, which makes the stream key visible to local process inspection tools. Move the
+  credential handoff away from argv before calling the bridge path production-safe.
+
+** Next best step
+
+Restart or let Vite reload the server code, end the current stale Broadcast, start a fresh managed
+Broadcast, and confirm YouTube moves from active ingest to live playback.

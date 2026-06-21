@@ -1,6 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createInMemoryYouTubeStore } from "./store";
-import { createManagedYouTubeBroadcast } from "./managed-broadcast";
+import {
+  createManagedYouTubeBroadcast,
+  transitionManagedYouTubeBroadcastLive,
+} from "./managed-broadcast";
 import { clearYouTubeRuntimeForTests, setYouTubeRuntimeForTests } from "./runtime";
 
 describe("managed YouTube Broadcasts", () => {
@@ -60,6 +63,56 @@ describe("managed YouTube Broadcasts", () => {
     expect(bindLiveBroadcast).toHaveBeenCalledWith("fresh-access-token", {
       broadcastId: "broadcast-1",
       streamId: "stream-1",
+    });
+  });
+
+  it("waits for the bound stream to become active before transitioning the Broadcast live", async () => {
+    const store = createInMemoryYouTubeStore();
+    await store.saveChannelLink({
+      hostAccountId: "host-1",
+      youtubeChannelId: "channel-1",
+      youtubeChannelTitle: "Linked Channel",
+      refreshTokenCiphertext: "encrypted-refresh-token",
+    });
+    const getLiveStreamStatus = vi.fn(async () =>
+      getLiveStreamStatus.mock.calls.length === 1 ? "inactive" : "active",
+    );
+    const transitionLiveBroadcast = vi.fn(async () => undefined);
+    let now = 0;
+    setYouTubeRuntimeForTests({
+      store,
+      decryptRefreshToken: () => "stored-refresh-token",
+      googleClient: {
+        exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
+        getOwnChannel: async () => ({ id: "channel-1", title: "Linked Channel" }),
+        refreshAccessToken: async () => "fresh-access-token",
+        revokeToken: async () => undefined,
+        getLiveStreamStatus,
+        transitionLiveBroadcast,
+      },
+    });
+
+    await transitionManagedYouTubeBroadcastLive({
+      hostAccountId: "host-1",
+      youtubeBroadcastId: "broadcast-1",
+      youtubeStreamId: "stream-1",
+      now: () => now,
+      sleep: async (milliseconds) => {
+        now += milliseconds;
+      },
+    });
+
+    expect(getLiveStreamStatus).toHaveBeenCalledTimes(2);
+    expect(getLiveStreamStatus).toHaveBeenCalledWith("fresh-access-token", {
+      streamId: "stream-1",
+    });
+    expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(1, "fresh-access-token", {
+      broadcastId: "broadcast-1",
+      status: "testing",
+    });
+    expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(2, "fresh-access-token", {
+      broadcastId: "broadcast-1",
+      status: "live",
     });
   });
 });

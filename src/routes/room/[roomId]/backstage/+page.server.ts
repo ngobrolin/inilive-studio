@@ -20,6 +20,7 @@ import {
   getRoomBroadcastIngestGrant,
   getRoomBroadcastView,
   getRoomProductBroadcastId,
+  setRoomManagedYouTubeBroadcast,
   startRoomBroadcast,
   startRoomBroadcastCountdown,
 } from "$lib/server/broadcast-state";
@@ -201,6 +202,11 @@ export const actions: Actions = {
             });
             rtmpServerUrl = managedBroadcast.rtmpServerUrl;
             streamKey = managedBroadcast.streamKey;
+            setRoomManagedYouTubeBroadcast(params.roomId, {
+              hostAccountId: hostSession.hostAccountId,
+              youtubeBroadcastId: managedBroadcast.youtubeBroadcastId,
+              youtubeStreamId: managedBroadcast.youtubeStreamId,
+            });
           } catch {
             return fail(400, {
               error:

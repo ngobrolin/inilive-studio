@@ -26,6 +26,11 @@ export type GoogleYouTubeClient = {
     accessToken: string,
     input: { broadcastId: string; streamId: string },
   ): Promise<void>;
+  getLiveStreamStatus?(accessToken: string, input: { streamId: string }): Promise<string>;
+  transitionLiveBroadcast?(
+    accessToken: string,
+    input: { broadcastId: string; status: "testing" | "live" | "complete" },
+  ): Promise<void>;
 };
 
 let youtubeStore: YouTubeStore | null = null;
@@ -233,6 +238,42 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
 
       if (!response.ok) {
         throw new Error("Google YouTube liveBroadcast bind failed");
+      }
+    },
+    async getLiveStreamStatus(accessToken, input) {
+      const url = new URL("https://www.googleapis.com/youtube/v3/liveStreams");
+      url.searchParams.set("part", "status");
+      url.searchParams.set("id", input.streamId);
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveStream status lookup failed");
+      }
+
+      const body = (await response.json()) as {
+        items?: Array<{ status?: { streamStatus?: string } }>;
+      };
+      const streamStatus = body.items?.[0]?.status?.streamStatus;
+      if (!streamStatus) {
+        throw new Error("Google YouTube liveStream status response did not include streamStatus");
+      }
+
+      return streamStatus;
+    },
+    async transitionLiveBroadcast(accessToken, input) {
+      const url = new URL("https://www.googleapis.com/youtube/v3/liveBroadcasts/transition");
+      url.searchParams.set("part", "id,status,contentDetails");
+      url.searchParams.set("id", input.broadcastId);
+      url.searchParams.set("broadcastStatus", input.status);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveBroadcast transition failed");
       }
     },
   };
