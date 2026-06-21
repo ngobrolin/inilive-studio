@@ -1454,12 +1454,35 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
     - `npm run lint` completed with four unrelated existing warnings.
     - `git diff --check`
     - Final `./init.sh` passed with 145 Vitest tests and 61 Playwright tests.
+- 2026-06-20: Added the Host YouTube channel unlink/revoke slice.
+  - The signed-in Host dashboard now loads linked channel metadata without exposing encrypted token
+    storage and shows an `Unlink YouTube channel` control only when a link exists.
+  - Added `POST /youtube/unlink`, which requires a Host session, decrypts the stored refresh token
+    server-side, revokes it through Google's OAuth revocation endpoint, and then deletes the Host's
+    channel link.
+  - Missing links, Google revocation failures, and post-revocation local cleanup failures return
+    distinct actionable dashboard feedback. Google failures retain the stored link for safe retry.
+  - Added in-memory and Postgres channel-link deletion support. The Postgres integration test remains
+    conditional on `DATABASE_URL`.
+  - Token/client-secret assertions use non-value checks so failed tests do not echo configured OAuth
+    credentials. No token or secret logging path was added.
+  - Focused verification passed:
+    - `npm run test:unit -- --run src/routes/youtube/unlink/server.spec.ts src/routes/dashboard/server.spec.ts src/lib/server/youtube/access-token.spec.ts src/routes/youtube/callback/server.spec.ts src/lib/server/youtube/postgres-store.integration.spec.ts`
+    - `npm run test:unit -- --run src/routes/dashboard/page.svelte.spec.ts`
+    - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube" --workers=1`
+    - `npm run check`
+    - `npm run lint` completed with four unrelated existing warnings.
+    - Touched-file `oxfmt --check` and `git diff --check` passed.
+    - Final `./init.sh` passed with 150 Vitest tests passing, 4 skipped Postgres
+      integration tests without `DATABASE_URL`, and 62 Playwright tests passing.
 
 *** Notes
 
 - HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
-- Real Google account linking still requires HITL credentials/configuration. Unlink/revoke remains
-  unfinished. The access-token helper is ready for yt-002 to call before YouTube Data API requests.
+- Real Google account linking and unlink/revoke still require HITL evidence with a test channel.
+  Rotate the previously exposed `GOOGLE_CLIENT_SECRET` before that verification. Do not record secret
+  values in repository artifacts. The access-token helper is ready for yt-002 to call before YouTube
+  Data API requests.
 
 ** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
 :PROPERTIES:

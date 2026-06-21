@@ -2845,3 +2845,68 @@ YouTube liveBroadcast and liveStream resources.
 
 Start yt-002 with a TDD slice that uses `getYouTubeAccessToken(hostAccountId)` to create a
 liveStream, then create and bind the liveBroadcast without persisting or logging the stream key.
+
+* 2026-06-20 yt-001 Host YouTube unlink/revoke slice
+** Goal
+
+Finish the next yt-001 product slice so a signed-in Host can revoke Google access and remove the
+stored YouTube channel link without exposing OAuth token material.
+
+** Completed
+
+- TDD tracer bullet added `POST /youtube/unlink` for a signed-in Host with a linked channel.
+- The endpoint loads the Host-scoped link, decrypts the refresh token server-side, posts it to
+  Google's OAuth revocation endpoint, and deletes the link only after successful revocation.
+- Missing links and Google failures redirect to actionable dashboard feedback without calling or
+  deleting more than necessary.
+- A separate cleanup-failure result distinguishes successful Google revocation from a failed local
+  delete.
+- Added `deleteChannelLinkForHost` to the in-memory and Postgres YouTube stores.
+- The Host dashboard now receives only channel id/title metadata, shows the linked channel title,
+  and replaces the link control with `Unlink YouTube channel`.
+- Hardened OAuth protocol tests so configured client credential values are not printed by failed
+  assertions. No token or secret logging was added.
+
+** Verification run
+
+- Baseline `./init.sh`: passed before changes.
+  - Vitest: 142 passed, 3 skipped.
+  - Playwright: 61 passed.
+- Focused server tests: 15 passed, 1 Postgres test skipped without `DATABASE_URL`.
+- Dashboard component test: 1 passed.
+- Focused dashboard YouTube Playwright tests: 3 passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run lint`: completed with four unrelated existing warnings.
+- Touched-file `oxfmt --check`: passed.
+- `git diff --check`: passed.
+- Final `./init.sh`: passed.
+  - Vitest: 150 passed, 4 skipped.
+  - Playwright: 62 passed.
+
+** Evidence captured
+
+- Unlink endpoint and behavior tests:
+  ~/code/inilive-studio/src/routes/youtube/unlink/+server.ts and
+  ~/code/inilive-studio/src/routes/youtube/unlink/server.spec.ts
+- Google revocation client:
+  ~/code/inilive-studio/src/lib/server/youtube/runtime.ts
+- In-memory/Postgres deletion:
+  ~/code/inilive-studio/src/lib/server/youtube/store.ts and
+  ~/code/inilive-studio/src/lib/server/youtube/postgres-store.ts
+- Dashboard linked-state contract and control:
+  ~/code/inilive-studio/src/routes/dashboard/+page.server.ts and
+  ~/code/inilive-studio/src/routes/dashboard/+page.svelte
+
+** Known risk or unresolved issue
+
+- yt-001 remains in_progress/HITL. Automated tests do not prove real Google consent, token
+  revocation, or channel unlinking.
+- Rotate the previously exposed `GOOGLE_CLIENT_SECRET` before any real Google HITL verification.
+  No secret value is recorded here.
+- The Postgres deletion integration test is skipped when `DATABASE_URL` is absent.
+
+** Next best step
+
+After rotating `GOOGLE_CLIENT_SECRET`, run a real Google OAuth link/unlink cycle with a test YouTube
+channel. Confirm the dashboard link disappears, Google consent is revoked, the Postgres link row is
+removed, and logs contain no token material. Keep yt-001 open until that evidence is captured.
