@@ -2734,3 +2734,62 @@ Google credentials.
 Continue yt-001 with the callback slice: validate and consume OAuth state, exchange the Google
 authorization code for tokens, fetch the granted channel id/title, and persist the encrypted refresh
 token without exposing token material to the browser or logs.
+
+* 2026-06-20 yt-001 YouTube OAuth callback slice
+
+** Goal
+
+Continue yt-001 with the Google OAuth callback path so a Host can return from Google with a linked
+channel record in the product store.
+
+** Completed
+
+- TDD cycle 1: added `GET /youtube/callback` unknown-state handling; invalid callbacks redirect to
+  `/dashboard?youtube=link-failed`.
+- TDD cycle 2: added valid callback handling with host-bound state consumption, fake Google token
+  exchange, fake channel lookup, encrypted refresh-token storage, persisted channel link, and replay
+  rejection.
+- TDD cycle 3: required a refresh token; callbacks without one fail safely and persist no channel
+  link.
+- TDD cycle 4: external Google exchange/channel errors fail safely rather than returning 500 or
+  exposing token details.
+- Added real server-side Google token exchange and channel lookup for configured environments.
+- Added AES-256-GCM refresh-token encryption through `YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY`; when
+  `DATABASE_URL` is set, callback storage fails closed if the encryption key is absent.
+- Added dashboard return banners for `youtube=linked` and `youtube=link-failed`.
+- Documented `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and
+  `YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY` in `.env.example`.
+
+** Verification run
+
+- Baseline `./init.sh`: passed before changes after removing a stale preview server on port 4173.
+  - Vitest: 137 passed.
+  - Playwright: 60 passed.
+- `npm run test:unit -- --run src/routes/youtube/callback/server.spec.ts src/routes/youtube/link/server.spec.ts src/lib/server/youtube/oauth.spec.ts`: passed, 7 tests.
+- `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube" --workers=1`: passed, 2 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `git diff --check`: passed.
+- Final `./init.sh`: passed.
+  - Vitest: 141 passed.
+  - Playwright: 61 passed.
+
+** Evidence captured
+
+- Callback route: ~/code/inilive-studio/src/routes/youtube/callback/+server.ts
+- Callback tests: ~/code/inilive-studio/src/routes/youtube/callback/server.spec.ts
+- YouTube runtime/client/encryption: ~/code/inilive-studio/src/lib/server/youtube/runtime.ts
+- Channel link store methods: ~/code/inilive-studio/src/lib/server/youtube/store.ts and
+  ~/code/inilive-studio/src/lib/server/youtube/postgres-store.ts
+- Dashboard return UI: ~/code/inilive-studio/src/routes/dashboard/+page.svelte
+- Env documentation: ~/code/inilive-studio/.env.example
+
+** Known risk or unresolved issue
+
+- Real OAuth account linking is still HITL: it needs a real Google OAuth Web Client, YouTube Data
+  API enabled, a matching authorized redirect URI, and a real test channel.
+- Unlink/revoke and automatic access-token refresh remain unfinished.
+
+** Next best step
+
+Run the real OAuth manual test with Google credentials. If it passes, continue yt-001 with unlink /
+revoke. If it fails, inspect the safe dashboard failure and server logs without exposing tokens.

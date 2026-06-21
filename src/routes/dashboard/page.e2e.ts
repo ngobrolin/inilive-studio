@@ -44,6 +44,14 @@ test("signed-in Host can start linking a YouTube channel from the dashboard", as
   await expect(page.getByRole("button", { name: "Link YouTube channel" })).toBeVisible();
 });
 
+test("dashboard confirms when a Host returns from YouTube linking", async ({ page, request }) => {
+  await signInHost(page, request, "dashboard-youtube-linked@example.com");
+
+  await page.goto("/dashboard?youtube=linked");
+
+  await expect(page.getByText("YouTube channel linked.")).toBeVisible();
+});
+
 test("signed-out Guest can open a valid product Guest Invite", async ({ page, request }) => {
   await signInHost(page, request, "dashboard-guest-invite@example.com");
 

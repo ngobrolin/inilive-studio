@@ -69,6 +69,15 @@
 		Signed in as {data.hostEmail}. Room Titles are for your organization only and are not public
 		broadcast metadata.
 	</p>
+	{#if data.youtubeLinkStatus === "linked"}
+		<p class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+			YouTube channel linked.
+		</p>
+	{:else if data.youtubeLinkStatus === "link-failed"}
+		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+			YouTube channel linking failed. Please try again.
+		</p>
+	{/if}
 
 	<section class="mt-8 rounded-xl border border-slate-200 p-6">
 		<h2 class="text-lg font-medium">YouTube channel</h2>

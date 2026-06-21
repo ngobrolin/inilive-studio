@@ -1425,11 +1425,27 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
     - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube channel" --workers=1`
     - `npm run check`
     - Final `./init.sh` passed with 137 Vitest tests and 60 Playwright tests.
+- 2026-06-20: Continued yt-001 with the OAuth callback slice.
+  - Added `GET /youtube/callback`, which validates and consumes the host-bound OAuth state.
+  - Callback exchanges the Google authorization code for tokens, requires a refresh token, fetches
+    the linked channel id/title, encrypts the refresh token, persists the channel link, and
+    redirects the Host back to `/dashboard?youtube=linked`.
+  - Unknown, expired, replayed, missing-refresh-token, or Google-error callbacks redirect to
+    `/dashboard?youtube=link-failed` without exposing token material.
+  - Added real server-side Google token exchange/channel lookup using `GOOGLE_CLIENT_SECRET` and
+    AES-256-GCM refresh-token encryption using `YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY`.
+  - Added dashboard success/failure return banners and documented new env vars in `.env.example`.
+  - Focused verification passed:
+    - `npm run test:unit -- --run src/routes/youtube/callback/server.spec.ts src/routes/youtube/link/server.spec.ts src/lib/server/youtube/oauth.spec.ts`
+    - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "YouTube" --workers=1`
+    - `npm run check`
+    - `git diff --check`
+    - Final `./init.sh` passed with 141 Vitest tests and 61 Playwright tests.
 
 *** Notes
 
 - HITL because it requires a Google Cloud project and OAuth consent-screen setup with a real channel.
-- The real Google callback, encrypted refresh-token storage implementation, unlink/revoke, and
+- Real Google account linking still requires HITL credentials/configuration. Unlink/revoke and
   automatic access-token refresh are still unfinished.
 
 ** TODO yt-002 - Create and bind liveBroadcast and liveStream via the Data API
