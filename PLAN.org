@@ -1500,7 +1500,7 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
 :TYPE: AFK
 :PRIORITY: 26
 :AREA: youtube-api
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: yt-001
 :END:
 
@@ -1526,6 +1526,20 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
 *** Notes
 
 - The pasted-credential path may remain as a fallback for non-YouTube RTMP destinations.
+- 2026-06-21: Started yt-002 with a TDD Data API binding slice.
+  - Added Google YouTube client methods for `liveStreams.insert`, `liveBroadcasts.insert`, and
+    `liveBroadcasts.bind`.
+  - Added `createManagedYouTubeBroadcast(hostAccountId, roomTitle)`, which refreshes a Host-scoped
+    access token, creates a 720p30 RTMP `liveStream`, creates a private low-latency
+    `liveBroadcast`, binds them, and returns only the transient RTMP ingestion address and stream
+    key to the caller.
+  - Wired product Room Broadcast start so linked Hosts use API-issued ingestion credentials while
+    unlinked Hosts keep the existing pasted-credential fallback.
+  - API quota/live-permission failures currently surface as actionable Host failure copy before the
+    Broadcast Countdown is created.
+  - Focused verification passed:
+    - `npm run check`
+    - `npm run test:unit -- --run src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts src/routes/youtube/callback/server.spec.ts src/routes/youtube/unlink/server.spec.ts`
 
 ** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
 :PROPERTIES:

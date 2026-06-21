@@ -2946,3 +2946,58 @@ Close yt-001 after a real Host links and unlinks a YouTube channel through Googl
 
 Start yt-002: create and bind the YouTube `liveStream` and `liveBroadcast` using the verified
 Host-scoped OAuth access-token helper.
+
+* 2026-06-21 yt-002 managed YouTube Broadcast creation starter slice
+
+** Goal
+
+Start yt-002 with the smallest TDD slice that creates and binds YouTube Data API resources and hands
+the API-issued RTMP ingestion credentials to the existing Broadcast Bridge path.
+
+** Completed
+
+- Ran the required startup workflow; `./init.sh` passed before new yt-002 work.
+- Added Google YouTube client methods for creating a `liveStream`, creating a `liveBroadcast`, and
+  binding the broadcast to the stream.
+- Added `createManagedYouTubeBroadcast`, which refreshes the Host's OAuth access token, creates a
+  720p30 RTMP stream, creates a private low-latency broadcast with monitor stream enabled, binds
+  them, and returns the transient ingestion address and stream key.
+- Wired product Room Broadcast start so a linked Host uses API-issued ingestion credentials instead
+  of the pasted fields; unlinked Hosts still use the pasted-credential fallback.
+- Added actionable Host failure copy for Data API quota/live-permission/setup errors before a
+  Countdown is created.
+
+** Verification run
+
+- Baseline `./init.sh`: passed before changes.
+  - Vitest: 154 passed.
+  - Playwright: 62 passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- Focused YouTube tests passed: 15 tests across managed broadcast, access-token, callback, and
+  unlink modules.
+- Final verification:
+  - `./init.sh` unit phase passed with 155 Vitest tests; the Playwright webServer startup exceeded
+    the command timeout during the combined run.
+  - Isolated `npm run test:e2e` rerun passed with 62 Playwright tests.
+
+** Evidence captured
+
+- Managed Broadcast helper and test:
+  ~/code/inilive-studio/src/lib/server/youtube/managed-broadcast.ts and
+  ~/code/inilive-studio/src/lib/server/youtube/managed-broadcast.spec.ts
+- Google Data API client methods: ~/code/inilive-studio/src/lib/server/youtube/runtime.ts
+- Product Room start wiring: ~/code/inilive-studio/src/routes/room/[roomId]/backstage/+page.server.ts
+
+** Known risk or unresolved issue
+
+- yt-002 remains in progress. Automated tests prove the request ordering and handoff shape, but no
+  real YouTube Data API `liveStream`/`liveBroadcast` has been created yet in HITL.
+- Product settings for title/visibility/latency are still hard-coded to sensible defaults
+  (Room title, private, low latency).
+- Product Broadcast records do not yet store YouTube broadcast/stream ids; yt-003 needs persisted
+  IDs for lifecycle transitions.
+
+** Next best step
+
+Add route-level or browser coverage for linked-Host managed start, then persist YouTube resource IDs
+with the product Broadcast record so yt-003 can transition testing -> live -> complete.

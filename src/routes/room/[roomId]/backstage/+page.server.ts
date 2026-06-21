@@ -35,6 +35,8 @@ import {
 import { getRoomStore } from "$lib/server/rooms/runtime";
 import { getGuestInvitePathForHost } from "$lib/server/rooms/rooms";
 import { getHostSessionFromCookies } from "$lib/server/auth/host-session";
+import { createManagedYouTubeBroadcast } from "$lib/server/youtube/managed-broadcast";
+import { getYouTubeStore } from "$lib/server/youtube/runtime";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -57,7 +59,10 @@ async function startBridgeForRoom(input: {
     roomId: input.roomId,
     rtmpServerUrl: input.rtmpServerUrl,
     streamKey: input.streamKey,
-    callbackUrl: new URL(callbackGrant.callbackUrl, resolveBridgeCallbackOrigin(input.origin)).toString(),
+    callbackUrl: new URL(
+      callbackGrant.callbackUrl,
+      resolveBridgeCallbackOrigin(input.origin),
+    ).toString(),
     callbackBearerToken: callbackGrant.bearerToken,
   });
 }
@@ -170,7 +175,7 @@ export const actions: Actions = {
 
     return { success: true };
   },
-  broadcast: async ({ params, request, url }) => {
+  broadcast: async ({ params, request, url, cookies }) => {
     ensureBridgeClientConfigured();
     const formData = await request.formData();
     const hostParticipantId = String(formData.get("hostParticipantId") ?? "");
@@ -179,10 +184,31 @@ export const actions: Actions = {
     const broadcastStore = getBroadcastStore();
 
     if (action === "start") {
-      const rtmpServerUrl = String(formData.get("rtmpServerUrl") ?? "");
-      const streamKey = String(formData.get("streamKey") ?? "");
+      let rtmpServerUrl = String(formData.get("rtmpServerUrl") ?? "");
+      let streamKey = String(formData.get("streamKey") ?? "");
 
       if (productRoom) {
+        const hostSession = await getHostSessionFromCookies(cookies);
+        const linkedChannel = hostSession
+          ? await getYouTubeStore().getChannelLinkForHost(hostSession.hostAccountId)
+          : null;
+        if (hostSession && linkedChannel) {
+          const room = await getRoomStore().getRoom(params.roomId);
+          try {
+            const managedBroadcast = await createManagedYouTubeBroadcast({
+              hostAccountId: hostSession.hostAccountId,
+              roomTitle: room?.title ?? "Inilive Broadcast",
+            });
+            rtmpServerUrl = managedBroadcast.rtmpServerUrl;
+            streamKey = managedBroadcast.streamKey;
+          } catch {
+            return fail(400, {
+              error:
+                "YouTube could not create the managed Broadcast. Check channel live permissions and API quota, then try again.",
+            });
+          }
+        }
+
         const runtimeBroadcast = getRoomBroadcastView(params.roomId);
         await recoverInterruptedBroadcast(
           {
@@ -192,7 +218,10 @@ export const actions: Actions = {
           },
           { store: broadcastStore },
         );
-        const countdown = await startBroadcastCountdown({ roomId: params.roomId }, { store: broadcastStore });
+        const countdown = await startBroadcastCountdown(
+          { roomId: params.roomId },
+          { store: broadcastStore },
+        );
         if (countdown.error) {
           return fail(400, { error: "A Broadcast is already active in this Room." });
         }
@@ -256,7 +285,10 @@ export const actions: Actions = {
       }
 
       if (productBroadcastId) {
-        await cancelBroadcastCountdown({ broadcastId: productBroadcastId }, { store: broadcastStore });
+        await cancelBroadcastCountdown(
+          { broadcastId: productBroadcastId },
+          { store: broadcastStore },
+        );
       }
     } else if (action === "complete-countdown") {
       const currentBroadcast = getRoomBroadcastView(params.roomId);

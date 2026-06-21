@@ -10,6 +10,22 @@ export type GoogleYouTubeClient = {
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
   refreshAccessToken(refreshToken: string): Promise<string>;
   revokeToken(refreshToken: string): Promise<void>;
+  createLiveStream?(
+    accessToken: string,
+    input: { title: string },
+  ): Promise<{ id: string; ingestionAddress: string; streamName: string }>;
+  createLiveBroadcast?(
+    accessToken: string,
+    input: {
+      title: string;
+      visibility: "private" | "public" | "unlisted";
+      latencyPreference: "normal" | "low" | "ultraLow";
+    },
+  ): Promise<{ id: string }>;
+  bindLiveBroadcast?(
+    accessToken: string,
+    input: { broadcastId: string; streamId: string },
+  ): Promise<void>;
 };
 
 let youtubeStore: YouTubeStore | null = null;
@@ -134,6 +150,89 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
 
       if (!response.ok) {
         throw new Error("Google OAuth token revocation failed");
+      }
+    },
+    async createLiveStream(accessToken, input) {
+      const response = await fetch(
+        "https://www.googleapis.com/youtube/v3/liveStreams?part=snippet,cdn",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            snippet: { title: input.title },
+            cdn: { frameRate: "30fps", ingestionType: "rtmp", resolution: "720p" },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveStream creation failed");
+      }
+
+      const body = (await response.json()) as {
+        id?: string;
+        cdn?: { ingestionInfo?: { ingestionAddress?: string; streamName?: string } };
+      };
+      const ingestionInfo = body.cdn?.ingestionInfo;
+      if (!body.id || !ingestionInfo?.ingestionAddress || !ingestionInfo.streamName) {
+        throw new Error("Google YouTube liveStream response did not include ingestion info");
+      }
+
+      return {
+        id: body.id,
+        ingestionAddress: ingestionInfo.ingestionAddress,
+        streamName: ingestionInfo.streamName,
+      };
+    },
+    async createLiveBroadcast(accessToken, input) {
+      const response = await fetch(
+        "https://www.googleapis.com/youtube/v3/liveBroadcasts?part=snippet,status,contentDetails",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            snippet: {
+              title: input.title,
+              scheduledStartTime: new Date(Date.now() + 60_000).toISOString(),
+            },
+            status: { privacyStatus: input.visibility },
+            contentDetails: {
+              latencyPreference: input.latencyPreference,
+              monitorStream: { enableMonitorStream: true },
+            },
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveBroadcast creation failed");
+      }
+
+      const body = (await response.json()) as { id?: string };
+      if (!body.id) {
+        throw new Error("Google YouTube liveBroadcast response did not include an id");
+      }
+
+      return { id: body.id };
+    },
+    async bindLiveBroadcast(accessToken, input) {
+      const url = new URL("https://www.googleapis.com/youtube/v3/liveBroadcasts/bind");
+      url.searchParams.set("part", "id,contentDetails");
+      url.searchParams.set("id", input.broadcastId);
+      url.searchParams.set("streamId", input.streamId);
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveBroadcast bind failed");
       }
     },
   };
