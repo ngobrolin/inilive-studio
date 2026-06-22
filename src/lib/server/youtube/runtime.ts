@@ -27,6 +27,10 @@ export type GoogleYouTubeClient = {
     input: { broadcastId: string; streamId: string },
   ): Promise<void>;
   getLiveStreamStatus?(accessToken: string, input: { streamId: string }): Promise<string>;
+  getLiveBroadcastLifeCycleStatus?(
+    accessToken: string,
+    input: { broadcastId: string },
+  ): Promise<string>;
   transitionLiveBroadcast?(
     accessToken: string,
     input: { broadcastId: string; status: "testing" | "live" | "complete" },
@@ -261,6 +265,30 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       }
 
       return streamStatus;
+    },
+    async getLiveBroadcastLifeCycleStatus(accessToken, input) {
+      const url = new URL("https://www.googleapis.com/youtube/v3/liveBroadcasts");
+      url.searchParams.set("part", "status");
+      url.searchParams.set("id", input.broadcastId);
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!response.ok) {
+        throw new Error("Google YouTube liveBroadcast status lookup failed");
+      }
+
+      const body = (await response.json()) as {
+        items?: Array<{ status?: { lifeCycleStatus?: string } }>;
+      };
+      const lifeCycleStatus = body.items?.[0]?.status?.lifeCycleStatus;
+      if (!lifeCycleStatus) {
+        throw new Error(
+          "Google YouTube liveBroadcast status response did not include lifeCycleStatus",
+        );
+      }
+
+      return lifeCycleStatus;
     },
     async transitionLiveBroadcast(accessToken, input) {
       const url = new URL("https://www.googleapis.com/youtube/v3/liveBroadcasts/transition");
