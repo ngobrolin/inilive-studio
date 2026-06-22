@@ -5,8 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: yt-002 "Create and bind liveBroadcast and
-  liveStream via the Data API."
+- Current highest-priority unfinished AFK feature: yt-003 "Drive the broadcast lifecycle and LIVE transition."
 - cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
@@ -3207,3 +3206,30 @@ verification does not use YouTube Studio's default stream-key page.
 Restart or let Vite reload the server code, end any stale Broadcast, start a fresh managed Broadcast,
 open the new "Open this YouTube live event in Live Control Room" link, and confirm that exact event
 reaches LIVE.
+
+* 2026-06-22 yt-002 HITL passed
+
+** Goal
+
+Record the user's managed YouTube event-link retest result and mark yt-002 passing.
+
+** Completed
+
+- User reported the fresh managed Broadcast retest against the exact newly exposed YouTube event was
+  "all good."
+- Updated `PLAN.org` yt-002 status from `in_progress` to `passing`.
+- Checked off yt-002 acceptance criteria.
+- Updated the current highest-priority unfinished AFK feature to yt-003.
+
+** Verification run
+
+- User HITL verification: passed.
+- Documentation/status-only change; no automated tests run after this update.
+
+** Known risk or unresolved issue
+
+- yt-003 remains not started as the next lifecycle-hardening slice.
+
+** Next best step
+
+Start yt-003: drive and reconcile the managed YouTube lifecycle transitions through Broadcast State.

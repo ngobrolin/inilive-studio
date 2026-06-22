@@ -1500,7 +1500,7 @@ Add Google OAuth account linking so a signed-in Host can connect their YouTube c
 :TYPE: AFK
 :PRIORITY: 26
 :AREA: youtube-api
-:STATUS: in_progress
+:STATUS: passing
 :BLOCKED_BY: yt-001
 :END:
 
@@ -1510,11 +1510,11 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
 
 *** Acceptance criteria
 
-- [ ] Starting a Broadcast on a linked channel creates and binds a liveStream and liveBroadcast.
-- [ ] The bridge receives the API-issued ingestion address and stream key, not pasted values.
-- [ ] Title, visibility, and latency mode are set from product settings with sensible defaults.
-- [ ] API quota errors and missing live permissions surface as actionable Host failure copy.
-- [ ] Stream keys from the API are never persisted or logged.
+- [X] Starting a Broadcast on a linked channel creates and binds a liveStream and liveBroadcast.
+- [X] The bridge receives the API-issued ingestion address and stream key, not pasted values.
+- [X] Title, visibility, and latency mode are set from product settings with sensible defaults.
+- [X] API quota errors and missing live permissions surface as actionable Host failure copy.
+- [X] Stream keys from the API are never persisted or logged.
 
 *** Verification
 
@@ -1573,6 +1573,8 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
     - `npm run fmt:check -- src/lib/server/broadcast-state.ts src/lib/server/broadcast-state.spec.ts src/routes/room/[roomId]/backstage/+page.server.ts src/lib/room/RoomPresencePanel.svelte src/routes/room/[roomId]/broadcast.e2e.ts`
     - `npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`
     - `npx playwright test "src/routes/room/\[roomId\]/broadcast.e2e.ts"`
+- 2026-06-22: User completed HITL verification against the exact managed YouTube event exposed by
+  the Live Control Room link and reported it was all good. Marked yt-002 passing.
 
 ** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
 :PROPERTIES:
