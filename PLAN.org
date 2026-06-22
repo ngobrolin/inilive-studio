@@ -1551,6 +1551,14 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
     - `npx vitest run src/lib/server/youtube/managed-broadcast.spec.ts`
     - `npx vitest run src/routes/bridge/[roomId]/events/server.spec.ts src/routes/room/[roomId]/broadcast-state/server.spec.ts`
     - `npm run check`
+- 2026-06-22: Hid manual RTMP Stream URL and Stream key inputs for Hosts with linked YouTube
+  channels. Linked Hosts now see managed YouTube copy and a one-click Start YouTube Broadcast
+  Countdown button; unlinked/manual RTMP fallback still shows the fields.
+  - Verification passed:
+    - `npm run check`
+    - `npx playwright test --grep "Host can enter YouTube credentials|Host can end a Broadcast|Host Broadcast Health|Guest sees Broadcast State|Host sees Failed|Host sends the Composed"`
+    - `npx playwright test src/routes/dashboard/broadcasts.e2e.ts`
+    - `npm run fmt:check -- src/routes/room/[roomId]/backstage/+page.server.ts src/routes/room/[roomId]/backstage/+page.svelte src/lib/room/RoomPresencePanel.svelte`
 
 ** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
 :PROPERTIES:

@@ -3127,3 +3127,39 @@ not transition the managed Broadcast to live."
 
 Start a fresh managed Broadcast and confirm YouTube reaches LIVE instead of failing immediately after
 the bridge reports Connected.
+
+* 2026-06-22 hide manual RTMP fields for linked YouTube Hosts
+
+** Goal
+
+Remove Stream URL and Stream key confusion for the managed YouTube path.
+
+** Completed
+
+- Confirmed that linked YouTube Hosts do not need user-facing Stream URL or Stream key fields; the
+  app creates a YouTube `liveStream` and receives transient ingest credentials from the API.
+- Added `hasLinkedYouTubeChannel` to the Backstage page load data.
+- Hid the RTMP Stream URL and Stream key inputs only when the active Host has a linked YouTube
+  channel.
+- Updated linked-channel UI copy to describe the managed one-click YouTube flow.
+- Kept the manual RTMP fields visible for unlinked Hosts and non-managed fallback use.
+
+** Verification run
+
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npx playwright test --grep "Host can enter YouTube credentials|Host can end a Broadcast|Host Broadcast Health|Guest sees Broadcast State|Host sees Failed|Host sends the Composed"`:
+  passed, 6 tests.
+- `npx playwright test src/routes/dashboard/broadcasts.e2e.ts`: passed, 3 tests.
+- `npm run fmt:check -- src/routes/room/[roomId]/backstage/+page.server.ts src/routes/room/[roomId]/backstage/+page.svelte src/lib/room/RoomPresencePanel.svelte`:
+  passed.
+
+** Known risk or unresolved issue
+
+- No real YouTube HITL retest yet after this UI clarification.
+- The app still needs a clear link to the newly created YouTube live event/control room so Hosts do
+  not inspect the default YouTube stream-key page by mistake.
+
+** Next best step
+
+Expose the managed YouTube broadcast/watch/control-room URL after creation, then retry a fresh live
+attempt against the exact event created by the app.
