@@ -3233,3 +3233,38 @@ Record the user's managed YouTube event-link retest result and mark yt-002 passi
 ** Next best step
 
 Start yt-003: drive and reconcile the managed YouTube lifecycle transitions through Broadcast State.
+
+* 2026-06-22 yt-003 YouTube complete transition
+
+** Goal
+
+Fix managed YouTube Broadcasts that were not being explicitly completed when Live Studio ended the
+Broadcast, which could leave YouTube to infer archive finalization after RTMP ingest stopped.
+
+** Completed
+
+- Added `completeManagedYouTubeBroadcast`, which refreshes the Host-scoped YouTube access token and
+  transitions the API-managed YouTube `liveBroadcast` to `complete`.
+- Wired Host End Broadcast to capture the managed YouTube event before local runtime cleanup and
+  complete it after Live Studio marks the Broadcast ended.
+- Wired bridge `ended` callbacks to complete the captured managed YouTube event as well, preserving
+  coverage for bridge-driven terminal callbacks.
+- Updated `PLAN.org` yt-003 status to `in_progress` and recorded the completed lifecycle slices.
+
+** Verification run
+
+- `./init.sh`: passed before code changes.
+- `npm run test:unit -- --run src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts`:
+  passed, 7 tests.
+
+** Known risk or unresolved issue
+
+- No real YouTube HITL retest has been run after this completion-transition fix.
+- yt-003 still needs audience LIVE-badge HITL evidence and final product-record reconciliation work
+  before it can be marked passing.
+
+** Next best step
+
+Restart or let Vite reload the server code, start a fresh managed YouTube Broadcast, end it from
+Live Studio, and confirm the exact YouTube event transitions to Complete and archives at the actual
+session length.

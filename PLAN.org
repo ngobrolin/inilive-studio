@@ -1582,7 +1582,7 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
 :TYPE: AFK
 :PRIORITY: 27
 :AREA: youtube-api
-:STATUS: not_started
+:STATUS: in_progress
 :BLOCKED_BY: yt-002
 :END:
 
@@ -1592,9 +1592,9 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
 
 *** Acceptance criteria
 
-- [ ] Broadcast goes live only after YouTube reports the bound stream active.
+- [X] Broadcast goes live only after YouTube reports the bound stream active.
 - [ ] The audience player shows the LIVE badge at the live edge once transitioned.
-- [ ] Ending a Broadcast transitions the YouTube broadcast to complete.
+- [X] Ending a Broadcast transitions the YouTube broadcast to complete.
 - [ ] YouTube lifecycle errors map to product Failed state with actionable copy.
 - [ ] Product Broadcast records reflect the YouTube broadcast id and final status.
 
@@ -1608,6 +1608,16 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
 *** Notes
 
 - Reuses the existing Broadcast Bridge and Broadcast Health callbacks unchanged.
+- 2026-06-22: Added YouTube completion transition when a managed Broadcast ends.
+  - Added `completeManagedYouTubeBroadcast`, which refreshes the Host-scoped YouTube access token
+    and calls `liveBroadcasts.transition` with `broadcastStatus=complete`.
+  - Host End Broadcast now captures the managed YouTube broadcast before clearing runtime state and
+    transitions the YouTube event complete after local Broadcast state is ended.
+  - Bridge `ended` callbacks also transition the captured managed YouTube event complete, covering
+    bridge-driven terminal callbacks after ingest stops.
+  - Verification:
+    - `./init.sh` passed before code changes.
+    - `npm run test:unit -- --run src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts` passed, 7 tests.
 
 ** TODO yt-004 - Verify managed YouTube broadcast end-to-end
 :PROPERTIES:

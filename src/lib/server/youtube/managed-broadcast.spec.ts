@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createInMemoryYouTubeStore } from "./store";
 import {
+  completeManagedYouTubeBroadcast,
   createManagedYouTubeBroadcast,
   transitionManagedYouTubeBroadcastLive,
 } from "./managed-broadcast";
@@ -121,6 +122,38 @@ describe("managed YouTube Broadcasts", () => {
     expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(2, "fresh-access-token", {
       broadcastId: "broadcast-1",
       status: "live",
+    });
+  });
+
+  it("transitions a managed Broadcast complete so YouTube finalizes the archive", async () => {
+    const store = createInMemoryYouTubeStore();
+    await store.saveChannelLink({
+      hostAccountId: "host-1",
+      youtubeChannelId: "channel-1",
+      youtubeChannelTitle: "Linked Channel",
+      refreshTokenCiphertext: "encrypted-refresh-token",
+    });
+    const transitionLiveBroadcast = vi.fn(async () => undefined);
+    setYouTubeRuntimeForTests({
+      store,
+      decryptRefreshToken: () => "stored-refresh-token",
+      googleClient: {
+        exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
+        getOwnChannel: async () => ({ id: "channel-1", title: "Linked Channel" }),
+        refreshAccessToken: async () => "fresh-access-token",
+        revokeToken: async () => undefined,
+        transitionLiveBroadcast,
+      },
+    });
+
+    await completeManagedYouTubeBroadcast({
+      hostAccountId: "host-1",
+      youtubeBroadcastId: "broadcast-1",
+    });
+
+    expect(transitionLiveBroadcast).toHaveBeenCalledWith("fresh-access-token", {
+      broadcastId: "broadcast-1",
+      status: "complete",
     });
   });
 });

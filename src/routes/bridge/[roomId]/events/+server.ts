@@ -10,7 +10,10 @@ import { readBridgeCallbackHmacSecret } from "$lib/server/health/callback-secret
 import { recordBroadcastHealthEvent } from "$lib/server/health/health";
 import { getHealthEventStore } from "$lib/server/health/runtime";
 import { verifyBridgeHealthSignature } from "$lib/server/health/signatures";
-import { transitionManagedYouTubeBroadcastLive } from "$lib/server/youtube/managed-broadcast";
+import {
+  completeManagedYouTubeBroadcast,
+  transitionManagedYouTubeBroadcastLive,
+} from "$lib/server/youtube/managed-broadcast";
 import type { RequestHandler } from "./$types";
 
 const healthStatuses = new Set<BroadcastHealthStatus>([
@@ -43,6 +46,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
   }
 
   const message = typeof payload.message === "string" ? payload.message : undefined;
+  const managedBroadcast = getRoomManagedYouTubeBroadcast(params.roomId);
   const result = recordBridgeBroadcastHealth({
     roomId: params.roomId,
     authorizationHeader: request.headers.get("Authorization"),
@@ -79,10 +83,12 @@ export const POST: RequestHandler = async ({ params, request }) => {
       },
       { store: getBroadcastStore() },
     );
+    if (status === "ended" && managedBroadcast) {
+      await completeManagedYouTubeBroadcast(managedBroadcast);
+    }
   }
 
   if (status === "connected") {
-    const managedBroadcast = getRoomManagedYouTubeBroadcast(params.roomId);
     if (managedBroadcast) {
       try {
         await transitionManagedYouTubeBroadcastLive(managedBroadcast);

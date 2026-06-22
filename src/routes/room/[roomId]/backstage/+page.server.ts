@@ -19,6 +19,7 @@ import {
   getRoomBroadcastCredentials,
   getRoomBroadcastIngestGrant,
   getRoomBroadcastView,
+  getRoomManagedYouTubeBroadcast,
   getRoomProductBroadcastId,
   setRoomManagedYouTubeBroadcast,
   startRoomBroadcast,
@@ -36,7 +37,10 @@ import {
 import { getRoomStore } from "$lib/server/rooms/runtime";
 import { getGuestInvitePathForHost } from "$lib/server/rooms/rooms";
 import { getHostSessionFromCookies } from "$lib/server/auth/host-session";
-import { createManagedYouTubeBroadcast } from "$lib/server/youtube/managed-broadcast";
+import {
+  completeManagedYouTubeBroadcast,
+  createManagedYouTubeBroadcast,
+} from "$lib/server/youtube/managed-broadcast";
 import { getYouTubeStore } from "$lib/server/youtube/runtime";
 import { fail, redirect } from "@sveltejs/kit";
 import type { Actions, PageServerLoad } from "./$types";
@@ -358,6 +362,7 @@ export const actions: Actions = {
       }
     } else if (action === "end") {
       const productBroadcastId = getRoomProductBroadcastId(params.roomId);
+      const managedBroadcast = getRoomManagedYouTubeBroadcast(params.roomId);
       const result = endRoomBroadcast({
         roomId: params.roomId,
         hostParticipantId,
@@ -372,6 +377,9 @@ export const actions: Actions = {
         { store: broadcastStore },
       );
       await stopBridgeSession({ roomId: params.roomId });
+      if (managedBroadcast) {
+        await completeManagedYouTubeBroadcast(managedBroadcast);
+      }
     } else if (action === "simulate-fail") {
       const productBroadcastId = getRoomProductBroadcastId(params.roomId);
       const failureMessage = "YouTube rejected the stream credentials.";

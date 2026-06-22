@@ -105,3 +105,19 @@ export async function transitionManagedYouTubeBroadcastLive(input: {
     status: "live",
   });
 }
+
+export async function completeManagedYouTubeBroadcast(input: {
+  hostAccountId: string;
+  youtubeBroadcastId: string;
+}): Promise<void> {
+  const accessToken = await getYouTubeAccessToken(input.hostAccountId);
+  const client = getGoogleYouTubeClient();
+  if (!client.transitionLiveBroadcast) {
+    throw new Error("YouTube Data API client is not configured for Broadcast transitions");
+  }
+
+  await client.transitionLiveBroadcast(accessToken, {
+    broadcastId: input.youtubeBroadcastId,
+    status: "complete",
+  });
+}
