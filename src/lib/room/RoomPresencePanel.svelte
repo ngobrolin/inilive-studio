@@ -301,6 +301,22 @@
 				v1.
 			</p>
 		{/if}
+		{#if activeHost && liveBroadcast.youtubeControlRoomUrl}
+			<p class="mt-4 text-sm leading-6">
+				<a
+					class="font-semibold underline decoration-rose-400 underline-offset-4"
+					data-testid="youtube-control-room-link"
+					href={liveBroadcast.youtubeControlRoomUrl}
+					rel="noreferrer"
+					target="_blank"
+				>
+					Open this YouTube live event in Live Control Room
+				</a>
+				<span class="block text-rose-900/80">
+					Use this event-specific link for verification, not YouTube Studio's default stream-key page.
+				</span>
+			</p>
+		{/if}
 	</section>
 
 	{#if activeHost && liveBroadcast.health}

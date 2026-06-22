@@ -77,6 +77,48 @@ test("Host Broadcast Health updates from bridge callback polling", async ({ page
   await expect(page.getByTestId("broadcast-health")).toContainText("RTMP output is degraded.");
 });
 
+test("Host sees the managed YouTube live event control-room link for the active Broadcast", async ({
+  page,
+  request,
+}) => {
+  const room = await setupProductRoom(page, request, {
+    email: "broadcast-youtube-event-link@example.com",
+    title: "Broadcast YouTube event link episode",
+  });
+
+  const hostUrl = await enterHostBackstage(page, room.roomHref, "Host One");
+
+  await page.goto(hostUrl);
+  await page.route(`**/room/${room.roomId}/broadcast-state?**`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        state: "broadcasting",
+        failureMessage: null,
+        health: {
+          status: "connected",
+          message: "Broadcast Bridge is connected.",
+          updatedAt: Date.now(),
+        },
+        countdownEndsAt: null,
+        productBroadcastId: "product-broadcast-1",
+        youtubeWatchUrl: "https://www.youtube.com/watch?v=youtube-broadcast-1",
+        youtubeControlRoomUrl: "https://studio.youtube.com/video/youtube-broadcast-1/livestreaming",
+      }),
+    });
+  });
+
+  await expect(page.getByTestId("youtube-control-room-link")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId("youtube-control-room-link")).toHaveAttribute(
+    "href",
+    "https://studio.youtube.com/video/youtube-broadcast-1/livestreaming",
+  );
+  await expect(page.getByTestId("broadcast-state")).toContainText(
+    "Use this event-specific link for verification",
+  );
+});
+
 test("Guest sees Broadcast State but not Host credential controls", async ({ page, request }) => {
   const room = await setupProductRoom(page, request, {
     email: "broadcast-guest-view@example.com",

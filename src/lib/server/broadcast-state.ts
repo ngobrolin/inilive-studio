@@ -7,6 +7,8 @@ export type RoomBroadcastView = {
   health: BroadcastHealthView | null;
   countdownEndsAt: number | null;
   productBroadcastId: string | null;
+  youtubeWatchUrl: string | null;
+  youtubeControlRoomUrl: string | null;
 };
 
 type RoomBroadcastRecord = {
@@ -16,6 +18,7 @@ type RoomBroadcastRecord = {
   health: BroadcastHealthView | null;
   countdownEndsAt: number | null;
   productBroadcastId: string | null;
+  youtubeBroadcastId: string | null;
 };
 
 type BroadcastCredentials = {
@@ -82,6 +85,12 @@ export function getRoomBroadcastView(
     health: includeHealth ? (record?.health ?? null) : null,
     countdownEndsAt: record?.countdownEndsAt ?? null,
     productBroadcastId: record?.productBroadcastId ?? null,
+    youtubeWatchUrl: record?.youtubeBroadcastId
+      ? `https://www.youtube.com/watch?v=${encodeURIComponent(record.youtubeBroadcastId)}`
+      : null,
+    youtubeControlRoomUrl: record?.youtubeBroadcastId
+      ? `https://studio.youtube.com/video/${encodeURIComponent(record.youtubeBroadcastId)}/livestreaming`
+      : null,
   };
 }
 
@@ -217,6 +226,7 @@ export function startRoomBroadcastCountdown(input: {
   streamKey: string;
   countdownEndsAt: number;
   productBroadcastId: string;
+  youtubeBroadcastId?: string | null;
 }): { error: string | null } {
   const rtmpServerUrl = input.rtmpServerUrl.trim();
   const streamKey = input.streamKey.trim();
@@ -241,6 +251,7 @@ export function startRoomBroadcastCountdown(input: {
     health: null,
     countdownEndsAt: input.countdownEndsAt,
     productBroadcastId: input.productBroadcastId,
+    youtubeBroadcastId: input.youtubeBroadcastId ?? null,
   });
   pendingBroadcastAttempts.set(input.roomId, {
     hostParticipantId: input.hostParticipantId,
@@ -297,6 +308,7 @@ export function completeRoomBroadcastCountdown(input: { roomId: string }): {
     rtmpServerUrl: pending.rtmpServerUrl,
     streamKey: pending.streamKey,
     productBroadcastId,
+    youtubeBroadcastId: record.youtubeBroadcastId,
   });
 }
 
@@ -306,6 +318,7 @@ export function startRoomBroadcast(input: {
   rtmpServerUrl: string;
   streamKey: string;
   productBroadcastId?: string | null;
+  youtubeBroadcastId?: string | null;
 }): { error: string | null } {
   const rtmpServerUrl = input.rtmpServerUrl.trim();
   const streamKey = input.streamKey.trim();
@@ -334,6 +347,7 @@ export function startRoomBroadcast(input: {
     },
     countdownEndsAt: null,
     productBroadcastId: input.productBroadcastId ?? null,
+    youtubeBroadcastId: input.youtubeBroadcastId ?? null,
   });
   credentials.set(input.roomId, { rtmpServerUrl, streamKey });
   ingestGrants.set(input.roomId, {

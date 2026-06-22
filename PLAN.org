@@ -1559,6 +1559,20 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
     - `npx playwright test --grep "Host can enter YouTube credentials|Host can end a Broadcast|Host Broadcast Health|Guest sees Broadcast State|Host sees Failed|Host sends the Composed"`
     - `npx playwright test src/routes/dashboard/broadcasts.e2e.ts`
     - `npm run fmt:check -- src/routes/room/[roomId]/backstage/+page.server.ts src/routes/room/[roomId]/backstage/+page.svelte src/lib/room/RoomPresencePanel.svelte`
+- 2026-06-22: Exposed Host-visible event-specific YouTube links for managed Broadcast attempts.
+  - Runtime Broadcast state now carries the managed YouTube broadcast id through Countdown into
+    Broadcasting and derives:
+    - `https://www.youtube.com/watch?v=<youtubeBroadcastId>`
+    - `https://studio.youtube.com/video/<youtubeBroadcastId>/livestreaming`
+  - Backstage Broadcast State shows Hosts an "Open this YouTube live event in Live Control Room"
+    link with copy warning them not to verify from YouTube Studio's default stream-key page.
+  - Verification passed:
+    - `npx vitest run src/lib/server/broadcast-state.spec.ts`
+    - `npx playwright test "src/routes/room/\[roomId\]/broadcast.e2e.ts" --grep "control-room link"`
+    - `npm run check`
+    - `npm run fmt:check -- src/lib/server/broadcast-state.ts src/lib/server/broadcast-state.spec.ts src/routes/room/[roomId]/backstage/+page.server.ts src/lib/room/RoomPresencePanel.svelte src/routes/room/[roomId]/broadcast.e2e.ts`
+    - `npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`
+    - `npx playwright test "src/routes/room/\[roomId\]/broadcast.e2e.ts"`
 
 ** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
 :PROPERTIES:

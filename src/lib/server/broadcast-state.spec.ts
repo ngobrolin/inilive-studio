@@ -38,6 +38,24 @@ describe("broadcast state", () => {
     expect(getRoomBroadcastView("demo")).not.toHaveProperty("rtmpServerUrl");
   });
 
+  it("exposes the managed YouTube event links without exposing ingest credentials", () => {
+    const result = startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+      youtubeBroadcastId: "youtube-broadcast-1",
+    });
+
+    expect(result.error).toBeNull();
+    expect(getRoomBroadcastView("demo")).toMatchObject({
+      youtubeWatchUrl: "https://www.youtube.com/watch?v=youtube-broadcast-1",
+      youtubeControlRoomUrl: "https://studio.youtube.com/video/youtube-broadcast-1/livestreaming",
+    });
+    expect(getRoomBroadcastView("demo")).not.toHaveProperty("streamKey");
+    expect(getRoomBroadcastView("demo")).not.toHaveProperty("rtmpServerUrl");
+  });
+
   it("issues a short-lived WHIP ingest grant for the current Broadcast attempt", () => {
     const result = startRoomBroadcast({
       roomId: "demo",

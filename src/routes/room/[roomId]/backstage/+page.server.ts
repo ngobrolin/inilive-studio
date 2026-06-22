@@ -192,6 +192,7 @@ export const actions: Actions = {
     if (action === "start") {
       let rtmpServerUrl = String(formData.get("rtmpServerUrl") ?? "");
       let streamKey = String(formData.get("streamKey") ?? "");
+      let youtubeBroadcastId: string | null = null;
 
       if (productRoom) {
         const hostSession = await getHostSessionFromCookies(cookies);
@@ -207,6 +208,7 @@ export const actions: Actions = {
             });
             rtmpServerUrl = managedBroadcast.rtmpServerUrl;
             streamKey = managedBroadcast.streamKey;
+            youtubeBroadcastId = managedBroadcast.youtubeBroadcastId;
             setRoomManagedYouTubeBroadcast(params.roomId, {
               hostAccountId: hostSession.hostAccountId,
               youtubeBroadcastId: managedBroadcast.youtubeBroadcastId,
@@ -244,6 +246,7 @@ export const actions: Actions = {
           streamKey,
           countdownEndsAt: countdown.broadcast!.countdownEndsAt!.getTime(),
           productBroadcastId: countdown.broadcast!.id,
+          youtubeBroadcastId,
         });
 
         if (result.error) {

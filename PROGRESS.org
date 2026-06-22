@@ -3163,3 +3163,47 @@ Remove Stream URL and Stream key confusion for the managed YouTube path.
 
 Expose the managed YouTube broadcast/watch/control-room URL after creation, then retry a fresh live
 attempt against the exact event created by the app.
+
+* 2026-06-22 managed YouTube event link
+
+** Goal
+
+Expose a link to the exact YouTube live event/control room created by Live Studio so HITL
+verification does not use YouTube Studio's default stream-key page.
+
+** Completed
+
+- Added managed YouTube broadcast id propagation from the linked-channel start action into runtime
+  Broadcast state, through Countdown, and into Broadcasting.
+- Added derived `youtubeWatchUrl` and `youtubeControlRoomUrl` fields to the public Broadcast view;
+  stream URL and stream key remain excluded.
+- Added a Host-only Backstage link: "Open this YouTube live event in Live Control Room".
+- Added copy telling Hosts to verify against the event-specific link instead of the default
+  stream-key page.
+- Added unit coverage for derived managed YouTube event links and browser coverage for rendering the
+  control-room link.
+
+** Verification run
+
+- `./init.sh`: passed before code changes.
+- `npx vitest run src/lib/server/broadcast-state.spec.ts`: passed, 11 tests.
+- `npx playwright test "src/routes/room/\[roomId\]/broadcast.e2e.ts" --grep "control-room link"`:
+  passed, 1 test.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run fmt:check -- src/lib/server/broadcast-state.ts src/lib/server/broadcast-state.spec.ts src/routes/room/[roomId]/backstage/+page.server.ts src/lib/room/RoomPresencePanel.svelte src/routes/room/[roomId]/broadcast.e2e.ts`:
+  passed.
+- `npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`:
+  passed, 13 tests.
+- `npx playwright test "src/routes/room/\[roomId\]/broadcast.e2e.ts"`: passed, 7 tests.
+
+** Known risk or unresolved issue
+
+- No real YouTube HITL retest was run in this session.
+- The next managed Broadcast attempt should be fresh; do not use a stale Broadcast created before
+  this server code loaded.
+
+** Next best step
+
+Restart or let Vite reload the server code, end any stale Broadcast, start a fresh managed Broadcast,
+open the new "Open this YouTube live event in Live Control Room" link, and confirm that exact event
+reaches LIVE.
