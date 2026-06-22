@@ -3091,3 +3091,39 @@ show the composed video as live on YouTube.
 
 Restart or let Vite reload the server code, end the current stale Broadcast, start a fresh managed
 Broadcast, and confirm YouTube moves from active ingest to live playback.
+
+* 2026-06-22 managed YouTube testing-state wait
+
+** Goal
+
+Fix the follow-up failure where Broadcast Health reached Connected, then failed with "YouTube did
+not transition the managed Broadcast to live."
+
+** Completed
+
+- Re-examined the bridge `connected` callback path that calls `transitionManagedYouTubeBroadcastLive`.
+- Confirmed the existing implementation waited for the bound `liveStream` to become `active`, then
+  called `liveBroadcasts.transition(testing)` and immediately called
+  `liveBroadcasts.transition(live)`.
+- Added Google YouTube client support for `liveBroadcasts.list(part=status)`.
+- Updated managed transition logic to poll `status.lifeCycleStatus` until the broadcast is actually
+  `testing` before requesting `live`.
+- Recorded the fix in `PLAN.org` under yt-002 evidence.
+
+** Verification run
+
+- `npx vitest run src/lib/server/youtube/managed-broadcast.spec.ts`: passed, 2 tests.
+- `npx vitest run src/routes/bridge/[roomId]/events/server.spec.ts src/routes/room/[roomId]/broadcast-state/server.spec.ts`:
+  passed, 5 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+
+** Known risk or unresolved issue
+
+- This is not yet HITL-verified against the real YouTube channel.
+- The current failed Broadcast attempt cannot be repaired in place; end it and start a fresh attempt
+  after Vite reloads the server code.
+
+** Next best step
+
+Start a fresh managed Broadcast and confirm YouTube reaches LIVE instead of failing immediately after
+the bridge reports Connected.

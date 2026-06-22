@@ -1540,6 +1540,17 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
   - Focused verification passed:
     - `npm run check`
     - `npm run test:unit -- --run src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts src/routes/youtube/callback/server.spec.ts src/routes/youtube/unlink/server.spec.ts`
+- 2026-06-22: Fixed managed transition retry where Broadcast Health reached Connected but YouTube
+  did not go live.
+  - Root cause found in the lifecycle handoff: after `liveBroadcasts.transition(testing)`, the code
+    immediately requested `live` without waiting for YouTube's broadcast `lifeCycleStatus` to leave
+    `testStarting` and become `testing`.
+  - Added `liveBroadcasts.list(part=status)` polling for `status.lifeCycleStatus === testing`
+    before requesting `live`.
+  - Focused verification passed:
+    - `npx vitest run src/lib/server/youtube/managed-broadcast.spec.ts`
+    - `npx vitest run src/routes/bridge/[roomId]/events/server.spec.ts src/routes/room/[roomId]/broadcast-state/server.spec.ts`
+    - `npm run check`
 
 ** TODO yt-003 - Drive the broadcast lifecycle and LIVE transition
 :PROPERTIES:
