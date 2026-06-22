@@ -77,6 +77,9 @@ describe("managed YouTube Broadcasts", () => {
     const getLiveStreamStatus = vi.fn(async () =>
       getLiveStreamStatus.mock.calls.length === 1 ? "inactive" : "active",
     );
+    const getLiveBroadcastLifeCycleStatus = vi.fn(async () =>
+      getLiveBroadcastLifeCycleStatus.mock.calls.length === 1 ? "testStarting" : "testing",
+    );
     const transitionLiveBroadcast = vi.fn(async () => undefined);
     let now = 0;
     setYouTubeRuntimeForTests({
@@ -88,6 +91,7 @@ describe("managed YouTube Broadcasts", () => {
         refreshAccessToken: async () => "fresh-access-token",
         revokeToken: async () => undefined,
         getLiveStreamStatus,
+        getLiveBroadcastLifeCycleStatus,
         transitionLiveBroadcast,
       },
     });
@@ -109,6 +113,10 @@ describe("managed YouTube Broadcasts", () => {
     expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(1, "fresh-access-token", {
       broadcastId: "broadcast-1",
       status: "testing",
+    });
+    expect(getLiveBroadcastLifeCycleStatus).toHaveBeenCalledTimes(2);
+    expect(getLiveBroadcastLifeCycleStatus).toHaveBeenCalledWith("fresh-access-token", {
+      broadcastId: "broadcast-1",
     });
     expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(2, "fresh-access-token", {
       broadcastId: "broadcast-1",

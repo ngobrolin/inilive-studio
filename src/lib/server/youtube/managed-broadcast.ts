@@ -10,6 +10,8 @@ export type ManagedYouTubeBroadcast = {
 
 const STREAM_ACTIVE_POLL_INTERVAL_MS = 2_000;
 const STREAM_ACTIVE_TIMEOUT_MS = 60_000;
+const BROADCAST_TESTING_POLL_INTERVAL_MS = 2_000;
+const BROADCAST_TESTING_TIMEOUT_MS = 60_000;
 
 export async function createManagedYouTubeBroadcast(input: {
   hostAccountId: string;
@@ -50,7 +52,11 @@ export async function transitionManagedYouTubeBroadcastLive(input: {
 }): Promise<void> {
   const accessToken = await getYouTubeAccessToken(input.hostAccountId);
   const client = getGoogleYouTubeClient();
-  if (!client.getLiveStreamStatus || !client.transitionLiveBroadcast) {
+  if (
+    !client.getLiveStreamStatus ||
+    !client.getLiveBroadcastLifeCycleStatus ||
+    !client.transitionLiveBroadcast
+  ) {
     throw new Error("YouTube Data API client is not configured for Broadcast transitions");
   }
 
@@ -76,6 +82,24 @@ export async function transitionManagedYouTubeBroadcastLive(input: {
     broadcastId: input.youtubeBroadcastId,
     status: "testing",
   });
+
+  const testingDeadline = now() + BROADCAST_TESTING_TIMEOUT_MS;
+  while (true) {
+    const status = await client.getLiveBroadcastLifeCycleStatus(accessToken, {
+      broadcastId: input.youtubeBroadcastId,
+    });
+    if (status === "testing") {
+      break;
+    }
+    if (status === "live") {
+      return;
+    }
+    if (now() >= testingDeadline) {
+      throw new Error("YouTube liveBroadcast did not enter testing before transition timeout");
+    }
+    await sleep(BROADCAST_TESTING_POLL_INTERVAL_MS);
+  }
+
   await client.transitionLiveBroadcast(accessToken, {
     broadcastId: input.youtubeBroadcastId,
     status: "live",
