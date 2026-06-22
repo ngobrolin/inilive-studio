@@ -17,6 +17,7 @@
 		broadcast,
 		hostWhipIngestGrant,
 		isProductRoom = false,
+		hasLinkedYouTubeChannel = false,
 		guestInvitePath = null,
 	}: {
 		presence: RoomPresence;
@@ -27,6 +28,7 @@
 		broadcast: RoomBroadcastView;
 		hostWhipIngestGrant: BroadcastIngestGrant | null;
 		isProductRoom?: boolean;
+		hasLinkedYouTubeChannel?: boolean;
 		guestInvitePath?: string | null;
 	} = $props();
 	const visibleParticipants = $derived(
@@ -351,11 +353,21 @@
 			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
 				Broadcast controls
 			</p>
-			<h2 class="mt-1 text-2xl font-semibold">YouTube stream credentials</h2>
-			<p class="mt-2 text-sm leading-6 text-neutral-600">
-				Paste the RTMP server URL and stream key for this Broadcast attempt only. Credentials stay
-				in memory and are not persisted or logged.
-			</p>
+			<h2 class="mt-1 text-2xl font-semibold">
+				{hasLinkedYouTubeChannel ? 'Managed YouTube Broadcast' : 'YouTube stream credentials'}
+			</h2>
+			{#if hasLinkedYouTubeChannel}
+				<p class="mt-2 text-sm leading-6 text-neutral-600">
+					Live Studio will create a new YouTube live event and use YouTube-issued ingest
+					credentials internally. You do not need to copy a Stream URL or Stream key from YouTube
+					Studio.
+				</p>
+			{:else}
+				<p class="mt-2 text-sm leading-6 text-neutral-600">
+					Paste the RTMP server URL and stream key for this Broadcast attempt only. Credentials
+					stay in memory and are not persisted or logged.
+				</p>
+			{/if}
 			<p class="mt-2 text-sm leading-6 text-neutral-600">
 				In v1, the YouTube archive is the recording. Live Studio does not store a separate copy.
 			</p>
@@ -388,33 +400,47 @@
 			{:else if !isCountdown}
 				<form class="mt-4 grid gap-4" method="POST" action={broadcastActionUrl}>
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-					<div>
-						<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
-						<input
-							class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
-							id="rtmp-server-url"
-							name="rtmpServerUrl"
-							placeholder="rtmp://a.rtmp.youtube.com/live2"
-							type="url"
-						/>
-					</div>
-					<div>
-						<label class="block text-sm font-semibold" for="stream-key">Stream key</label>
-						<input
-							class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
-							id="stream-key"
-							name="streamKey"
-							placeholder="Paste the YouTube stream key"
-							type="password"
-						/>
-					</div>
+					{#if hasLinkedYouTubeChannel}
+						<div class="rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
+							<p class="font-semibold">Ready for one-click YouTube setup.</p>
+							<p class="mt-1 leading-6">
+								Start will create a fresh YouTube live event for this Room and send the Composed Room
+								Feed to that event.
+							</p>
+						</div>
+					{:else}
+						<div>
+							<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
+							<input
+								class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+								id="rtmp-server-url"
+								name="rtmpServerUrl"
+								placeholder="rtmp://a.rtmp.youtube.com/live2"
+								type="url"
+							/>
+						</div>
+						<div>
+							<label class="block text-sm font-semibold" for="stream-key">Stream key</label>
+							<input
+								class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+								id="stream-key"
+								name="streamKey"
+								placeholder="Paste the YouTube stream key"
+								type="password"
+							/>
+						</div>
+					{/if}
 					<button
 						class="rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
 						name="broadcastAction"
 						type="submit"
 						value="start"
 					>
-						{isProductRoom ? 'Start Broadcast Countdown' : 'Start Broadcast'}
+						{hasLinkedYouTubeChannel
+							? 'Start YouTube Broadcast Countdown'
+							: isProductRoom
+								? 'Start Broadcast Countdown'
+								: 'Start Broadcast'}
 					</button>
 				</form>
 			{/if}

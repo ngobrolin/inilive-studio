@@ -85,6 +85,10 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
 
   const productRoom = await isProductRoom(params.roomId);
   const hostSession = await getHostSessionFromCookies(cookies);
+  const linkedYouTubeChannel =
+    productRoom && activeParticipant?.role === "host" && hostSession
+      ? await getYouTubeStore().getChannelLinkForHost(hostSession.hostAccountId)
+      : null;
   const guestInvitePath =
     productRoom && activeParticipant?.role === "host" && hostSession
       ? await getGuestInvitePathForHost(
@@ -104,6 +108,7 @@ export const load: PageServerLoad = async ({ params, url, cookies }) => {
     hostWhipIngestGrant:
       activeParticipant?.role === "host" ? getRoomBroadcastIngestGrant(params.roomId) : null,
     isProductRoom: productRoom,
+    hasLinkedYouTubeChannel: linkedYouTubeChannel !== null,
     guestInvitePath,
   };
 };

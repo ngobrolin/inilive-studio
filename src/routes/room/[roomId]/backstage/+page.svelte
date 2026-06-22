@@ -14,6 +14,7 @@
 	broadcast={data.broadcast}
 	chatMessages={data.chatMessages}
 	guestInvitePath={data.guestInvitePath}
+	hasLinkedYouTubeChannel={data.hasLinkedYouTubeChannel}
 	hostWhipIngestGrant={data.hostWhipIngestGrant}
 	isProductRoom={data.isProductRoom}
 	mediaGrant={data.mediaGrant}
