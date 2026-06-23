@@ -1582,7 +1582,7 @@ When a Host starts a Broadcast on a linked channel, create a `liveStream` (RTMP 
 :TYPE: AFK
 :PRIORITY: 27
 :AREA: youtube-api
-:STATUS: in_progress
+:STATUS: passing
 :BLOCKED_BY: yt-002
 :END:
 
@@ -1593,7 +1593,7 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
 *** Acceptance criteria
 
 - [X] Broadcast goes live only after YouTube reports the bound stream active.
-- [ ] The audience player shows the LIVE badge at the live edge once transitioned.
+- [X] The audience player shows the LIVE badge at the live edge once transitioned.
 - [X] Ending a Broadcast transitions the YouTube broadcast to complete.
 - [X] YouTube lifecycle errors map to product Failed state with actionable copy.
 - [X] Product Broadcast records reflect the YouTube broadcast id and final status.
@@ -1645,6 +1645,10 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
     - `npm run test:unit -- --run src/routes/bridge/[roomId]/events/server.spec.ts src/lib/server/broadcasts/broadcasts.spec.ts src/lib/server/db/migrations.spec.ts` passed, 13 tests.
     - `npm run check` passed with 0 errors and 0 warnings.
     - `./init.sh` passed after implementation: Vitest 48 files passed / 4 skipped, 157 tests passed / 4 skipped; Playwright 63 passed.
+- 2026-06-23: User completed HITL retest after the auto-start and reconciliation changes.
+  - A fresh managed YouTube Broadcast auto-started publicly from the event-specific YouTube link.
+  - The audience player showed the red LIVE badge at the live edge.
+  - Marked yt-003 passing; longer-duration end-to-end evidence remains tracked in yt-004.
 
 ** TODO yt-004 - Verify managed YouTube broadcast end-to-end
 :PROPERTIES:

@@ -5,7 +5,8 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished AFK feature: yt-003 "Drive the broadcast lifecycle and LIVE transition."
+- Current highest-priority unfinished feature: yt-004 "Verify managed YouTube broadcast end-to-end" (HITL).
+- Current highest-priority unfinished AFK feature: none in the active YouTube milestone after yt-003 passed.
 - cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
@@ -3387,3 +3388,36 @@ Broadcast state and Broadcast Health history.
 Run the HITL YouTube retest: start a fresh managed Broadcast after server reload and open the
 event-specific YouTube link; verify YouTube auto-starts and the public player shows the red LIVE
 badge. If it passes, record evidence and mark yt-003 passing.
+
+* 2026-06-23 yt-003 HITL live badge passed
+
+** Goal
+
+Record the user's real YouTube retest result after the managed auto-start and product Broadcast
+reconciliation changes.
+
+** Completed
+
+- User confirmed the fresh managed YouTube Broadcast test passed.
+- Recorded that the event-specific YouTube player auto-started publicly and showed the red LIVE
+  badge at the live edge.
+- Marked yt-003 passing in `PLAN.org`.
+- Updated the current next feature pointer to yt-004, which remains HITL for longer end-to-end
+  validation.
+
+** Verification run
+
+- HITL verification by user on a real YouTube channel.
+- No code changed; no automated tests run in this documentation-only update.
+
+** Known risk or unresolved issue
+
+- yt-004 still needs the full managed end-to-end run, including >1 hour duration, latency behavior,
+  clean completion, and archive evidence.
+- `graphify-out/` remains an untracked pre-existing artifact and was not modified.
+
+** Next best step
+
+Proceed to yt-004 when the live-enabled YouTube channel and time window are available: run a real
+>1 hour managed Broadcast, capture audience LIVE/live-edge evidence, end it cleanly, and confirm the
+archive.
