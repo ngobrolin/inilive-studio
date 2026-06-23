@@ -67,7 +67,7 @@ describe("managed YouTube Broadcasts", () => {
     });
   });
 
-  it("waits for the bound stream to become active before transitioning the Broadcast live", async () => {
+  it("waits for the bound stream to become active and the auto-started Broadcast to become live", async () => {
     const store = createInMemoryYouTubeStore();
     await store.saveChannelLink({
       hostAccountId: "host-1",
@@ -79,7 +79,7 @@ describe("managed YouTube Broadcasts", () => {
       getLiveStreamStatus.mock.calls.length === 1 ? "inactive" : "active",
     );
     const getLiveBroadcastLifeCycleStatus = vi.fn(async () =>
-      getLiveBroadcastLifeCycleStatus.mock.calls.length === 1 ? "testStarting" : "testing",
+      getLiveBroadcastLifeCycleStatus.mock.calls.length === 1 ? "ready" : "live",
     );
     const transitionLiveBroadcast = vi.fn(async () => undefined);
     let now = 0;
@@ -93,7 +93,6 @@ describe("managed YouTube Broadcasts", () => {
         revokeToken: async () => undefined,
         getLiveStreamStatus,
         getLiveBroadcastLifeCycleStatus,
-        transitionLiveBroadcast,
       },
     });
 
@@ -111,18 +110,11 @@ describe("managed YouTube Broadcasts", () => {
     expect(getLiveStreamStatus).toHaveBeenCalledWith("fresh-access-token", {
       streamId: "stream-1",
     });
-    expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(1, "fresh-access-token", {
-      broadcastId: "broadcast-1",
-      status: "testing",
-    });
     expect(getLiveBroadcastLifeCycleStatus).toHaveBeenCalledTimes(2);
     expect(getLiveBroadcastLifeCycleStatus).toHaveBeenCalledWith("fresh-access-token", {
       broadcastId: "broadcast-1",
     });
-    expect(transitionLiveBroadcast).toHaveBeenNthCalledWith(2, "fresh-access-token", {
-      broadcastId: "broadcast-1",
-      status: "live",
-    });
+    expect(transitionLiveBroadcast).not.toHaveBeenCalled();
   });
 
   it("transitions a managed Broadcast complete so YouTube finalizes the archive", async () => {

@@ -138,8 +138,13 @@ describe("YouTube access tokens", () => {
       scheduledEndTime: "2026-06-23T16:00:00.000Z",
     });
     expect(body.contentDetails).toMatchObject({
+      enableAutoStart: true,
+      enableAutoStop: true,
+      enableDvr: true,
+      enableEmbed: true,
       latencyPreference: "low",
-      monitorStream: { enableMonitorStream: true },
+      recordFromStart: true,
+      monitorStream: { enableMonitorStream: false },
     });
   });
 });

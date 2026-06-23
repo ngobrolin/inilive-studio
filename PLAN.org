@@ -1626,6 +1626,15 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
   - Verification:
     - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts` passed, 9 tests.
     - `npm run check` passed with 0 errors and 0 warnings.
+- 2026-06-23: Switched managed YouTube events to encoder-style auto-start behavior after HITL
+  showed RTMP preview was Excellent but the public player still did not show a normal LIVE badge.
+  - `liveBroadcasts.insert` now sets `enableAutoStart`, `enableAutoStop`, `enableDvr`,
+    `enableEmbed`, and `recordFromStart` true, with monitor stream disabled.
+  - Live Studio no longer forces `testing -> live`; it waits for the bound stream to become active
+    and then waits for YouTube's auto-started `liveBroadcast` lifecycle status to become `live`.
+  - Verification:
+    - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts` passed, 13 tests.
+    - `npm run check` passed with 0 errors and 0 warnings.
 
 ** TODO yt-004 - Verify managed YouTube broadcast end-to-end
 :PROPERTIES:

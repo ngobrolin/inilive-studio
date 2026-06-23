@@ -3300,3 +3300,42 @@ the cap in real testing.
 
 Start a fresh managed Broadcast after the server reloads, inspect the exact YouTube event in Live
 Control Room, and confirm the event no longer shows a one-hour duration cap.
+
+* 2026-06-23 yt-003 encoder-style YouTube auto-start
+
+** Goal
+
+Fix the managed YouTube event still behaving like a Studio RTMP preview instead of a regular public
+livestream after the explicit scheduled-end fix.
+
+** Completed
+
+- User provided YouTube Studio evidence: RTMP preview health was Excellent, but the public YouTube
+  player still did not show a normal LIVE badge/notification and the event still appeared capped at
+  one hour.
+- Changed managed `liveBroadcasts.insert` settings to match encoder-style YouTube events more
+  closely: `enableAutoStart`, `enableAutoStop`, `enableDvr`, `enableEmbed`, and `recordFromStart`
+  are true, and monitor stream is disabled.
+- Changed Live Studio's YouTube live confirmation path to wait for YouTube auto-start to report the
+  `liveBroadcast` lifecycle as `live` after the bound stream becomes active, instead of forcing the
+  manual `testing -> live` transition path.
+- Updated unit expectations for the Google request body and lifecycle polling behavior.
+- Updated `PLAN.org` yt-003 notes with the HITL evidence and implementation change.
+
+** Verification run
+
+- `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts`:
+  passed, 13 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+
+** Known risk or unresolved issue
+
+- No real YouTube HITL retest has been run after switching to auto-start behavior.
+- If YouTube still does not show the public LIVE badge, the next thing to inspect is the exact
+  `liveBroadcasts.list(part=snippet,status,contentDetails)` response for the app-created broadcast
+  id while the bridge is connected.
+
+** Next best step
+
+Start a fresh managed Broadcast after server reload and open the app's event-specific YouTube link;
+verify that YouTube auto-starts the event and the public player shows the red LIVE badge.
