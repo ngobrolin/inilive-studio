@@ -1618,6 +1618,14 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
   - Verification:
     - `./init.sh` passed before code changes.
     - `npm run test:unit -- --run src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts` passed, 7 tests.
+- 2026-06-23: Removed reliance on YouTube's implicit scheduled duration for managed Broadcasts.
+  - Google documents omitted `scheduledEndTime` as indefinite, but real HITL testing still showed a
+    one-hour YouTube event window.
+  - Managed `liveBroadcasts.insert` now sends an explicit 12-hour scheduled window while Live Studio
+    still completes the event when the Host ends the Broadcast.
+  - Verification:
+    - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts` passed, 9 tests.
+    - `npm run check` passed with 0 errors and 0 warnings.
 
 ** TODO yt-004 - Verify managed YouTube broadcast end-to-end
 :PROPERTIES:

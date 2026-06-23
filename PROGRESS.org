@@ -3268,3 +3268,35 @@ Broadcast, which could leave YouTube to infer archive finalization after RTMP in
 Restart or let Vite reload the server code, start a fresh managed YouTube Broadcast, end it from
 Live Studio, and confirm the exact YouTube event transitions to Complete and archives at the actual
 session length.
+
+* 2026-06-23 yt-003 explicit YouTube scheduled end
+
+** Goal
+
+Fix the remaining one-hour YouTube event window after the completion-transition fix did not remove
+the cap in real testing.
+
+** Completed
+
+- Stopped relying on YouTube's documented implicit indefinite `scheduledEndTime` behavior.
+- Added an explicit 12-hour scheduled window to managed `liveBroadcasts.insert` requests.
+- Kept Host End Broadcast completion behavior, so normal sessions still end and archive when Live
+  Studio ends the Broadcast rather than waiting for the 12-hour schedule.
+- Added unit coverage for the exact Google request body, including `scheduledStartTime` and
+  `scheduledEndTime`.
+- Updated `PLAN.org` yt-003 notes with the HITL finding and verification evidence.
+
+** Verification run
+
+- `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`:
+  passed, 9 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+
+** Known risk or unresolved issue
+
+- No real YouTube HITL retest has been run after adding the explicit 12-hour scheduled window.
+
+** Next best step
+
+Start a fresh managed Broadcast after the server reloads, inspect the exact YouTube event in Live
+Control Room, and confirm the event no longer shows a one-hour duration cap.

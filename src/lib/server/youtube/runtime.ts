@@ -5,6 +5,8 @@ import { createDatabase } from "$lib/server/db/database";
 import { createPostgresYouTubeStore } from "./postgres-store";
 import { createInMemoryYouTubeStore, type YouTubeStore } from "./store";
 
+const MANAGED_BROADCAST_SCHEDULED_DURATION_MS = 12 * 60 * 60 * 1000;
+
 export type GoogleYouTubeClient = {
   exchangeCode(code: string): Promise<{ accessToken: string; refreshToken: string | null }>;
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
@@ -197,6 +199,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       };
     },
     async createLiveBroadcast(accessToken, input) {
+      const now = Date.now();
       const response = await fetch(
         "https://www.googleapis.com/youtube/v3/liveBroadcasts?part=snippet,status,contentDetails",
         {
@@ -208,7 +211,8 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
           body: JSON.stringify({
             snippet: {
               title: input.title,
-              scheduledStartTime: new Date(Date.now() + 60_000).toISOString(),
+              scheduledStartTime: new Date(now + 60_000).toISOString(),
+              scheduledEndTime: new Date(now + MANAGED_BROADCAST_SCHEDULED_DURATION_MS).toISOString(),
             },
             status: { privacyStatus: input.visibility },
             contentDetails: {

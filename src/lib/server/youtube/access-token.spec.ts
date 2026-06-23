@@ -15,6 +15,7 @@ describe("YouTube access tokens", () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
@@ -110,5 +111,35 @@ describe("YouTube access tokens", () => {
     expect(init?.method).toBe("POST");
     const body = init?.body as URLSearchParams;
     expect(body.get("token")).toBe("stored-refresh-token");
+  });
+
+  it("creates live broadcasts with an explicit 12-hour scheduled window", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(Date.UTC(2026, 5, 23, 4, 0, 0));
+    const fetchGoogle = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        Response.json({ id: "broadcast-1" }),
+    );
+    vi.stubGlobal("fetch", fetchGoogle);
+
+    await expect(
+      getGoogleYouTubeClient().createLiveBroadcast?.("fresh-access-token", {
+        title: "Launch Room",
+        visibility: "private",
+        latencyPreference: "low",
+      }),
+    ).resolves.toEqual({ id: "broadcast-1" });
+
+    expect(fetchGoogle).toHaveBeenCalledOnce();
+    const [_url, init] = fetchGoogle.mock.calls[0] ?? [];
+    const body = JSON.parse(String(init?.body));
+    expect(body.snippet).toMatchObject({
+      title: "Launch Room",
+      scheduledStartTime: "2026-06-23T04:01:00.000Z",
+      scheduledEndTime: "2026-06-23T16:00:00.000Z",
+    });
+    expect(body.contentDetails).toMatchObject({
+      latencyPreference: "low",
+      monitorStream: { enableMonitorStream: true },
+    });
   });
 });
