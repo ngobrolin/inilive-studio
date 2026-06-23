@@ -3339,3 +3339,51 @@ livestream after the explicit scheduled-end fix.
 
 Start a fresh managed Broadcast after server reload and open the app's event-specific YouTube link;
 verify that YouTube auto-starts the event and the public player shows the red LIVE badge.
+
+* 2026-06-23 yt-003 product Broadcast reconciliation
+
+** Goal
+
+Continue yt-003 with TDD by closing the AFK gaps around durable product Broadcast reconciliation:
+persist the managed YouTube broadcast id and make YouTube lifecycle failures visible in product
+Broadcast state and Broadcast Health history.
+
+** Completed
+
+- Added a product Broadcast store capability to attach a managed YouTube `liveBroadcast` id to an
+  existing Broadcast record.
+- Added migration `0005_broadcast_youtube_lifecycle.sql` and the typed Postgres/in-memory store
+  support for `broadcasts.youtube_broadcast_id`.
+- Wired product Room managed Broadcast start so the YouTube broadcast id is persisted immediately
+  after the product Countdown record is created.
+- Added route-level coverage proving a managed YouTube live-transition failure maps to:
+  - process-local Broadcast `failed`
+  - product Broadcast `failed`
+  - Host-facing failure message: "YouTube did not transition the managed Broadcast to live."
+  - persisted Broadcast Health events: `connected`, then `failed`
+
+** Verification run
+
+- `npm run test:unit -- --run src/lib/server/broadcasts/broadcasts.spec.ts`: first RED, failed
+  because `attachYouTubeBroadcast` did not exist.
+- `npm run test:unit -- --run src/routes/bridge/[roomId]/events/server.spec.ts`: second RED,
+  failed because the synthetic YouTube lifecycle failure was not persisted as a Broadcast Health
+  event.
+- `npm run test:unit -- --run src/routes/bridge/[roomId]/events/server.spec.ts src/lib/server/broadcasts/broadcasts.spec.ts src/lib/server/db/migrations.spec.ts`:
+  passed, 13 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `./init.sh`: passed after implementation.
+  - Vitest: 48 files passed / 4 skipped, 157 tests passed / 4 skipped.
+  - Playwright: 63 passed.
+
+** Known risk or unresolved issue
+
+- yt-003 still needs HITL evidence that a fresh managed YouTube Broadcast auto-starts publicly and
+  shows the red LIVE badge in the event-specific YouTube player.
+- `graphify-out/` remains an untracked pre-existing artifact and was not modified for this feature.
+
+** Next best step
+
+Run the HITL YouTube retest: start a fresh managed Broadcast after server reload and open the
+event-specific YouTube link; verify YouTube auto-starts and the public player shows the red LIVE
+badge. If it passes, record evidence and mark yt-003 passing.

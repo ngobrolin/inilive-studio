@@ -101,6 +101,18 @@ export const POST: RequestHandler = async ({ params, request }) => {
           message: failureMessage,
         });
         if (productBroadcastId) {
+          await recordBroadcastHealthEvent(
+            {
+              broadcastId: productBroadcastId,
+              status: "failed",
+              message: failureMessage,
+              payload: {
+                status: "failed",
+                message: failureMessage,
+              },
+            },
+            { store: getHealthEventStore() },
+          );
           await syncProductBroadcastTerminalState(
             {
               productBroadcastId,

@@ -45,6 +45,7 @@ export type Database = {
     id: Generated<string>;
     room_id: string;
     state: "countdown" | "broadcasting" | "ended" | "failed";
+    youtube_broadcast_id: string | null;
     failure_message: string | null;
     started_at: Date | null;
     ended_at: Date | null;

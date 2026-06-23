@@ -1595,8 +1595,8 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
 - [X] Broadcast goes live only after YouTube reports the bound stream active.
 - [ ] The audience player shows the LIVE badge at the live edge once transitioned.
 - [X] Ending a Broadcast transitions the YouTube broadcast to complete.
-- [ ] YouTube lifecycle errors map to product Failed state with actionable copy.
-- [ ] Product Broadcast records reflect the YouTube broadcast id and final status.
+- [X] YouTube lifecycle errors map to product Failed state with actionable copy.
+- [X] Product Broadcast records reflect the YouTube broadcast id and final status.
 
 *** Verification
 
@@ -1635,6 +1635,16 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
   - Verification:
     - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts` passed, 13 tests.
     - `npm run check` passed with 0 errors and 0 warnings.
+- 2026-06-23: Persisted managed YouTube ids and hardened lifecycle failure reconciliation.
+  - Added `broadcasts.youtube_broadcast_id` through migration `0005_broadcast_youtube_lifecycle.sql`.
+  - Product Broadcast records now retain the managed YouTube `liveBroadcast` id after the product
+    Countdown record is created.
+  - Managed YouTube live-transition failures now record a failed Broadcast Health event and sync the
+    product Broadcast record to Failed with Host-facing recovery copy.
+  - Verification:
+    - `npm run test:unit -- --run src/routes/bridge/[roomId]/events/server.spec.ts src/lib/server/broadcasts/broadcasts.spec.ts src/lib/server/db/migrations.spec.ts` passed, 13 tests.
+    - `npm run check` passed with 0 errors and 0 warnings.
+    - `./init.sh` passed after implementation: Vitest 48 files passed / 4 skipped, 157 tests passed / 4 skipped; Playwright 63 passed.
 
 ** TODO yt-004 - Verify managed YouTube broadcast end-to-end
 :PROPERTIES:

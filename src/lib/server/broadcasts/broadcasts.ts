@@ -26,6 +26,11 @@ export type MarkBroadcastFailedResult = {
   error: "not_found" | "invalid_state" | "missing_message" | null;
 };
 
+export type AttachYouTubeBroadcastResult = {
+  broadcast: BroadcastRecord | null;
+  error: "not_found" | "missing_youtube_broadcast_id" | null;
+};
+
 export async function recoverInterruptedBroadcast(
   input: {
     roomId: string;
@@ -149,6 +154,19 @@ export async function markBroadcastFailed(
     failureMessage,
     new Date(input.now ?? Date.now()),
   );
+  return broadcast ? { broadcast, error: null } : { broadcast: null, error: "not_found" };
+}
+
+export async function attachYouTubeBroadcast(
+  input: { broadcastId: string; youtubeBroadcastId: string },
+  deps: { store: BroadcastStore },
+): Promise<AttachYouTubeBroadcastResult> {
+  const youtubeBroadcastId = input.youtubeBroadcastId.trim();
+  if (!youtubeBroadcastId) {
+    return { broadcast: null, error: "missing_youtube_broadcast_id" };
+  }
+
+  const broadcast = await deps.store.attachYouTubeBroadcast(input.broadcastId, youtubeBroadcastId);
   return broadcast ? { broadcast, error: null } : { broadcast: null, error: "not_found" };
 }
 

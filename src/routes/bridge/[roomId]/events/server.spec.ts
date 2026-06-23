@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearBroadcastState,
   endRoomBroadcast,
@@ -15,6 +15,9 @@ import {
   clearBroadcastStoreForTests,
   setBroadcastStoreForTests,
 } from "$lib/server/broadcasts/runtime";
+import { createInMemoryYouTubeStore } from "$lib/server/youtube/store";
+import { clearYouTubeRuntimeForTests, setYouTubeRuntimeForTests } from "$lib/server/youtube/runtime";
+import { setRoomManagedYouTubeBroadcast } from "$lib/server/broadcast-state";
 import { POST } from "./+server";
 
 describe("bridge Broadcast Health callback endpoint", () => {
@@ -24,6 +27,7 @@ describe("bridge Broadcast Health callback endpoint", () => {
     clearBroadcastState();
     clearHealthEventStoreForTests();
     clearBroadcastStoreForTests();
+    clearYouTubeRuntimeForTests();
     configureBridgeCallbackHmacSecret(hmacSecret);
     setHealthEventStoreForTests(createInMemoryHealthEventStore());
     setBroadcastStoreForTests(createInMemoryBroadcastStore());
@@ -147,6 +151,73 @@ describe("bridge Broadcast Health callback endpoint", () => {
       message: "Broadcast Bridge ended the Broadcast.",
     });
     expect(getRoomBroadcastCallbackGrant("demo")).toBeNull();
+  });
+
+  it("maps managed YouTube live transition failures to Broadcast Health and product Failed state", async () => {
+    const broadcastStore = createInMemoryBroadcastStore();
+    setBroadcastStoreForTests(broadcastStore);
+    const productBroadcast = await broadcastStore.createCountdownBroadcast("demo", new Date(1_000));
+    await broadcastStore.markBroadcastBroadcasting(productBroadcast.id, new Date(1_000));
+    startRoomBroadcast({
+      roomId: "demo",
+      hostParticipantId: "participant-1",
+      rtmpServerUrl: "rtmp://a.rtmp.youtube.com/live2",
+      streamKey: "secret-stream-key",
+      productBroadcastId: productBroadcast.id,
+      youtubeBroadcastId: "youtube-broadcast-1",
+    });
+    setRoomManagedYouTubeBroadcast("demo", {
+      hostAccountId: "host-1",
+      youtubeBroadcastId: "youtube-broadcast-1",
+      youtubeStreamId: "youtube-stream-1",
+    });
+    const youtubeStore = createInMemoryYouTubeStore();
+    await youtubeStore.saveChannelLink({
+      hostAccountId: "host-1",
+      youtubeChannelId: "channel-1",
+      youtubeChannelTitle: "Linked Channel",
+      refreshTokenCiphertext: "encrypted-refresh-token",
+    });
+    setYouTubeRuntimeForTests({
+      store: youtubeStore,
+      decryptRefreshToken: () => "stored-refresh-token",
+      googleClient: {
+        exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
+        getOwnChannel: async () => ({ id: "channel-1", title: "Linked Channel" }),
+        refreshAccessToken: async () => "fresh-access-token",
+        revokeToken: async () => undefined,
+        getLiveStreamStatus: vi.fn(async () => "active"),
+        getLiveBroadcastLifeCycleStatus: vi.fn(async () => {
+          throw new Error("YouTube quota exhausted");
+        }),
+      },
+    });
+    const callbackGrant = getRoomBroadcastCallbackGrant("demo");
+
+    const response = await postBridgeEvent(
+      "demo",
+      `Bearer ${callbackGrant?.bearerToken}`,
+      { status: "connected", message: "RTMP ingest connected." },
+      hmacSecret,
+    );
+
+    expect(response.status).toBe(202);
+    expect(getRoomBroadcastView("demo")).toMatchObject({
+      state: "failed",
+      failureMessage: "YouTube did not transition the managed Broadcast to live.",
+      health: {
+        status: "failed",
+        message: "YouTube did not transition the managed Broadcast to live.",
+      },
+    });
+    await expect(broadcastStore.getBroadcastById(productBroadcast.id)).resolves.toMatchObject({
+      state: "failed",
+      failureMessage: "YouTube did not transition the managed Broadcast to live.",
+      youtubeBroadcastId: null,
+    });
+    const { getHealthEventStore } = await import("$lib/server/health/runtime");
+    const events = await getHealthEventStore().listEventsForBroadcast(productBroadcast.id);
+    expect(events.map((event) => event.status)).toEqual(["connected", "failed"]);
   });
 });
 

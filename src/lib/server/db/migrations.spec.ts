@@ -10,6 +10,7 @@ describe("database migrations", () => {
       "0002_magic_link_tokens.sql",
       "0003_broadcast_countdown.sql",
       "0004_youtube_channel_links.sql",
+      "0005_broadcast_youtube_lifecycle.sql",
     ]);
     expect(migrations[0]?.sql).toContain("CREATE TABLE host_accounts");
     expect(migrations[0]?.sql).toContain("CREATE TABLE host_sessions");
@@ -21,6 +22,7 @@ describe("database migrations", () => {
     expect(migrations[3]?.sql).toContain("CREATE TABLE youtube_oauth_states");
     expect(migrations[3]?.sql).toContain("CREATE TABLE youtube_channel_links");
     expect(migrations[3]?.sql).toContain("refresh_token_ciphertext");
+    expect(migrations[4]?.sql).toContain("youtube_broadcast_id");
     expect(migrations[0]?.sql).not.toMatch(/stream_key|room_chat|chat_messages/i);
   });
 });

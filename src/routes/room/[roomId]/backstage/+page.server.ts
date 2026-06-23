@@ -3,6 +3,7 @@ import { ensureBridgeClientConfigured } from "$lib/server/bridge-env";
 import { resolveBridgeCallbackOrigin } from "$lib/server/bridge-callback-origin";
 import { startBridgeSession, stopBridgeSession } from "$lib/server/bridge-client";
 import {
+  attachYouTubeBroadcast,
   cancelBroadcastCountdown,
   completeBroadcastCountdown,
   recoverInterruptedBroadcast,
@@ -241,6 +242,12 @@ export const actions: Actions = {
         );
         if (countdown.error) {
           return fail(400, { error: "A Broadcast is already active in this Room." });
+        }
+        if (youtubeBroadcastId) {
+          await attachYouTubeBroadcast(
+            { broadcastId: countdown.broadcast!.id, youtubeBroadcastId },
+            { store: broadcastStore },
+          );
         }
 
         const result = startRoomBroadcastCountdown({

@@ -4,6 +4,7 @@ export type BroadcastRecord = {
   id: string;
   roomId: string;
   state: BroadcastRecordState;
+  youtubeBroadcastId: string | null;
   failureMessage: string | null;
   startedAt: Date | null;
   endedAt: Date | null;
@@ -19,6 +20,10 @@ export type BroadcastStore = {
   getBroadcastById(broadcastId: string): Promise<BroadcastRecord | null>;
   getActiveBroadcast(roomId: string): Promise<BroadcastRecord | null>;
   deleteBroadcast(broadcastId: string): Promise<boolean>;
+  attachYouTubeBroadcast(
+    broadcastId: string,
+    youtubeBroadcastId: string,
+  ): Promise<BroadcastRecord | null>;
   markBroadcastBroadcasting(broadcastId: string, startedAt: Date): Promise<BroadcastRecord | null>;
   markBroadcastEnded(broadcastId: string, endedAt: Date): Promise<BroadcastRecord | null>;
   markBroadcastFailed(
@@ -38,6 +43,7 @@ export function createInMemoryBroadcastStore(): BroadcastStore {
         id: `broadcast-${nextId++}`,
         roomId,
         state: "countdown",
+        youtubeBroadcastId: null,
         failureMessage: null,
         startedAt: null,
         endedAt: null,
@@ -66,6 +72,17 @@ export function createInMemoryBroadcastStore(): BroadcastStore {
 
     async deleteBroadcast(broadcastId) {
       return records.delete(broadcastId);
+    },
+
+    async attachYouTubeBroadcast(broadcastId, youtubeBroadcastId) {
+      const record = records.get(broadcastId);
+      if (!record) return null;
+      const updated = {
+        ...record,
+        youtubeBroadcastId,
+      };
+      records.set(broadcastId, updated);
+      return updated;
     },
 
     async markBroadcastBroadcasting(broadcastId, startedAt) {

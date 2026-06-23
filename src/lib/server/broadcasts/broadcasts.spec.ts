@@ -6,6 +6,7 @@ import {
   markBroadcastFailed,
   recoverInterruptedBroadcast,
   startBroadcastCountdown,
+  attachYouTubeBroadcast,
 } from "./broadcasts";
 import { clearBroadcastStoreForTests, setBroadcastStoreForTests } from "./runtime";
 import { createInMemoryBroadcastStore } from "./store";
@@ -61,6 +62,25 @@ describe("product-backed broadcasts", () => {
       startedAt: new Date(now),
       endedAt: null,
       countdownEndsAt: null,
+    });
+  });
+
+  it("persists the managed YouTube broadcast id on the product Broadcast record", async () => {
+    const store = createInMemoryBroadcastStore();
+    const started = await startBroadcastCountdown({ roomId: "room-1", now: 1_000 }, { store });
+
+    const result = await attachYouTubeBroadcast(
+      { broadcastId: started.broadcast!.id, youtubeBroadcastId: "youtube-broadcast-1" },
+      { store },
+    );
+
+    expect(result.error).toBeNull();
+    expect(result.broadcast).toMatchObject({
+      id: started.broadcast!.id,
+      youtubeBroadcastId: "youtube-broadcast-1",
+    });
+    await expect(store.getBroadcastById(started.broadcast!.id)).resolves.toMatchObject({
+      youtubeBroadcastId: "youtube-broadcast-1",
     });
   });
 

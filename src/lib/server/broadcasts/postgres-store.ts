@@ -6,6 +6,7 @@ function mapRow(row: {
   id: string;
   room_id: string;
   state: "countdown" | "broadcasting" | "ended" | "failed";
+  youtube_broadcast_id: string | null;
   failure_message: string | null;
   started_at: Date | null;
   ended_at: Date | null;
@@ -16,6 +17,7 @@ function mapRow(row: {
     id: row.id,
     roomId: row.room_id,
     state: row.state,
+    youtubeBroadcastId: row.youtube_broadcast_id,
     failureMessage: row.failure_message,
     startedAt: row.started_at,
     endedAt: row.ended_at,
@@ -38,6 +40,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
@@ -56,6 +59,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
@@ -75,6 +79,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
@@ -99,6 +104,27 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
       return Number(result.numDeletedRows) > 0;
     },
 
+    async attachYouTubeBroadcast(broadcastId, youtubeBroadcastId) {
+      const row = await db
+        .updateTable("broadcasts")
+        .set({ youtube_broadcast_id: youtubeBroadcastId })
+        .where("id", "=", broadcastId)
+        .returning([
+          "id",
+          "room_id",
+          "state",
+          "youtube_broadcast_id",
+          "failure_message",
+          "started_at",
+          "ended_at",
+          "created_at",
+          "countdown_ends_at",
+        ])
+        .executeTakeFirst();
+
+      return row ? mapRow(row) : null;
+    },
+
     async markBroadcastBroadcasting(broadcastId, startedAt) {
       const row = await db
         .updateTable("broadcasts")
@@ -113,6 +139,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
@@ -138,6 +165,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
@@ -164,6 +192,7 @@ export function createPostgresBroadcastStore(db: Kysely<Database>): BroadcastSto
           "id",
           "room_id",
           "state",
+          "youtube_broadcast_id",
           "failure_message",
           "started_at",
           "ended_at",
