@@ -40,6 +40,8 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
   - 2026-06-24: Renamed project branding from "Live Studio" / "inLive Studio" to "iniLive Studio"
     across UI copy, planning docs, session logs, and verification scripts. Third-party inLive SFU
     spike references in ADRs and media-001 history were left unchanged.
+  - 2026-06-24: Added README installation and usage instructions for the local Graphify knowledge
+    graph workflow. `graphify-out/` remains an ignored generated artifact.
 
 * Status Legend
 

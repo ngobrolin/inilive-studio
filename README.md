@@ -37,6 +37,41 @@ Run the standard startup and smoke-test path used by this repo:
 
 Set `RUN_START_COMMAND=1` if you want `init.sh` to launch the dev server after verification.
 
+## Graphify knowledge graph
+
+This repo keeps Graphify output out of Git with `graphify-out/` in `.gitignore`. Graphify itself is a local agent/developer tool, not an npm project dependency.
+
+Install or upgrade the Graphify CLI locally:
+
+```sh
+# Preferred if uv is available
+uv tool install --upgrade graphifyy
+
+# Or install with Python/pip
+python3 -m pip install --upgrade graphifyy
+```
+
+Build or refresh a knowledge graph for the repository:
+
+```sh
+# First full graph build from the repo root
+graphify .
+
+# Re-extract only new or changed files after the first build
+graphify . --update
+
+# Query the existing graph
+graphify query "How does managed YouTube broadcasting work?"
+```
+
+Common outputs are written under `graphify-out/`:
+
+- `graph.html` - interactive graph to open in a browser
+- `GRAPH_REPORT.md` - plain-language audit report and suggested questions
+- `graph.json` - raw graph data for agent or GraphRAG use
+
+If semantic extraction is enabled, set `GEMINI_API_KEY` or `GOOGLE_API_KEY` in your local shell before running Graphify. Do not commit API keys or generated `graphify-out/` files.
+
 ## Verification
 
 ```sh

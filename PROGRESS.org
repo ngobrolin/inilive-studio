@@ -3563,3 +3563,32 @@ Convert the current bug report and still-open plan issues into GitHub issues.
 
 Use GitHub issue #1 for the Screen Share regression fix, and issues #2/#3 for remaining HITL
 broadcast verification.
+
+* 2026-06-24 Add Graphify setup instructions
+
+** Goal
+
+Document how to install and use Graphify for this repository.
+
+** Completed
+
+- Added a `README.md` Graphify knowledge graph section.
+- Documented local install/upgrade commands using `uv tool install --upgrade graphifyy` or
+  `python3 -m pip install --upgrade graphifyy`.
+- Documented first build, incremental update, and query commands.
+- Documented the generated `graphify-out/` outputs and confirmed they remain ignored by Git.
+- Recorded the documentation update in `PLAN.org` Publishing Readiness notes.
+
+** Verification run
+
+- `./init.sh` passed before changes: 157 Vitest tests passed, 4 Postgres integration tests skipped
+  without `DATABASE_URL`, and 63 Playwright tests passed.
+- `npm run fmt:check -- README.md` passed.
+
+** Known risk or unresolved issue
+
+- Graphify itself was not run or installed as part of this documentation-only change.
+
+** Next best step
+
+Run `graphify . --update` locally when the existing ignored graph should be refreshed.
