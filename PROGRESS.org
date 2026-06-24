@@ -3499,3 +3499,67 @@ inLive SFU service that was spiked and replaced by LiveKit Cloud.
 ** Next best step
 
 Continue yt-004 HITL validation when the live-enabled YouTube channel and time window are available.
+
+* 2026-06-24 yt-004 Screen Share rebroadcast bug report
+
+** Goal
+
+Record the user's reported Screen Share regression against the active managed YouTube end-to-end
+issue.
+
+** Completed
+
+- Added the regression report to `PLAN.org` under yt-004 notes.
+- Captured repro flow: start Broadcast, turn Screen Share on, end Broadcast, then start another
+  Broadcast.
+- Captured observed behavior: Screen Share state remains on without an available off control, and
+  the second Broadcast does not include Screen Share in the composed video.
+
+** Verification run
+
+- `./init.sh` passed before this documentation-only update.
+- No automated tests were run after the documentation-only update.
+
+** Known risk or unresolved issue
+
+- The Screen Share rebroadcast regression has not been reproduced locally yet.
+
+** Next best step
+
+Reproduce the Screen Share rebroadcast flow and fix state cleanup/composed-video registration before
+or during yt-004 HITL retesting.
+
+* 2026-06-24 Convert open plan work to GitHub issues
+
+** Goal
+
+Convert the current bug report and still-open plan issues into GitHub issues.
+
+** Completed
+
+- Confirmed GitHub CLI auth and admin access to `ngobrolin/inilive-studio`.
+- Added triage labels used by the new issues: `needs-triage`, `ready-for-human`, and
+  `ready-for-agent`.
+- Created GitHub issues:
+  - https://github.com/ngobrolin/inilive-studio/issues/1 - Screen Share remains stuck after ending
+    and restarting Broadcast.
+  - https://github.com/ngobrolin/inilive-studio/issues/2 - bridge-005 YouTube 720p30 end-to-end
+    verification.
+  - https://github.com/ngobrolin/inilive-studio/issues/3 - yt-004 managed YouTube end-to-end
+    verification.
+- Recorded the GitHub issue links in `PLAN.org`.
+
+** Verification run
+
+- `gh issue list --state all --limit 100 --json number,title,state,labels,url` showed no existing
+  issues before creation, so no duplicates were created.
+- No code changed; no automated tests run for this issue-tracker update.
+
+** Known risk or unresolved issue
+
+- Already-passing historical `PLAN.org` items were not mirrored to GitHub issues.
+
+** Next best step
+
+Use GitHub issue #1 for the Screen Share regression fix, and issues #2/#3 for remaining HITL
+broadcast verification.

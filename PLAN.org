@@ -1707,3 +1707,15 @@ Validate the full managed path on a real channel: link, one-click go-live, LIVE 
 *** Notes
 
 - HITL because it requires a live-enabled YouTube channel and human audience-side confirmation.
+- 2026-06-24 user-reported regression to include in yt-004 retest:
+  - Repro flow: start a Broadcast, turn Screen Share on, end the Broadcast, then start another
+    Broadcast.
+  - Observed: the second Broadcast still shows Screen Share as on in Room state, but the Host cannot
+    turn it off.
+  - Observed: the second Broadcast does not include the Screen Share in the composed video output.
+  - Expected: ending a Broadcast should either clear Screen Share state or the next Broadcast should
+    have a working Screen Share control and include the active Screen Share in the Composed Room Feed.
+  - Converted to GitHub issue: https://github.com/ngobrolin/inilive-studio/issues/1
+- 2026-06-24 GitHub issue mirror:
+  - bridge-005: https://github.com/ngobrolin/inilive-studio/issues/2
+  - yt-004: https://github.com/ngobrolin/inilive-studio/issues/3
