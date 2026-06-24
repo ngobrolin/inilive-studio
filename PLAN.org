@@ -17,6 +17,30 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
   :DO_NOT_SKIP_VERIFICATION: true
   :END:
 
+* Publishing Readiness
+
+- 2026-06-24: GitHub publishing prep started.
+  - Project-specific setup, development, verification, environment, and publishing checklist added
+    to `README.md`.
+  - `outputs/` is now ignored with other generated/runtime artifacts.
+  - `./init.sh` passed before changes, `npm run check` passed, and `npm run build` passed.
+  - `npm run fmt:check` currently fails on 42 pre-existing files; leave broad formatting cleanup as
+    a separate change to avoid unrelated churn.
+  - `gitleaks` is not installed locally, so only a high-signal `git grep` secret scan was run. No
+    concrete credential values were found in tracked files, but a real gitleaks scan is still
+    recommended before public push.
+  - Before a public GitHub publish, choose whether `PLAN.org`, `PROGRESS.org`, `CONTEXT.md`,
+    `session-handoff.md`, and `AGENTS.md` should remain public, and add a `LICENSE` file if reuse is
+    intended.
+  - User decided the GitHub repository should be public, workflow/planning artifacts should remain
+    public, and the project should use the MIT license.
+  - Added `LICENSE` and package MIT license metadata.
+  - `nix-shell -p gitleaks --run 'gitleaks detect --source . --no-banner'` passed with no leaks
+    found.
+  - 2026-06-24: Renamed project branding from "Live Studio" / "inLive Studio" to "iniLive Studio"
+    across UI copy, planning docs, session logs, and verification scripts. Third-party inLive SFU
+    spike references in ADRs and media-001 history were left unchanged.
+
 * Status Legend
 
 - not_started :: Work has not begun.

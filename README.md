@@ -1,35 +1,55 @@
-# sv
+# iniLive Studio
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+iniLive Studio is a browser-based production Room for a signed-in Host and up to three Guests. Hosts can prepare in Backstage, bring Guests into a private Room, compose a 720p Room Feed, and broadcast it to YouTube through the local Broadcast Bridge.
 
-## Creating a project
+This repository is a SvelteKit/TypeScript app with Vitest, Playwright, Tailwind CSS, Kysely, Postgres, and a Node/GStreamer Broadcast Bridge service.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Requirements
+
+- Node.js and npm
+- Playwright browser dependencies, installed by the test script
+- Podman or Docker-compatible Compose for local Postgres and the optional Broadcast Bridge
+- LiveKit Cloud credentials for real multi-participant media testing
+- Google OAuth credentials for managed YouTube broadcast testing
+
+## Setup
 
 ```sh
-# create a new project
-npx sv create my-app
+npm install
+cp .env.example .env
 ```
 
-To recreate this project with the same configuration:
+Fill in `.env` only with local credentials. Keep `.env` out of Git.
 
-```sh
-# recreate this project
-npx sv@0.16.1 create --template minimal --types ts --add vitest="usages:unit,component" playwright tailwindcss="plugins:none" sveltekit-adapter="adapter:node" --install npm .
-```
+## Development
 
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Start the SvelteKit development server:
 
 ```sh
 npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
 ```
 
-## Building
+Run the standard startup and smoke-test path used by this repo:
+
+```sh
+./init.sh
+```
+
+Set `RUN_START_COMMAND=1` if you want `init.sh` to launch the dev server after verification.
+
+## Verification
+
+```sh
+npm test
+npm run check
+npm run lint
+npm run fmt:check
+npm run build
+```
+
+`npm test` runs Vitest and Playwright. Some integration tests are skipped unless the required external services and environment variables are configured.
+
+## Build
 
 To create a production version of your app:
 
@@ -39,11 +59,9 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
-
 ## Local database
 
-Milestone 3 product data uses Postgres through Podman Compose, Kysely, and plain SQL migrations.
+Product data uses Postgres through Compose, Kysely, and plain SQL migrations.
 
 ```sh
 podman compose up -d postgres
@@ -69,3 +87,27 @@ The first run builds the pinned GStreamer image and can take several minutes. Th
 - WebRTC media UDP ports: `8790-8810`
 
 For local macOS Podman callbacks, set `BRIDGE_CALLBACK_ORIGIN=http://host.containers.internal:5173` when running `npm run dev`.
+
+## Environment variables
+
+See `.env.example` for the full local environment template. The most common variables are:
+
+- `DATABASE_URL` for Postgres persistence
+- `APP_ORIGIN` for absolute callback and magic-link URLs
+- `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` for media Rooms
+- `BRIDGE_ENABLED`, `BRIDGE_CONTROL_URL`, `BRIDGE_WHIP_URL`, and `BRIDGE_CALLBACK_HMAC_SECRET` for local broadcasting
+- `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY` for managed YouTube broadcasts
+
+## Publishing checklist
+
+Before publishing this repository to GitHub:
+
+1. Confirm `.env` and other local credential files are not tracked.
+2. Run `./init.sh` and any additional gates relevant to the change.
+3. Run a secret scan such as `gitleaks detect --source .` if available.
+4. Decide whether planning artifacts such as `PLAN.org`, `PROGRESS.org`, `CONTEXT.md`, and `session-handoff.md` should be public.
+5. Add a `LICENSE` file if this repository will be public and reusable.
+
+## License
+
+MIT. See `LICENSE`.

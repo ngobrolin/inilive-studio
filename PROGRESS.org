@@ -16,6 +16,53 @@
 
 * Session Log
 
+** 2026-06-24 GitHub publishing prep
+
+*** Goal
+
+Prepare the repository for GitHub publishing by auditing tracked/generated files, improving public
+setup documentation, and recording remaining publish decisions.
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed `PROGRESS.org`, `PLAN.org`, recent git history, `package.json`, `.gitignore`,
+  `README.md`, `.env.example`, and `compose.yaml`.
+- Replaced the generated Svelte starter README content with project-specific iniLive Studio setup,
+  development, verification, build, local database, Broadcast Bridge, environment, and publishing
+  checklist sections.
+- Added `outputs/` to `.gitignore` so local/generated run artifacts do not get published.
+- Audited tracked suspicious paths; only `.env.example` is tracked, as intended.
+- Recorded user decisions: publish as public, keep workflow/planning artifacts public, and use MIT
+  license.
+- Added `LICENSE` and package MIT license metadata.
+
+*** Verification run
+
+- `./init.sh`: passed before changes.
+  - Vitest: 48 files passed / 4 skipped, 157 tests passed / 4 skipped.
+  - Playwright: 63 passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run build`: passed.
+- `npm run fmt:check`: failed on 42 pre-existing files across docs/source. Broad formatting cleanup
+  was not applied because it is unrelated churn for this publishing prep.
+- `gitleaks detect --source . --no-banner`: not run because `gitleaks` is not installed locally.
+- High-signal `git grep` secret scan: no concrete credential values found in tracked files; matches
+  were code/test placeholders and API field names.
+- `nix-shell -p gitleaks --run 'gitleaks detect --source . --no-banner'`: passed with no leaks
+  found after `nix run nixpkgs#gitleaks` timed out while fetching a truncated nixpkgs tar archive.
+
+*** Known risk or unresolved issue
+
+- `npm run fmt:check` still fails on pre-existing files and should be handled separately if a fully
+  green formatting gate is required.
+- `.env.example` contains only placeholders, but one redacted-looking placeholder line could not be
+  edited automatically because the local redaction layer changed the text seen by the patch tool.
+
+*** Next best step
+
+Create the GitHub repository as public and push `main` after this prep commit.
+
 ** Session 001
 :PROPERTIES:
 :SESSION_ID: 001
