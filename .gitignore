@@ -30,3 +30,5 @@ test-results
 !.cursor/skills/**
 !.cursor/rules/
 !.cursor/rules/**
+
+graphify-out/
