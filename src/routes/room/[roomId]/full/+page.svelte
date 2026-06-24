@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<title>Room Full - Live Studio</title>
+	<title>Room Full - iniLive Studio</title>
 </svelte:head>
 
 <RoomFullPanel roomId={data.roomId} />

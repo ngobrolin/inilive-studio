@@ -91,7 +91,7 @@
 		</p>
 	{:else if data.youtubeLinkStatus === "unlink-cleanup-failed"}
 		<p class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-			Google access was revoked, but Live Studio could not remove the saved channel link. Please
+			Google access was revoked, but iniLive Studio could not remove the saved channel link. Please
 			try again or contact support.
 		</p>
 	{/if}
@@ -100,7 +100,7 @@
 		<h2 class="text-lg font-medium">YouTube channel</h2>
 		{#if data.youtubeChannel}
 			<p class="mt-2 text-sm text-slate-600">
-				Linked as <strong>{data.youtubeChannel.title}</strong>. Unlinking revokes Live Studio's
+				Linked as <strong>{data.youtubeChannel.title}</strong>. Unlinking revokes iniLive Studio's
 				Google access and removes the stored channel link.
 			</p>
 			<form class="mt-4" method="POST" action="/youtube/unlink">
@@ -114,7 +114,7 @@
 		{:else}
 			<p class="mt-2 text-sm text-slate-600">
 				Link the Host YouTube channel used for managed Broadcasts. Google will ask for YouTube
-				permission before returning to Live Studio.
+				permission before returning to iniLive Studio.
 			</p>
 			<form class="mt-4" method="POST" action="/youtube/link">
 				<button

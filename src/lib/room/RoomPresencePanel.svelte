@@ -374,7 +374,7 @@
 			</h2>
 			{#if hasLinkedYouTubeChannel}
 				<p class="mt-2 text-sm leading-6 text-neutral-600">
-					Live Studio will create a new YouTube live event and use YouTube-issued ingest
+					iniLive Studio will create a new YouTube live event and use YouTube-issued ingest
 					credentials internally. You do not need to copy a Stream URL or Stream key from YouTube
 					Studio.
 				</p>
@@ -385,7 +385,7 @@
 				</p>
 			{/if}
 			<p class="mt-2 text-sm leading-6 text-neutral-600">
-				In v1, the YouTube archive is the recording. Live Studio does not store a separate copy.
+				In v1, the YouTube archive is the recording. iniLive Studio does not store a separate copy.
 			</p>
 
 			{#if isBroadcasting}

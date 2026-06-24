@@ -3,11 +3,11 @@
 
 * Project
   :PROPERTIES:
-  :PROJECT: Live Studio
+  :PROJECT: iniLive Studio
   :LAST_UPDATED: 2026-06-15
   :END:
 
-Live Studio is a browser-based production Room where a signed-in Host brings up to three Guests into a private Room and broadcasts one Composed Room Feed to YouTube.
+iniLive Studio is a browser-based production Room where a signed-in Host brings up to three Guests into a private Room and broadcasts one Composed Room Feed to YouTube.
 
 * Rules
   :PROPERTIES:
@@ -57,7 +57,7 @@ Create the first demoable Room prototype entry path. A Host can open an authless
 
 - [X] A Host can open a prototype Room URL without signing in.
 - [X] A Guest can open a prototype Guest Invite URL without an Account.
-- [X] The UI clearly distinguishes Host and Guest roles using Live Studio vocabulary.
+- [X] The UI clearly distinguishes Host and Guest roles using iniLive Studio vocabulary.
 - [X] The Room starts in Backstage or equivalent prototype state; nothing implies it is Broadcasting.
 - [X] The implementation does not add persistence, magic-link auth, or product-backed Room records.
 
@@ -304,7 +304,7 @@ Validate the LiveKit Cloud selection with real credentials and browser sessions.
 
 - [X] Token smoke: Backstage issues a non-stub LiveKit grant when LIVEKIT_URL, LIVEKIT_API_KEY, and LIVEKIT_API_SECRET are configured.
 - [X] Two-participant connect: Host and Guest join the same Room, publish camera/mic, and see/hear each other.
-- [X] Fourth Guest cap: Live Studio Room Full still blocks a fourth Guest before SFU connect.
+- [X] Fourth Guest cap: iniLive Studio Room Full still blocks a fourth Guest before SFU connect.
 - [X] Screen share spike: Host publishes one screen share; Guest receives it (record pass/fail for media-003).
 - [X] Evidence is recorded in ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
 
@@ -320,7 +320,7 @@ Validate the LiveKit Cloud selection with real credentials and browser sessions.
 - 2026-06-16: LiveKit live triage passed with real credentials configured in `.env`.
   - Token smoke passed: Backstage connected with a non-stub grant and showed `Connected · LiveKit`.
   - Two-participant connect passed in session 013: Host and Guest joined the same LiveKit Room and saw each other's remote tiles. Screenshots: /tmp/inilive-remote-host.png and /tmp/inilive-remote-guest.png.
-  - Fourth Guest cap remains enforced before SFU connect by the Live Studio Room Full state; coverage: ~/code/inilive-studio/src/routes/room/[roomId]/presence.e2e.ts.
+  - Fourth Guest cap remains enforced before SFU connect by the iniLive Studio Room Full state; coverage: ~/code/inilive-studio/src/routes/room/[roomId]/presence.e2e.ts.
   - Screen share spike passed in session 017: Host published Screen Share, Guest received the remote Screen Share track, Host stopped sharing, and Guest reflected no active Screen Share after reload. Screenshots: /tmp/inilive-screen-share-guest.png and /tmp/inilive-screen-share-host-stopped.png.
   - Spike table updated: ~/code/inilive-studio/docs/spikes/media-001-managed-sfu-choice.md.
 
@@ -578,7 +578,7 @@ Render the final Composed Room Feed into a browser canvas and produce a MediaStr
   - Spike doc: ~/code/inilive-studio/docs/spikes/compose-002-obs-capture.md
   - OBS verification script: ~/code/inilive-studio/scripts/verify/compose-002-obs-capture.mjs
   - Canvas screenshot evidence: /tmp/inilive-compose-002-canvas.png
-  - OBS WebSocket Window Capture API path passed: script created `window_capture` input, matched `Backstage Room - Live Studio`, and returned a screenshot response.
+  - OBS WebSocket Window Capture API path passed: script created `window_capture` input, matched `Backstage Room - iniLive Studio`, and returned a screenshot response.
   - OBS visual capture is constrained in this environment without macOS Screen Recording permission for OBS; qa-001 documents the one-time permission step for full supplementary capture.
   - Targeted verification passed: npx playwright test 'src/routes/room/\[roomId\]/composition-preview.e2e.ts' (5 tests).
   - ./init.sh passed after completion (24 Vitest tests, 31 Playwright tests).
@@ -1621,7 +1621,7 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
 - 2026-06-23: Removed reliance on YouTube's implicit scheduled duration for managed Broadcasts.
   - Google documents omitted `scheduledEndTime` as indefinite, but real HITL testing still showed a
     one-hour YouTube event window.
-  - Managed `liveBroadcasts.insert` now sends an explicit 12-hour scheduled window while Live Studio
+  - Managed `liveBroadcasts.insert` now sends an explicit 12-hour scheduled window while iniLive Studio
     still completes the event when the Host ends the Broadcast.
   - Verification:
     - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts` passed, 9 tests.
@@ -1630,7 +1630,7 @@ Transition the API-managed broadcast through its lifecycle in step with Broadcas
   showed RTMP preview was Excellent but the public player still did not show a normal LIVE badge.
   - `liveBroadcasts.insert` now sets `enableAutoStart`, `enableAutoStop`, `enableDvr`,
     `enableEmbed`, and `recordFromStart` true, with monitor stream disabled.
-  - Live Studio no longer forces `testing -> live`; it waits for the bound stream to become active
+  - iniLive Studio no longer forces `testing -> live`; it waits for the bound stream to become active
     and then waits for YouTube's auto-started `liveBroadcast` lifecycle status to become `live`.
   - Verification:
     - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts src/routes/bridge/[roomId]/events/server.spec.ts` passed, 13 tests.

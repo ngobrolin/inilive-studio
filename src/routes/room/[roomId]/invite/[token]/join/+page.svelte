@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<title>Join Check - Guest Invite - Live Studio</title>
+	<title>Join Check - Guest Invite - iniLive Studio</title>
 </svelte:head>
 
 {#if data.inviteStatus === 'invalid'}

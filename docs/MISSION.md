@@ -2,7 +2,7 @@
 
 ## Why am I learning this?
 
-I'm about to build Live Studio — a browser-based live production studio where a Host brings Guests into a Room and broadcasts the conversation to YouTube. I need to deeply understand the project plan, architecture, and domain before writing any code.
+I'm about to build iniLive Studio — a browser-based live production studio where a Host brings Guests into a Room and broadcasts the conversation to YouTube. I need to deeply understand the project plan, architecture, and domain before writing any code.
 
 ## What does success look like?
 

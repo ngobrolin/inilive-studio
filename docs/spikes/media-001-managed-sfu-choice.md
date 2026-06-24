@@ -27,7 +27,7 @@ Run this with real LiveKit Cloud credentials before marking media-001 fully clos
 | --- | --- | --- |
 | 1. Token smoke | Pass | With `LIVEKIT_URL`, `LIVEKIT_API_KEY`, and `LIVEKIT_API_SECRET` set in `.env`, Backstage connected with a non-stub grant and showed `Connected · LiveKit`. |
 | 2. Two-participant connect | Pass | Session 013 real Chromium check: Host and Guest joined the same LiveKit Room and each rendered the other's remote tile. Screenshots: `/tmp/inilive-remote-host.png`, `/tmp/inilive-remote-guest.png`. |
-| 3. Fourth Guest cap | Pass | The Live Studio process-local Room cap blocks the fourth Guest before Backstage media connect; automated coverage remains `src/routes/room/[roomId]/presence.e2e.ts`. |
+| 3. Fourth Guest cap | Pass | The iniLive Studio process-local Room cap blocks the fourth Guest before Backstage media connect; automated coverage remains `src/routes/room/[roomId]/presence.e2e.ts`. |
 | 4. Screen share spike | Pass | Session 017 real Chromium check: Host started Screen Share, Guest received the LiveKit remote Screen Share track, Host stopped sharing, and Guest reflected no active Screen Share after reload. Screenshots: `/tmp/inilive-screen-share-guest.png`, `/tmp/inilive-screen-share-host-stopped.png`. |
 | 5. Record evidence | Pass | Evidence recorded here and in `PLAN.org` / `PROGRESS.org`. |
 
@@ -37,7 +37,7 @@ Run this with real LiveKit Cloud credentials before marking media-001 fully clos
 
 - Server module: `src/lib/server/livekit-hub.ts` issues per-participant JWT grants.
 - Wrapper: `src/lib/server/media-join.ts` uses real grants when LiveKit env vars are set; otherwise returns a local stub for prototype UI and automated tests.
-- Live Studio `roomId` maps directly to the LiveKit room name; participant identity uses the ephemeral Join Check participant id.
+- iniLive Studio `roomId` maps directly to the LiveKit room name; participant identity uses the ephemeral Join Check participant id.
 - Browser connect (`livekit-client`) is the next media-002 slice and is the vehicle for live triage steps 2–4.
 
 ## Risks

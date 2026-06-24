@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Host Room - Live Studio</title>
+	<title>Host Room - iniLive Studio</title>
 </svelte:head>
 
 <RoomEntryPanel

@@ -1,8 +1,8 @@
-# Live Studio V1 Plan
+# iniLive Studio V1 Plan
 
 ## Product Shape
 
-Live Studio is a browser-based production room for streaming a small group conversation to YouTube. A signed-in Host creates a reusable Room, invites up to three Guests, and controls when the Room is broadcast. Guests join by invite link without accounts. The Audience watches on YouTube, not inside the product.
+iniLive Studio is a browser-based production room for streaming a small group conversation to YouTube. A signed-in Host creates a reusable Room, invites up to three Guests, and controls when the Room is broadcast. Guests join by invite link without accounts. The Audience watches on YouTube, not inside the product.
 
 V1 is intentionally closer to a simple StreamYard-style hosted studio than to a source-routing tool like VDO.Ninja. The app produces one Composed Room Feed and sends that feed to a Broadcast Bridge. OBS is only a testing aid for the first milestone, not part of the product flow.
 

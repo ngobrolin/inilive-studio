@@ -75,8 +75,8 @@ Audit the current project state and update this progress log with verified evide
 - Confirmed working directory: /Users/riza/code/inilive-studio.
 - Reviewed PLAN.org, PROGRESS.org, recent git history, package scripts, README.md, CONTEXT.md, docs/SPEC.md, session-handoff.md, and the current SvelteKit source files.
 - Confirmed the repository is a fresh SvelteKit/TypeScript app with Tailwind, Vitest, Playwright, adapter-node, oxlint, and oxfmt installed.
-- Confirmed app implementation is still the generated starter surface: src/routes/+page.svelte renders "Welcome to SvelteKit" and no Live Studio Room prototype exists yet.
-- Confirmed documentation is substantially ahead of implementation: CONTEXT.md and docs/SPEC.md describe Live Studio v1 and Milestone 1, while PLAN.org still lists placeholder chat features that do not match the product domain.
+- Confirmed app implementation is still the generated starter surface: src/routes/+page.svelte renders "Welcome to SvelteKit" and no iniLive Studio Room prototype exists yet.
+- Confirmed documentation is substantially ahead of implementation: CONTEXT.md and docs/SPEC.md describe iniLive Studio v1 and Milestone 1, while PLAN.org still lists placeholder chat features that do not match the product domain.
 
 *** Verification run
 
@@ -108,7 +108,7 @@ Audit the current project state and update this progress log with verified evide
   - src/routes/+page.svelte contains only the generated SvelteKit welcome heading and documentation link.
 - Current plan mismatch:
   - PLAN.org highest-priority feature is chat-001, "Create a new conversation".
-  - docs/SPEC.md first implementation tasks are Live Studio Milestone 1 tasks beginning with the SvelteKit skeleton and a Room prototype route.
+  - docs/SPEC.md first implementation tasks are iniLive Studio Milestone 1 tasks beginning with the SvelteKit skeleton and a Room prototype route.
 
 *** Commits
 
@@ -120,11 +120,11 @@ Audit the current project state and update this progress log with verified evide
 
 *** Known risk or unresolved issue
 
-- PLAN.org must be updated before feature work starts; otherwise agents may implement chat features unrelated to Live Studio.
+- PLAN.org must be updated before feature work starts; otherwise agents may implement chat features unrelated to iniLive Studio.
 - session-handoff.md is not oxfmt-clean.
 - npm run check has a TypeScript environment warning for missing node type definitions.
 - npm audit reports low severity cookie vulnerabilities through @sveltejs/kit with no safe automatic fix from npm audit.
-- README.md is still the generated sv/SvelteKit README rather than a project-specific Live Studio README.
+- README.md is still the generated sv/SvelteKit README rather than a project-specific iniLive Studio README.
 
 *** Next best step
 
@@ -144,7 +144,7 @@ Convert docs/SPEC.md into PLAN.org issues, using PLAN.org as the issue tracker i
 
 *** Completed
 
-- Replaced placeholder chat issues with a Live Studio backlog.
+- Replaced placeholder chat issues with a iniLive Studio backlog.
 - Added all three milestones to PLAN.org.
 - Marked Milestone 1 - Local Room Prototype as active.
 - Used domain-based issue IDs such as room-001, media-001, compose-001, bridge-001, data-001, and auth-001.
@@ -159,7 +159,7 @@ Convert docs/SPEC.md into PLAN.org issues, using PLAN.org as the issue tracker i
 
 *** Evidence captured
 
-- PLAN.org now contains 24 Live Studio issues across Milestone 1, Milestone 2, and Milestone 3.
+- PLAN.org now contains 24 iniLive Studio issues across Milestone 1, Milestone 2, and Milestone 3.
 - Milestone 1 status is active.
 - Placeholder chat issue IDs chat-001, chat-002, and chat-003 are no longer present.
 
@@ -2518,7 +2518,7 @@ Fix the live YouTube warning that measured 11,039.54 Kbps and then reported:
 - Runtime x264 inspection proved the checked-in encoder was already capped at a 4 Mbps
   `vbv_maxrate`; the target was not being ignored by the running bridge image.
 - The browser compositor was driven only by `requestAnimationFrame`. Chromium throttles that
-  clock when the Live Studio tab is backgrounded, so switching to YouTube Studio could starve the
+  clock when the iniLive Studio tab is backgrounded, so switching to YouTube Studio could starve the
   WHIP video track and later produce an apparent catch-up burst.
 - The x264 rate control was CBR internally, but the output did not declare CBR HRD or insert filler
   data, leaving the transport less constant than YouTube's ingest contract expects.
@@ -2558,7 +2558,7 @@ Fix the live YouTube warning that measured 11,039.54 Kbps and then reported:
 *** Known risk or unresolved issue
 
 - YouTube-side confirmation remains HITL. The next real Broadcast must remain active for at least
-  30 seconds while the Host switches between Live Studio and YouTube Studio.
+  30 seconds while the Host switches between iniLive Studio and YouTube Studio.
 - Baseline `./init.sh` initially reached 113 passing unit tests but its Playwright phase was blocked
   by a stale preview process on port 4173. The stale process was removed before focused browser
   verification.
@@ -2677,7 +2677,7 @@ Fix the live Host End path after the bridge terminal callback received HTTP 401 
 
 ** Next best step
 
-Run one short real YouTube Broadcast, end it from Live Studio, capture the YouTube screenshot and
+Run one short real YouTube Broadcast, end it from iniLive Studio, capture the YouTube screenshot and
 redacted logs, and query the latest Broadcast Health events for an `ended` row.
 
 * 2026-06-20 yt-001 YouTube OAuth linking starter slices
@@ -3168,7 +3168,7 @@ attempt against the exact event created by the app.
 
 ** Goal
 
-Expose a link to the exact YouTube live event/control room created by Live Studio so HITL
+Expose a link to the exact YouTube live event/control room created by iniLive Studio so HITL
 verification does not use YouTube Studio's default stream-key page.
 
 ** Completed
@@ -3239,7 +3239,7 @@ Start yt-003: drive and reconcile the managed YouTube lifecycle transitions thro
 
 ** Goal
 
-Fix managed YouTube Broadcasts that were not being explicitly completed when Live Studio ended the
+Fix managed YouTube Broadcasts that were not being explicitly completed when iniLive Studio ended the
 Broadcast, which could leave YouTube to infer archive finalization after RTMP ingest stopped.
 
 ** Completed
@@ -3247,7 +3247,7 @@ Broadcast, which could leave YouTube to infer archive finalization after RTMP in
 - Added `completeManagedYouTubeBroadcast`, which refreshes the Host-scoped YouTube access token and
   transitions the API-managed YouTube `liveBroadcast` to `complete`.
 - Wired Host End Broadcast to capture the managed YouTube event before local runtime cleanup and
-  complete it after Live Studio marks the Broadcast ended.
+  complete it after iniLive Studio marks the Broadcast ended.
 - Wired bridge `ended` callbacks to complete the captured managed YouTube event as well, preserving
   coverage for bridge-driven terminal callbacks.
 - Updated `PLAN.org` yt-003 status to `in_progress` and recorded the completed lifecycle slices.
@@ -3267,7 +3267,7 @@ Broadcast, which could leave YouTube to infer archive finalization after RTMP in
 ** Next best step
 
 Restart or let Vite reload the server code, start a fresh managed YouTube Broadcast, end it from
-Live Studio, and confirm the exact YouTube event transitions to Complete and archives at the actual
+iniLive Studio, and confirm the exact YouTube event transitions to Complete and archives at the actual
 session length.
 
 * 2026-06-23 yt-003 explicit YouTube scheduled end
@@ -3317,7 +3317,7 @@ livestream after the explicit scheduled-end fix.
 - Changed managed `liveBroadcasts.insert` settings to match encoder-style YouTube events more
   closely: `enableAutoStart`, `enableAutoStop`, `enableDvr`, `enableEmbed`, and `recordFromStart`
   are true, and monitor stream is disabled.
-- Changed Live Studio's YouTube live confirmation path to wait for YouTube auto-start to report the
+- Changed iniLive Studio's YouTube live confirmation path to wait for YouTube auto-start to report the
   `liveBroadcast` lifecycle as `live` after the bound stream becomes active, instead of forcing the
   manual `testing -> live` transition path.
 - Updated unit expectations for the Google request body and lifecycle polling behavior.
@@ -3421,3 +3421,34 @@ reconciliation changes.
 Proceed to yt-004 when the live-enabled YouTube channel and time window are available: run a real
 >1 hour managed Broadcast, capture audience LIVE/live-edge evidence, end it cleanly, and confirm the
 archive.
+
+* 2026-06-24 Project rename to iniLive Studio
+
+** Goal
+
+Align project branding with the correct product name iniLive Studio, distinct from the third-party
+inLive SFU service that was spiked and replaced by LiveKit Cloud.
+
+** Completed
+
+- Replaced standalone "Live Studio" and the "inLive Studio" typo with "iniLive Studio" across UI page
+  titles, dashboard copy, RoomPresencePanel strings, CONTEXT.md, PLAN.org, PROGRESS.org historical
+  entries, docs/SPEC.md, lessons, glossary, QA/spike docs, and compose-002 OBS capture script.
+- Left third-party inLive SFU references unchanged in ADR 0022, media-001 spike history, and PLAN.org
+  media-001 criteria.
+- Left technical slugs unchanged (`inilive-studio`, `inilive_studio`, compose image names).
+
+** Verification run
+
+- `rg 'inLive Studio'`: no matches.
+- `rg 'Live Studio'`: only matches inside "iniLive Studio" or "YouTube Studio".
+- `./init.sh`: passed.
+- `npm run test:e2e -- src/routes/dashboard/page.e2e.ts`: passed (10 tests).
+
+** Known risk or unresolved issue
+
+- None for the rename itself.
+
+** Next best step
+
+Continue yt-004 HITL validation when the live-enabled YouTube channel and time window are available.

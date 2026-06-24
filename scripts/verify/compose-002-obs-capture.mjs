@@ -21,7 +21,7 @@ const repoRoot = path.resolve(__dirname, "../..");
 const previewHost = "127.0.0.1";
 const previewPort = 4173;
 const obsPort = 4455;
-const inputName = "Live Studio Composed Feed";
+const inputName = "iniLive Studio Composed Feed";
 const canvasScreenshot = "/tmp/inilive-compose-002-canvas.png";
 const obsScreenshot = "/tmp/inilive-compose-002-obs-preview.png";
 
@@ -184,7 +184,7 @@ async function captureObsWindow(pageTitle, password) {
         const windows = message.d.responseData?.propertyItems ?? [];
         const match =
           windows.find((item) => item.itemName.includes(pageTitle)) ??
-          windows.find((item) => /Backstage Room - Live Studio|Live Studio/.test(item.itemName));
+          windows.find((item) => /Backstage Room - iniLive Studio|iniLive Studio/.test(item.itemName));
 
         if (!match) {
           clearTimeout(timeout);

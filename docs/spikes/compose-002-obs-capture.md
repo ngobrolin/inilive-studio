@@ -23,7 +23,7 @@ Run when marking compose-002 passing. Requires desktop Chromium and OBS.app.
 | 1. Preview server | Pass | `npm run build && npm run preview -- --host 127.0.0.1` |
 | 2. Backstage canvas | Pass | Host enters Join Check → Backstage; Composed Room Feed canvas shows participant grid at 1280×720 with `Composed feed stream ready` and ≥28fps |
 | 3. Canvas screenshot | Pass | `/tmp/inilive-compose-002-canvas.png` captured the composed output with Backstage chrome and Host tile |
-| 4. OBS Window Capture API | Pass | `scripts/verify/compose-002-obs-capture.mjs` connected over WebSocket, created `window_capture` input, matched the Playwright Chromium window titled `Backstage Room - Live Studio`, and called `GetSourceScreenshot` successfully |
+| 4. OBS Window Capture API | Pass | `scripts/verify/compose-002-obs-capture.mjs` connected over WebSocket, created `window_capture` input, matched the Playwright Chromium window titled `Backstage Room - iniLive Studio`, and called `GetSourceScreenshot` successfully |
 | 5. OBS visual capture | Constrained | OBS returned a blank 3688-byte PNG in this environment without macOS Screen Recording permission for OBS. Grant **System Settings → Privacy & Security → Screen Recording → OBS** and re-run the script for a full OBS preview screenshot |
 | 6. Record evidence | Pass | Evidence recorded here and in `PLAN.org` / `PROGRESS.org` |
 

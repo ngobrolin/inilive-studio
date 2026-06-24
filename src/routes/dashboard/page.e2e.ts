@@ -73,7 +73,7 @@ test("dashboard explains safe YouTube unlink outcomes", async ({ page, request }
   await page.goto("/dashboard?youtube=unlink-cleanup-failed");
   await expect(
     page.getByText(
-      "Google access was revoked, but Live Studio could not remove the saved channel link. Please try again or contact support.",
+      "Google access was revoked, but iniLive Studio could not remove the saved channel link. Please try again or contact support.",
     ),
   ).toBeVisible();
 });

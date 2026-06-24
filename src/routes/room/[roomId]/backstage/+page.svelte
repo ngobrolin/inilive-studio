@@ -5,7 +5,7 @@
 </script>
 
 <svelte:head>
-	<title>Backstage Room - Live Studio</title>
+	<title>Backstage Room - iniLive Studio</title>
 </svelte:head>
 
 <RoomPresencePanel

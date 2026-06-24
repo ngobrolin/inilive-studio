@@ -6,7 +6,7 @@
 </script>
 
 <svelte:head>
-	<title>Guest Invite - Live Studio</title>
+	<title>Guest Invite - iniLive Studio</title>
 </svelte:head>
 
 {#if data.inviteStatus === 'invalid'}

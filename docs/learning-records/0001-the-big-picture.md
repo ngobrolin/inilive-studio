@@ -6,7 +6,7 @@
 
 ## Context
 
-First lesson. User is a web developer preparing to build Live Studio starting from Milestone 1. New to WebRTC, media composition, and live streaming.
+First lesson. User is a web developer preparing to build iniLive Studio starting from Milestone 1. New to WebRTC, media composition, and live streaming.
 
 ## What was learned
 

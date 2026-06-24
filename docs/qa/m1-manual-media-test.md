@@ -120,7 +120,7 @@ Suggested screenshot paths:
 
 1. Build and preview the app: `npm run build && npm run preview -- --host 127.0.0.1`.
 2. Open Host Backstage in Chromium and scroll the Composed Room Feed canvas into view.
-3. In OBS, add **Window Capture** for the Chromium window titled `Backstage Room - Live Studio`.
+3. In OBS, add **Window Capture** for the Chromium window titled `Backstage Room - iniLive Studio`.
 4. Verify OBS preview shows the composed canvas including `Backstage Broadcast Preview · Not live` chrome.
 
 Optional scripted path:

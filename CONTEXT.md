@@ -1,4 +1,4 @@
-# Live Studio
+# iniLive Studio
 
 This context describes a browser-based live production studio where a host brings guests into a room and controls what is broadcast to an audience.
 

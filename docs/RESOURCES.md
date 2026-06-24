@@ -1,6 +1,6 @@
 # Resources
 
-Curated resources for learning Live Studio's technology stack. Organized by topic, prioritized by quality and relevance to the mission.
+Curated resources for learning iniLive Studio's technology stack. Organized by topic, prioritized by quality and relevance to the mission.
 
 ## WebRTC Fundamentals
 
