@@ -239,6 +239,10 @@ export function stopRoomScreenShare(input: {
   return { error: null };
 }
 
+export function clearRoomScreenShare(roomId: string): void {
+  roomScreenShares.delete(roomId);
+}
+
 function findRoomParticipant(roomId: string, participantId: string): RoomParticipant | undefined {
   return getRoomPresence(roomId).participants.find(
     (participant) => participant.id === participantId,

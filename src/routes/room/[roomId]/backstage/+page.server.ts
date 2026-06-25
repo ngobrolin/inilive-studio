@@ -27,6 +27,7 @@ import {
   startRoomBroadcastCountdown,
 } from "$lib/server/broadcast-state";
 import {
+  clearRoomScreenShare,
   getRoomChatMessages,
   getRoomPresence,
   moderateRoomParticipant,
@@ -387,6 +388,7 @@ export const actions: Actions = {
       if (managedBroadcast) {
         await completeManagedYouTubeBroadcast(managedBroadcast);
       }
+      clearRoomScreenShare(params.roomId);
     } else if (action === "simulate-fail") {
       const productBroadcastId = getRoomProductBroadcastId(params.roomId);
       const failureMessage = "YouTube rejected the stream credentials.";

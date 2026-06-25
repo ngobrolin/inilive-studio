@@ -3592,3 +3592,36 @@ Document how to install and use Graphify for this repository.
 ** Next best step
 
 Run `graphify . --update` locally when the existing ignored graph should be refreshed.
+
+* 2026-06-25 Fix Screen Share rebroadcast cleanup with TDD
+
+** Goal
+
+Reproduce and fix GitHub issue #1 / yt-004 retest blocker: after ending a Broadcast with Screen
+Share active, the next Broadcast should not inherit stale Screen Share state.
+
+** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed `PROGRESS.org`, `PLAN.org`, recent git history, and ran `./init.sh` before changes.
+- Added a Playwright regression test for the reported flow: start product Broadcast, start Screen
+  Share, end Broadcast, verify Screen Share is cleared, then start a second Broadcast.
+- Fixed the bug by clearing active Room Screen Share state when the Host ends a Broadcast.
+
+** Verification run
+
+- `./init.sh` passed before changes: 48 Vitest files passed / 4 skipped, 157 tests passed / 4
+  skipped; Playwright 63 passed.
+- RED: `npx playwright test 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts' --grep 'Ending a Broadcast clears active Screen Share'` failed because Screen Share still showed `Host One is sharing their screen.` after Broadcast end.
+- GREEN: same targeted Playwright test passed after the fix.
+- `npx playwright test 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts'` passed, 2 tests.
+- `npm run check` passed with 0 errors and 0 warnings.
+
+** Known risk or unresolved issue
+
+- `yt-004` still requires HITL >1 hour managed YouTube verification on a live-enabled channel.
+
+** Next best step
+
+Commit the Screen Share regression fix, then continue with `yt-004` HITL verification when the live
+YouTube account is available.

@@ -1718,6 +1718,13 @@ Validate the full managed path on a real channel: link, one-click go-live, LIVE 
   - Expected: ending a Broadcast should either clear Screen Share state or the next Broadcast should
     have a working Screen Share control and include the active Screen Share in the Composed Room Feed.
   - Converted to GitHub issue: https://github.com/ngobrolin/inilive-studio/issues/1
+  - 2026-06-25: Fixed via TDD by adding an e2e regression test and clearing active Room Screen
+    Share when the Host ends a Broadcast.
+    - RED: `npx playwright test 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts' --grep 'Ending a Broadcast clears active Screen Share'` failed because Screen Share still showed
+      `Host One is sharing their screen.` after Broadcast end.
+    - GREEN: same targeted test passed after the fix.
+    - `npx playwright test 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts'` passed, 2 tests.
+    - `npm run check` passed with 0 errors and 0 warnings.
 - 2026-06-24 GitHub issue mirror:
   - bridge-005: https://github.com/ngobrolin/inilive-studio/issues/2
   - yt-004: https://github.com/ngobrolin/inilive-studio/issues/3
