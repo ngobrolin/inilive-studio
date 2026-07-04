@@ -54,7 +54,16 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
   - Confirmed accessibility target: WCAG 2.2 AA.
   - Added `.impeccable/live/config.json` for SvelteKit live-mode injection through `src/app.html`.
   - Impeccable CSP detection returned no CSP configuration, so no source-code CSP patch was needed.
-  - `DESIGN.md` is still pending; run `$impeccable document` when visual-system capture is needed.
+  - 2026-07-04: Generated `DESIGN.md` from the current Svelte/Tailwind product UI.
+  - Added `.impeccable/design.json` so Impeccable live mode can render actual product primitives
+    instead of generic approximations.
+  - Captured approved visual language:
+    - Creative North Star: "The Backstage Console".
+    - Voice: quiet, task-first, operationally explicit.
+    - Elevation: flat-by-default with structural borders and small shadows only for grouped
+      operational panels.
+    - Component philosophy: compact, predictable controls with visible states and no decorative
+      styling.
 
 * Status Legend
 

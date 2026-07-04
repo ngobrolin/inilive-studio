@@ -1,0 +1,294 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-04T20:08:21+07:00",
+  "title": "Design System: iniLive Studio",
+  "extensions": {
+    "colorMeta": {
+      "ink-neutral": {
+        "role": "primary",
+        "displayName": "Ink Neutral",
+        "canonical": "#0a0a0a",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(25% 0 0)",
+          "oklch(35% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(58% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(86% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "studio-surface": {
+        "role": "neutral",
+        "displayName": "Studio Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0a0a0a",
+          "#262626",
+          "#525252",
+          "#737373",
+          "#a3a3a3",
+          "#d4d4d4",
+          "#f5f5f5",
+          "#ffffff"
+        ]
+      },
+      "signal-cyan": {
+        "role": "primary",
+        "displayName": "Signal Cyan",
+        "canonical": "#0e7490",
+        "tonalRamp": [
+          "#083344",
+          "#164e63",
+          "#155e75",
+          "#0e7490",
+          "#0891b2",
+          "#67e8f9",
+          "#cffafe",
+          "#ecfeff"
+        ]
+      },
+      "caution-amber": {
+        "role": "tertiary",
+        "displayName": "Caution Amber",
+        "canonical": "#fef3c7",
+        "tonalRamp": [
+          "#451a03",
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#f59e0b",
+          "#fcd34d",
+          "#fef3c7",
+          "#fffbeb"
+        ]
+      },
+      "failure-rose": {
+        "role": "tertiary",
+        "displayName": "Failure Rose",
+        "canonical": "#fff1f2",
+        "tonalRamp": [
+          "#4c0519",
+          "#881337",
+          "#9f1239",
+          "#be123c",
+          "#fb7185",
+          "#fda4af",
+          "#ffe4e6",
+          "#fff1f2"
+        ]
+      },
+      "youtube-red": {
+        "role": "secondary",
+        "displayName": "YouTube Red",
+        "canonical": "#dc2626",
+        "tonalRamp": [
+          "#450a0a",
+          "#7f1d1d",
+          "#991b1b",
+          "#b91c1c",
+          "#dc2626",
+          "#fca5a5",
+          "#fecaca",
+          "#fef2f2"
+        ]
+      },
+      "success-green": {
+        "role": "tertiary",
+        "displayName": "Success Green",
+        "canonical": "#f0fdf4",
+        "tonalRamp": [
+          "#052e16",
+          "#14532d",
+          "#166534",
+          "#16a34a",
+          "#86efac",
+          "#bbf7d0",
+          "#dcfce7",
+          "#f0fdf4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Rare terminal or empty states such as Room Full."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Primary product page headings in Join Check and Backstage."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel titles, Broadcast State, Broadcast Health, and participant names."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Operational explanations and recovery copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Buttons, field labels, status labels, and control labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "panel-low",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Small separation for grouped operational panels only."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "150ms ease-out",
+        "purpose": "Hover, focus, and small state feedback. No choreographed page-load motion."
+      },
+      {
+        "name": "meter-fast",
+        "value": "75ms ease-out",
+        "purpose": "Microphone level meter width updates."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary Host action for entering, starting, sending, or confirming a workflow step.",
+      "html": "<button class=\"ds-btn-primary\">Start Broadcast Countdown</button>",
+      "css": ".ds-btn-primary{background:#0a0a0a;color:#fff;border:0;border-radius:6px;padding:12px 16px;font:600 14px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:background 150ms ease-out;cursor:pointer}.ds-btn-primary:hover{background:#262626}.ds-btn-primary:focus-visible{outline:2px solid #0e7490;outline-offset:2px}.ds-btn-primary:disabled{background:#a3a3a3;cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Neutral alternate action for cancel, regenerate, moderation, or secondary choices.",
+      "html": "<button class=\"ds-btn-secondary\">Cancel Countdown</button>",
+      "css": ".ds-btn-secondary{background:#fff;color:#0a0a0a;border:1px solid #d4d4d4;border-radius:6px;padding:12px 16px;font:600 14px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:border-color 150ms ease-out,color 150ms ease-out;cursor:pointer}.ds-btn-secondary:hover{border-color:#0a0a0a}.ds-btn-secondary:focus-visible{outline:2px solid #0e7490;outline-offset:2px}.ds-btn-secondary:disabled{color:#737373;background:#f5f5f5;cursor:not-allowed}"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive action such as ending a Broadcast or removing a Guest.",
+      "html": "<button class=\"ds-btn-danger\">End Broadcast</button>",
+      "css": ".ds-btn-danger{background:#be123c;color:#fff;border:0;border-radius:6px;padding:12px 16px;font:600 14px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:background 150ms ease-out;cursor:pointer}.ds-btn-danger:hover{background:#9f1239}.ds-btn-danger:focus-visible{outline:2px solid #0e7490;outline-offset:2px}"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Plain operational field for Room Title, Display Name, URLs, and stream credentials.",
+      "html": "<label class=\"ds-field\"><span>Display Name</span><input class=\"ds-input\" placeholder=\"Your name\" /></label>",
+      "css": ".ds-field{display:grid;gap:8px;color:#0a0a0a;font:600 14px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.ds-input{width:100%;box-sizing:border-box;border:1px solid #d4d4d4;border-radius:6px;background:#fff;color:#0a0a0a;padding:12px 16px;font:400 16px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.ds-input::placeholder{color:#525252}.ds-input:focus-visible{outline:2px solid #0e7490;outline-offset:2px}.ds-input:disabled{background:#f5f5f5;color:#525252}"
+    },
+    {
+      "name": "Operational Panel",
+      "kind": "card",
+      "refersTo": "panel-default",
+      "description": "Default grouped panel for Broadcast controls, Room media, Capacity, and Room Chat.",
+      "html": "<section class=\"ds-panel\"><p class=\"ds-eyebrow\">Broadcast controls</p><h2>Managed YouTube Broadcast</h2><p>Start will create a fresh YouTube live event for this Room.</p></section>",
+      "css": ".ds-panel{background:#fff;color:#0a0a0a;border:1px solid #d4d4d4;border-radius:6px;padding:20px;box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.ds-panel h2{margin:4px 0 0;font-size:24px;line-height:1.3;font-weight:600}.ds-panel p{margin:8px 0 0;color:#525252;font-size:14px;line-height:1.5}.ds-panel .ds-eyebrow{margin:0;color:#737373;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}"
+    },
+    {
+      "name": "Status Panel",
+      "kind": "card",
+      "refersTo": "status-cyan",
+      "description": "Semantic state panel for Screen Share, Broadcast State, Broadcast Health, and readiness messages.",
+      "html": "<section class=\"ds-status-panel\"><p class=\"ds-eyebrow\">Screen Share</p><h2>No Screen Share is active.</h2><p>Only the Host can start Screen Share in this Room.</p></section>",
+      "css": ".ds-status-panel{background:#ecfeff;color:#083344;border:1px solid #67e8f9;border-radius:6px;padding:20px;box-shadow:0 1px 2px 0 rgb(0 0 0 / 0.05);font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.ds-status-panel .ds-eyebrow{margin:0;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase}.ds-status-panel h2{margin:8px 0 0;font-size:24px;line-height:1.3;font-weight:600}.ds-status-panel p{margin:8px 0 0;font-size:14px;line-height:1.5}"
+    },
+    {
+      "name": "State Chip",
+      "kind": "chip",
+      "refersTo": "status-chip",
+      "description": "Factual participant, media, or Broadcast state marker.",
+      "html": "<span class=\"ds-chip\">Mic muted</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;border-radius:9999px;background:#f5f5f5;color:#404040;padding:4px 12px;font:600 12px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}.ds-chip[data-state='warning']{background:#fef3c7;color:#451a03}.ds-chip[data-state='live']{background:#ffe4e6;color:#4c0519}.ds-chip[data-state='ready']{background:#cffafe;color:#083344}"
+    },
+    {
+      "name": "Minimal Nav Link",
+      "kind": "nav",
+      "refersTo": "nav-link",
+      "description": "Simple top navigation link for returning to the dashboard.",
+      "html": "<a class=\"ds-nav-link\" href=\"/dashboard\">Dashboard</a>",
+      "css": ".ds-nav-link{color:#404040;text-decoration:none;font:600 14px/1.25 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:color 150ms ease-out}.ds-nav-link:hover{color:#0a0a0a}.ds-nav-link:focus-visible{outline:2px solid #0e7490;outline-offset:2px;border-radius:4px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Backstage Console",
+    "overview": "iniLive Studio is a quiet product interface for live production pressure. It should feel like a clear backstage console: structured, readable, and explicit about what is ready, what is waiting, and what needs intervention before a Broadcast reaches YouTube.\n\nThe visual system is restrained by default. White and neutral surfaces carry most screens; cyan is reserved for operational readiness and focused interaction; amber, rose, green, and YouTube red appear only when state or recovery demands them. This follows the PRODUCT.md personality: calm, operational, trustworthy.\n\nThis system explicitly rejects a StreamYard clone. It must not become glossy creator-platform marketing UI, generic studio theater, or an OBS-like engineering console. The Room vocabulary and workflow clarity are the brand.",
+    "keyCharacteristics": [
+      "Restrained product surfaces with dense but readable information.",
+      "System sans typography with fixed rem sizes, no display theatrics.",
+      "Thin borders and compact radii, with small shadows only on grouped panels.",
+      "State colors used as operational signals, not decoration.",
+      "Explicit role separation for Host controls, Guest state, Broadcast State, and Broadcast Health."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Rarity Rule",
+        "body": "Cyan is for readiness, focus, and media operations. Do not use it as a decorative brand wash.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Owns the Color Rule",
+        "body": "Amber, rose, green, and YouTube red appear only when the state itself needs that color. If the element is not warning, failing, succeeding, or linking YouTube, keep it neutral.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Product UI uses one system sans family. Do not introduce display fonts, decorative type pairings, or fluid hero scales.",
+        "section": "typography"
+      },
+      {
+        "name": "The Labels Are Controls Rule",
+        "body": "Label text must stay compact, direct, and semantically useful. Avoid personality copy in buttons and field labels.",
+        "section": "typography"
+      },
+      {
+        "name": "The Border First Rule",
+        "body": "Use a 1px structural border before a shadow. If a panel needs more hierarchy, check spacing and heading structure before increasing elevation.",
+        "section": "elevation"
+      },
+      {
+        "name": "The No Ghost Card Rule",
+        "body": "Do not pair a 1px border with soft shadows larger than 8px blur. This product should not look like a generic SaaS card grid.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the default surface neutral and let state panels carry urgency.",
+      "Do reserve Signal Cyan for readiness, focus, media, and Screen Share operations.",
+      "Do use the repo vocabulary exactly: Host, Guest, Room, Guest Invite, Join Check, Backstage, Broadcast, Broadcast State, Broadcast Health, Broadcast Preview, Composed Room Feed, Screen Share, Broadcast Bridge.",
+      "Do make Host-only controls visually distinct from Guest-visible state.",
+      "Do keep body copy concise and actionable, especially for OAuth, device, permission, quota, and Broadcast Bridge recovery.",
+      "Do meet WCAG 2.2 AA contrast and include visible focus states for every interactive control."
+    ],
+    "donts": [
+      "Don't make iniLive Studio feel like a StreamYard clone.",
+      "Don't use glossy creator-platform marketing UI, generic studio metaphors, decorative broadcast theatrics, or OBS-like technical control-room density.",
+      "Don't use cyan, amber, rose, green, or YouTube red as decoration. Each color must map to a real state or action.",
+      "Don't introduce gradient text, glassmorphism, oversized hero metrics, decorative side-stripe borders, or identical card grids.",
+      "Don't add display fonts, fluid hero typography, or invented form controls to product surfaces.",
+      "Don't hide recovery information behind modals when inline state copy can explain what happened."
+    ]
+  }
+}

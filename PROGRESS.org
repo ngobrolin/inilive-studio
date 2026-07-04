@@ -5,7 +5,7 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: none in the active PLAN.org backlog after yt-004 was confirmed done and bridge-005 was closed by product-scope decision.
+- Current highest-priority unfinished feature: none in the active PLAN.org backlog after yt-004 was confirmed done, bridge-005 was closed by product-scope decision, and Impeccable design context was initialized.
 - Current highest-priority unfinished AFK feature: none in the active PLAN.org backlog.
 - cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
 - bridge-005 "Verify YouTube 720p30 end-to-end broadcast" is closed by product-scope decision: v1 uses the managed YouTube link/Data API path instead of pasted YouTube RTMP credentials.
@@ -15,6 +15,48 @@
   link/unlink HITL verification on 2026-06-21.
 
 * Session Log
+
+** 2026-07-04 impeccable document
+
+*** Goal
+
+Generate the visual `DESIGN.md` and Impeccable design sidecar from the current Svelte/Tailwind
+product UI.
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed Impeccable `document` command instructions and product-register guidance.
+- Reviewed current tracker state, recent commits, and the existing Svelte UI surfaces.
+- Ran the standard startup path before edits.
+- Extracted the current visual system from Tailwind utility usage in app shell, dashboard, Join
+  Check, Backstage, Room media, Composed Room Feed, cards, inputs, status panels, and navigation.
+- Used the user-approved qualitative defaults:
+  - Creative North Star: "The Backstage Console".
+  - Voice: quiet, task-first, operationally explicit.
+  - Color names: Ink Neutral, Studio Surface, Signal Cyan, Caution Amber, Failure Rose, YouTube Red.
+  - Elevation: flat-by-default with structural borders and small shadows only for grouped
+    operational panels.
+  - Component philosophy: compact, predictable controls with visible states and no decorative
+    styling.
+- Added `DESIGN.md` with Stitch-style frontmatter and the six required sections.
+- Added `.impeccable/design.json` sidecar with color metadata, typography metadata, motion,
+  breakpoints, shadow metadata, and self-contained component snippets for the live panel.
+
+*** Verification run
+
+- `./init.sh` passed before artifact edits: 166 Vitest tests passed and 64 Playwright tests passed.
+
+*** Known risk or unresolved issue
+
+- `DESIGN.md` documents the existing implicit visual system; it does not redesign the UI. Some
+  current dashboard surfaces still use older `slate-*` and `rounded-xl` patterns that the document
+  records as legacy rather than expanding as the preferred future direction.
+
+*** Next best step
+
+Run `$impeccable critique dashboard` or `$impeccable polish Backstage` to turn this captured design
+system into targeted UI improvements.
 
 ** 2026-07-04 impeccable init
 
@@ -46,8 +88,8 @@ register, strategy, and live-mode configuration.
 
 *** Known risk or unresolved issue
 
-- `DESIGN.md` has not been generated yet. Future visual iteration should run
-  `$impeccable document` to capture the current Tailwind/Svelte visual system.
+- Resolved later on 2026-07-04 by `$impeccable document`, which generated `DESIGN.md` and
+  `.impeccable/design.json`.
 
 *** Next best step
 
