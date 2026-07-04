@@ -64,6 +64,18 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
       operational panels.
     - Component philosophy: compact, predictable controls with visible states and no decorative
       styling.
+  - 2026-07-04: Polished the product Backstage surface in `RoomPresencePanel.svelte` and its
+    visible feed/media child panels.
+    - Product Rooms now headline the Room as `Backstage`, with readiness chips for participant
+      capacity, YouTube link status, and Broadcast state.
+    - Broadcast State and Broadcast Health now use semantic panel tones instead of fixed
+      failure/caution styling.
+    - Buttons, Guest Invite controls, moderation actions, focus rings, panel radius, long Display
+      Name wrapping, and visible feed/media copy now align more closely with the captured design
+      system.
+    - Verification: `npm run check`, targeted broadcast/presence unit tests, full
+      `npx playwright test src/routes/room --workers=1`, Impeccable detector, Playwright desktop
+      and mobile visual screenshots, and final `./init.sh` all passed.
 
 * Status Legend
 

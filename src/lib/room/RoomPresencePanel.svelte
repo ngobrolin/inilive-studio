@@ -2,7 +2,11 @@
 	import { onMount } from 'svelte';
 	import ComposedFeedCanvas from '$lib/room/ComposedFeedCanvas.svelte';
 	import MediaConnectionPanel from '$lib/room/MediaConnectionPanel.svelte';
-	import type { BroadcastIngestGrant, RoomBroadcastView } from '$lib/server/broadcast-state';
+	import type {
+		BroadcastHealthStatus,
+		BroadcastIngestGrant,
+		RoomBroadcastView,
+	} from '$lib/server/broadcast-state';
 	import type { MediaJoinGrant } from '$lib/server/media-join';
 	import type { RoomChatMessage, RoomPresence, RoomScreenShare } from '$lib/server/room-presence';
 	import { deserialize } from '$app/forms';
@@ -44,6 +48,17 @@
 	const broadcastActionUrl = $derived(
 		`?/broadcast&participant=${encodeURIComponent(activeParticipantId)}`,
 	);
+	const panelBaseClass = 'rounded-md border p-5 shadow-sm';
+	const primaryButtonClass =
+		'rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-neutral-400';
+	const signalButtonClass =
+		'rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60';
+	const secondaryButtonClass =
+		'rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold text-neutral-950 transition hover:border-neutral-950 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2';
+	const dangerButtonClass =
+		'rounded-md bg-rose-700 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2';
+	const dangerSecondaryButtonClass =
+		'rounded-md border border-rose-300 px-4 py-3 text-sm font-semibold text-rose-950 transition hover:border-rose-700 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2';
 	let liveBroadcastOverride = $state<RoomBroadcastView | null>(null);
 	let activeScreenShareOverride = $state<RoomScreenShare | null | undefined>(undefined);
 	let screenShareError = $state<string | null>(null);
@@ -86,6 +101,79 @@
 						? 'Ended'
 						: 'Connecting',
 	);
+	const roomHeading = $derived(isProductRoom ? 'Backstage' : 'Room presence');
+	const roomDescription = $derived(
+		isProductRoom
+			? 'Review participant readiness, the Broadcast Preview, media connection, and YouTube setup before the Audience sees anything.'
+			: 'This prototype Room keeps presence ephemeral in memory. It is not persisted and it is not restored after restart.',
+	);
+	const participantSummary = $derived(`${hosts.length} Host · ${guests.length}/3 Guests`);
+	const youtubeSummary = $derived(
+		hasLinkedYouTubeChannel ? 'YouTube channel linked' : 'YouTube channel not linked',
+	);
+	const broadcastStatePanelClass = $derived(
+		`mt-6 ${panelBaseClass} ${getBroadcastStatePanelTone(liveBroadcast.state)}`,
+	);
+	const broadcastHealthPanelClass = $derived(
+		`mt-6 ${panelBaseClass} ${getBroadcastHealthPanelTone(liveBroadcast.health?.status)}`,
+	);
+	const broadcastStateDescription = $derived(getBroadcastStateDescription());
+
+	function getBroadcastStatePanelTone(state: RoomBroadcastView['state']) {
+		switch (state) {
+			case 'countdown':
+				return 'border-amber-300 bg-amber-50 text-amber-950';
+			case 'broadcasting':
+				return 'border-cyan-300 bg-cyan-50 text-cyan-950';
+			case 'failed':
+				return 'border-rose-300 bg-rose-50 text-rose-950';
+			case 'ended':
+			case 'backstage':
+			default:
+				return 'border-neutral-300 bg-white text-neutral-950';
+		}
+	}
+
+	function getBroadcastHealthPanelTone(status: BroadcastHealthStatus | undefined) {
+		switch (status) {
+			case 'connected':
+				return 'border-green-300 bg-green-50 text-green-950';
+			case 'degraded':
+				return 'border-amber-300 bg-amber-50 text-amber-950';
+			case 'failed':
+				return 'border-rose-300 bg-rose-50 text-rose-950';
+			case 'ended':
+				return 'border-neutral-300 bg-white text-neutral-950';
+			default:
+				return 'border-cyan-300 bg-cyan-50 text-cyan-950';
+		}
+	}
+
+	function getBroadcastStateDescription() {
+		if (liveBroadcast.state === 'failed' && liveBroadcast.failureMessage) {
+			return liveBroadcast.failureMessage;
+		}
+
+		if (liveBroadcast.state === 'ended') {
+			return 'The Broadcast ended and this Room returned to Backstage. Start a new Broadcast when you are ready.';
+		}
+
+		if (liveBroadcast.state === 'countdown') {
+			return isProductRoom
+				? 'The Broadcast Countdown is visible to everyone in this reusable Room. YouTube goes live when the Countdown reaches zero.'
+				: 'The Broadcast Countdown is starting.';
+		}
+
+		if (liveBroadcast.state === 'backstage') {
+			if (hasLinkedYouTubeChannel) {
+				return 'Nothing is live to YouTube yet. The Host can start a managed YouTube Broadcast when the Room is ready.';
+			}
+
+			return 'Nothing is live to YouTube yet. Link a YouTube channel on the dashboard or paste ephemeral stream credentials for this Broadcast attempt.';
+		}
+
+		return 'The Composed Room Feed is live to the Broadcast Destination. Recording lives on YouTube in v1.';
+	}
 
 	async function submitScreenShareAction(action: 'start' | 'stop') {
 		if (!activeHost || screenShareBusy) {
@@ -182,11 +270,27 @@
 		<p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
 			Backstage · Room {presence.roomId}
 		</p>
-		<h1 class="mt-2 text-4xl font-semibold">Room presence</h1>
+		<h1 class="mt-2 text-4xl font-semibold">{roomHeading}</h1>
 		<p class="mt-3 max-w-2xl text-lg leading-8 text-neutral-700">
-			This prototype Room keeps presence ephemeral in memory. It is not persisted and it is not
-			restored after restart.
+			{roomDescription}
 		</p>
+		<div class="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
+			<p class="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700">{participantSummary}</p>
+			<p
+				class="rounded-full px-3 py-1 {hasLinkedYouTubeChannel
+					? 'bg-green-100 text-green-800'
+					: 'bg-amber-100 text-amber-950'}"
+			>
+				{youtubeSummary}
+			</p>
+			<p
+				class="rounded-full px-3 py-1 {isBroadcasting
+					? 'bg-cyan-100 text-cyan-950'
+					: 'bg-neutral-100 text-neutral-700'}"
+			>
+				{broadcastStateLabel}
+			</p>
+		</div>
 	</header>
 
 	{#if actionError}
@@ -200,18 +304,18 @@
 
 	{#if activeHost && guestInvitePath}
 		<section
-			class="mt-6 rounded-md border border-slate-300 bg-white p-5 shadow-sm"
+			class="mt-6 {panelBaseClass} border-neutral-300 bg-white"
 			data-testid="guest-invite-controls"
 		>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500">Guest Invite</p>
-			<p class="mt-2 text-sm leading-6 text-slate-700">
+			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Guest Invite</p>
+			<p class="mt-2 text-sm leading-6 text-neutral-600">
 				Share this link with Guests. The legacy <code class="font-mono text-xs">/invite/demo</code>
 				path no longer works for product Rooms.
 			</p>
-			<label class="mt-4 block text-xs font-medium text-slate-600">
+			<label class="mt-4 block text-xs font-medium text-neutral-600">
 				Guest Invite link
 				<input
-					class="mt-1 w-full rounded-lg border border-slate-300 bg-slate-50 px-3 py-2 font-mono text-xs"
+					class="mt-1 w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-cyan-700"
 					data-testid="guest-invite-link"
 					readonly
 					value={guestInvitePath}
@@ -221,7 +325,7 @@
 	{/if}
 
 	<section
-		class="mt-6 rounded-md border border-cyan-300 bg-cyan-50 p-5 text-cyan-950 shadow-sm"
+		class="mt-6 {panelBaseClass} border-cyan-300 bg-cyan-50 text-cyan-950"
 		data-testid="screen-share-status"
 	>
 		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Screen Share</p>
@@ -235,7 +339,7 @@
 		{:else}
 			<h2 class="mt-2 text-2xl font-semibold">No Screen Share is active.</h2>
 			<p class="mt-2 text-sm leading-6">
-				Only the Host can start Screen Share in this prototype Room.
+				Only the Host can start Screen Share from Backstage.
 			</p>
 		{/if}
 
@@ -243,7 +347,7 @@
 			<div class="mt-4 flex flex-wrap gap-3">
 				{#if activeScreenShare}
 					<button
-						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+						class={signalButtonClass}
 						disabled={screenShareBusy}
 						onclick={() => void submitScreenShareAction('stop')}
 						type="button"
@@ -252,7 +356,7 @@
 					</button>
 				{:else}
 					<button
-						class="rounded-md bg-cyan-950 px-4 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+						class={signalButtonClass}
 						disabled={screenShareBusy}
 						onclick={() => void submitScreenShareAction('start')}
 						type="button"
@@ -269,42 +373,16 @@
 
 	<section
 		aria-live="polite"
-		class="mt-6 rounded-md border border-rose-300 bg-rose-50 p-5 text-rose-950 shadow-sm"
+		class={broadcastStatePanelClass}
 		data-testid="broadcast-state"
 	>
 		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast State</p>
 		<h2 class="mt-2 text-2xl font-semibold">{broadcastStateLabel}</h2>
-		{#if liveBroadcast.state === 'failed' && liveBroadcast.failureMessage}
-			<p class="mt-2 text-sm leading-6">{liveBroadcast.failureMessage}</p>
-		{:else if liveBroadcast.state === 'ended'}
-			<p class="mt-2 text-sm leading-6">
-				The Broadcast ended and this Room returned to Backstage. Start a new Broadcast when you are
-				ready.
-			</p>
-		{:else if liveBroadcast.state === 'countdown'}
-			<p class="mt-2 text-sm leading-6">
-				{#if isProductRoom}
-					The Broadcast Countdown is visible to everyone in this reusable Room. YouTube goes live when
-					the Countdown reaches zero.
-				{:else}
-					The Broadcast Countdown is starting.
-				{/if}
-			</p>
-		{:else if liveBroadcast.state === 'backstage'}
-			<p class="mt-2 text-sm leading-6">
-				Nothing is live to YouTube yet. The Host can paste ephemeral stream credentials to start a
-				Broadcast.
-			</p>
-		{:else}
-			<p class="mt-2 text-sm leading-6">
-				The Composed Room Feed is live to the Broadcast Destination. Recording lives on YouTube in
-				v1.
-			</p>
-		{/if}
+		<p class="mt-2 text-sm leading-6">{broadcastStateDescription}</p>
 		{#if activeHost && liveBroadcast.youtubeControlRoomUrl}
 			<p class="mt-4 text-sm leading-6">
 				<a
-					class="font-semibold underline decoration-rose-400 underline-offset-4"
+					class="font-semibold underline decoration-current underline-offset-4 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
 					data-testid="youtube-control-room-link"
 					href={liveBroadcast.youtubeControlRoomUrl}
 					rel="noreferrer"
@@ -312,7 +390,7 @@
 				>
 					Open this YouTube live event in Live Control Room
 				</a>
-				<span class="block text-rose-900/80">
+				<span class="block opacity-80">
 					Use this event-specific link for verification, not YouTube Studio's default stream-key page.
 				</span>
 			</p>
@@ -322,7 +400,7 @@
 	{#if activeHost && liveBroadcast.health}
 		<section
 			aria-live="polite"
-			class="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
+			class={broadcastHealthPanelClass}
 			data-testid="broadcast-health"
 		>
 			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast Health</p>
@@ -345,7 +423,7 @@
 				<form class="mt-4" method="POST" action={broadcastActionUrl}>
 					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 					<button
-						class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold"
+						class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold transition hover:border-amber-700 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
 						name="broadcastAction"
 						type="submit"
 						value="cancel-countdown"
@@ -363,7 +441,7 @@
 
 	{#if activeHost}
 		<section
-			class="mt-6 rounded-md border border-neutral-300 bg-white p-5 shadow-sm"
+			class="mt-6 {panelBaseClass} border-neutral-300 bg-white"
 			data-testid="broadcast-controls"
 		>
 			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
@@ -393,7 +471,7 @@
 					<form method="POST" action={broadcastActionUrl}>
 						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 						<button
-							class="rounded-md bg-rose-700 px-4 py-3 text-sm font-semibold text-white"
+							class={dangerButtonClass}
 							name="broadcastAction"
 							type="submit"
 							value="end"
@@ -404,7 +482,7 @@
 					<form method="POST" action={broadcastActionUrl}>
 						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 						<button
-							class="rounded-md border border-rose-300 px-4 py-3 text-sm font-semibold text-rose-950"
+							class={dangerSecondaryButtonClass}
 							name="broadcastAction"
 							type="submit"
 							value="simulate-fail"
@@ -447,7 +525,7 @@
 						</div>
 					{/if}
 					<button
-						class="rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white"
+						class={primaryButtonClass}
 						name="broadcastAction"
 						type="submit"
 						value="start"
@@ -468,7 +546,7 @@
 			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Removed from Room</p>
 			<h2 class="mt-2 text-3xl font-semibold">The Host removed you from this Room session.</h2>
 			<p class="mt-3 max-w-2xl leading-7">
-				This only affects the current prototype Room session. It does not revoke the Guest Invite.
+				This only affects the current Room session. It does not revoke the Guest Invite.
 			</p>
 		</section>
 	{/if}
@@ -495,7 +573,7 @@
 					<p class="font-semibold">The Host requested that you unmute your microphone.</p>
 					<div class="flex gap-2">
 						<button
-							class="rounded-md bg-cyan-950 px-3 py-2 font-semibold text-white"
+							class={signalButtonClass}
 							name="unmuteResponse"
 							type="submit"
 							value="accept"
@@ -503,7 +581,7 @@
 							Accept unmute request
 						</button>
 						<button
-							class="rounded-md border border-cyan-300 px-3 py-2 font-semibold"
+							class="rounded-md border border-cyan-300 px-3 py-2 font-semibold transition hover:border-cyan-950 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
 							name="unmuteResponse"
 							type="submit"
 							value="dismiss"
@@ -534,7 +612,9 @@
 							{#if participant.cameraEnabled}
 								<div class="text-center">
 									<p class="text-sm uppercase tracking-[0.18em] text-cyan-200">Camera on</p>
-									<p class="mt-2 text-2xl font-semibold">{participant.displayName}</p>
+									<p class="mt-2 max-w-full break-words px-3 text-2xl font-semibold">
+										{participant.displayName}
+									</p>
 								</div>
 							{:else}
 								<div class="text-center" data-testid="camera-off-placeholder">
@@ -543,14 +623,16 @@
 									>
 										{participant.displayName.slice(0, 1).toUpperCase()}
 									</div>
-									<p class="mt-3 text-2xl font-semibold">{participant.displayName}</p>
+									<p class="mt-3 max-w-full break-words px-3 text-2xl font-semibold">
+										{participant.displayName}
+									</p>
 									<p class="mt-1 text-sm text-neutral-400">Camera off</p>
 								</div>
 							{/if}
 						</div>
 						<div class="flex items-center justify-between gap-3 p-4">
-							<div>
-								<p class="font-semibold">{participant.displayName}</p>
+							<div class="min-w-0">
+								<p class="break-words font-semibold">{participant.displayName}</p>
 								<p class="text-sm text-neutral-600">
 									{participant.role === 'host' ? 'Host' : 'Guest'}
 								</p>
@@ -572,14 +654,14 @@
 						</div>
 						{#if activeHost && participant.role === 'guest'}
 							<form
-								class="grid grid-cols-2 gap-2 border-t border-neutral-200 p-4"
+								class="grid grid-cols-2 gap-2 border-t border-neutral-200 p-4 max-sm:grid-cols-1"
 								method="POST"
 								action="?/moderate"
 							>
 								<input name="hostParticipantId" type="hidden" value={activeHost.id} />
 								<input name="guestParticipantId" type="hidden" value={participant.id} />
 								<button
-									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									class={secondaryButtonClass}
 									name="moderationAction"
 									type="submit"
 									value="force-mute"
@@ -587,7 +669,7 @@
 									Force mute {participant.displayName}
 								</button>
 								<button
-									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									class={secondaryButtonClass}
 									name="moderationAction"
 									type="submit"
 									value="force-camera-off"
@@ -595,7 +677,7 @@
 									Force camera off {participant.displayName}
 								</button>
 								<button
-									class="rounded-md border border-neutral-300 px-3 py-2 text-sm font-semibold"
+									class={secondaryButtonClass}
 									name="moderationAction"
 									type="submit"
 									value="request-unmute"
@@ -603,7 +685,7 @@
 									Request unmute from {participant.displayName}
 								</button>
 								<button
-									class="rounded-md bg-rose-700 px-3 py-2 text-sm font-semibold text-white"
+									class={dangerButtonClass}
 									name="moderationAction"
 									type="submit"
 									value="remove"
@@ -767,7 +849,7 @@
 						placeholder="Message everyone in this Room"
 					></textarea>
 					<button
-						class="mt-3 w-full rounded-md bg-neutral-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-cyan-700 disabled:cursor-not-allowed disabled:bg-neutral-400"
+						class="mt-3 w-full {primaryButtonClass}"
 						disabled={!activeParticipant}
 						type="submit"
 					>

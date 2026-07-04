@@ -20,8 +20,8 @@ test("Host and three Guests are represented in Backstage presence", async ({ pag
   await page.getByLabel("Display Name").fill("Guest Three");
   await page.getByRole("button", { name: "Enter Room" }).click();
 
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("Room presence");
-  await expect(page.getByText("1 Host · 3/3 Guests")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Backstage");
+  await expect(page.getByRole("complementary").getByText("1 Host · 3/3 Guests")).toBeVisible();
   await expect(page.getByText("Host One").first()).toBeVisible();
   await expect(page.getByText("Guest One").first()).toBeVisible();
   await expect(page.getByText("Guest Two").first()).toBeVisible();

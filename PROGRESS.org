@@ -16,6 +16,57 @@
 
 * Session Log
 
+** 2026-07-04 impeccable polish Backstage
+
+*** Goal
+
+Polish the product Backstage surface so Host readiness, Broadcast state, Guest Invite, screen
+share, participant, and Room Chat controls read as one coherent operational console.
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed Impeccable polish/product guidance, `PRODUCT.md`, `DESIGN.md`, `PROGRESS.org`,
+  `PLAN.org`, recent commits, and the Backstage implementation.
+- Ran the standard startup path before edits; the first full run had one transient login e2e
+  failure, and the isolated login spec passed immediately afterward.
+- Changed product Rooms to use `Backstage` as the H1 while preserving `Room presence` for the
+  prototype path.
+- Added compact readiness chips for Host/Guest capacity, YouTube link state, and Broadcast state.
+- Reworked Broadcast State and Broadcast Health panels to use state-specific neutral, cyan, amber,
+  green, and rose tones instead of a fixed failure/caution treatment.
+- Added product-aware Broadcast state copy for linked YouTube, unlinked YouTube, countdown,
+  broadcasting, ended, and failed states.
+- Tightened shared button styling, focus rings, panel radius, Guest Invite treatment, moderation
+  button wrapping, long Display Name wrapping, and visible child-panel copy in Composed Room Feed
+  and Room Media.
+- Updated Room e2e expectations to assert the product Backstage heading and scoped capacity copy.
+
+*** Verification run
+
+- `npx playwright test src/routes/login/page.e2e.ts --workers=1`: passed, 2 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run test:unit -- --run src/lib/server/broadcast-state.spec.ts src/lib/server/room-presence.spec.ts`: passed, 19 tests.
+- `npx playwright test src/routes/room --workers=1`: passed, 48 tests.
+- `node /Users/riza/.agents/skills/impeccable/scripts/detect.mjs --json src/lib/room/RoomPresencePanel.svelte src/lib/room/ComposedFeedCanvas.svelte src/lib/room/LiveKitMediaSession.svelte`: returned `[]`.
+- `node /private/tmp/backstage-polish-visual.mjs`: passed against `http://localhost:5175`; saved
+  `/private/tmp/inilive-backstage-polish-desktop.png` and
+  `/private/tmp/inilive-backstage-polish-mobile.png`; desktop and mobile layout metrics reported
+  no horizontal scroll and no overflowing elements.
+- `./init.sh`: passed after implementation, 166 Vitest tests and 64 Playwright tests.
+- Final `npm run check`: passed with 0 errors and 0 warnings after markup/copy cleanup.
+
+*** Known risk or unresolved issue
+
+- The visual script used the deterministic Playwright-style stub environment with `DATABASE_URL`,
+  `BRIDGE_ENABLED`, and LiveKit credentials empty. It verified the product Host flow and layout,
+  not a real external YouTube or LiveKit session.
+
+*** Next best step
+
+Use `$impeccable critique dashboard` or a focused polish pass on Join Check to bring the remaining
+older `slate-*`/`rounded-xl` surfaces closer to the captured design system.
+
 ** 2026-07-04 impeccable document
 
 *** Goal

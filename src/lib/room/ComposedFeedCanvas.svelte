@@ -472,6 +472,6 @@
 	</dl>
 
 	<p class="mt-3 text-sm leading-6 text-neutral-600">
-		This canvas is the Milestone 1 prototype output that Milestone 2 will send to WHIP.
+		This canvas is the Room feed used for Broadcast Preview and WHIP ingest.
 	</p>
 </section>

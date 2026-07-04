@@ -212,7 +212,7 @@
 			const screenSharePublication = await room.localParticipant.setScreenShareEnabled(true);
 			localScreenShareTrack =
 				(screenSharePublication?.track as LocalVideoTrack | undefined) ?? null;
-			screenShareLabel = 'Publishing Host Screen Share into this prototype Room';
+			screenShareLabel = 'Publishing Host Screen Share into this Room';
 			return;
 		}
 
@@ -326,8 +326,8 @@
 					localMicrophoneTrack = microphonePublication?.track?.mediaStreamTrack ?? null;
 					connectionStatus = 'Connected · LiveKit';
 					connectionLabel = cameraEnabled
-						? 'Publishing camera and microphone choices into this prototype Room'
-						: 'Connected with camera off · microphone choice published into this prototype Room';
+						? 'Publishing camera and microphone choices into this Room'
+						: 'Connected with camera off · microphone choice published into this Room';
 					startTokenRefresh(room);
 
 					return;

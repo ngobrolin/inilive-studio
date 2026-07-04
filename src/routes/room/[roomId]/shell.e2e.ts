@@ -67,7 +67,7 @@ test("signed-in Room owner can enter Join Check and Backstage for a product Room
   await page.getByRole("button", { name: "Enter Room" }).click();
 
   await expect(page).toHaveURL(/\/backstage/);
-  await expect(page.getByRole("heading", { name: "Room presence" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Backstage" })).toBeVisible();
 });
 
 test("Host sees the active Guest Invite link on Backstage", async ({ page, request }) => {
