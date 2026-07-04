@@ -3,14 +3,14 @@ import { getHostSessionFromCookies } from "$lib/server/auth/host-session";
 import { createYouTubeOAuthStart } from "$lib/server/youtube/oauth";
 import { getYouTubeOAuthConfig, getYouTubeStore } from "$lib/server/youtube/runtime";
 
-export const POST: RequestHandler = async ({ cookies }) => {
+export const POST: RequestHandler = async ({ cookies, url }) => {
   const session = await getHostSessionFromCookies(cookies);
   if (!session) {
     return new Response(null, { status: 401 });
   }
 
   const store = getYouTubeStore();
-  const config = getYouTubeOAuthConfig();
+  const config = getYouTubeOAuthConfig(url.origin);
   const start = await createYouTubeOAuthStart(
     { hostAccountId: session.hostAccountId },
     {

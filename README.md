@@ -133,6 +133,10 @@ See `.env.example` for the full local environment template. The most common vari
 - `BRIDGE_ENABLED`, `BRIDGE_CONTROL_URL`, `BRIDGE_WHIP_URL`, and `BRIDGE_CALLBACK_HMAC_SECRET` for local broadcasting
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `YOUTUBE_REFRESH_TOKEN_ENCRYPTION_KEY` for managed YouTube broadcasts
 
+For local YouTube OAuth, add the exact callback URI for the host you use in the browser to the
+Google OAuth Web Client. `http://localhost:5173/youtube/callback` and
+`http://127.0.0.1:5173/youtube/callback` are different redirect URIs to Google.
+
 ## Publishing checklist
 
 Before publishing this repository to GitHub:

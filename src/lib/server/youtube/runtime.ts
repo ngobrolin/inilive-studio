@@ -38,7 +38,10 @@ export class GoogleYouTubeApiError extends Error {
 }
 
 export type GoogleYouTubeClient = {
-  exchangeCode(code: string): Promise<{ accessToken: string; refreshToken: string | null }>;
+  exchangeCode(
+    code: string,
+    input?: { redirectUri?: string },
+  ): Promise<{ accessToken: string; refreshToken: string | null }>;
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
   refreshAccessToken(refreshToken: string): Promise<string>;
   revokeToken(refreshToken: string): Promise<void>;
@@ -145,10 +148,15 @@ export function getYouTubeStore(): YouTubeStore {
   return createPostgresYouTubeStore(createDatabase(env.DATABASE_URL));
 }
 
-export function getYouTubeOAuthConfig() {
+function normalizeOrigin(origin: string): string {
+  return origin.replace(/\/+$/, "");
+}
+
+export function getYouTubeOAuthConfig(requestOrigin?: string) {
+  const appOrigin = normalizeOrigin(requestOrigin ?? env.APP_ORIGIN ?? "http://localhost");
   return {
     clientId: env.GOOGLE_CLIENT_ID ?? "dev-google-client-id",
-    redirectUri: `${env.APP_ORIGIN ?? "http://localhost"}/youtube/callback`,
+    redirectUri: `${appOrigin}/youtube/callback`,
     createState: generateSecureToken,
   };
 }
@@ -159,7 +167,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
   }
 
   return {
-    async exchangeCode(code) {
+    async exchangeCode(code, input) {
       const clientSecret = env.GOOGLE_CLIENT_SECRET;
       if (!clientSecret) {
         throw new Error("GOOGLE_CLIENT_SECRET is required for YouTube OAuth callback");
@@ -172,7 +180,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
           code,
           client_id: getYouTubeOAuthConfig().clientId,
           client_secret: clientSecret,
-          redirect_uri: getYouTubeOAuthConfig().redirectUri,
+          redirect_uri: input?.redirectUri ?? getYouTubeOAuthConfig().redirectUri,
           grant_type: "authorization_code",
         }),
       });

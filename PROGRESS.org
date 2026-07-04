@@ -46,15 +46,26 @@ try again.`
   for retry.
 - Added dashboard copy for the stale-auth unlink path: the channel was unlinked locally because the
   stored Google authorization was already invalid.
+- Follow-up relink attempt from `http://localhost:5173/dashboard` failed at Google with
+  `Error 400: redirect_uri_mismatch`.
+- Root cause: the OAuth link and callback code preferred `APP_ORIGIN` for the Google
+  `redirect_uri`, so local requests could send a different host or drop the Vite dev-server port
+  instead of using the browser's current origin.
+- Fixed YouTube OAuth link and callback handling to prefer the current request origin for
+  `redirect_uri`, while keeping `APP_ORIGIN` as a fallback for non-request contexts.
+- Updated local docs to call out that `http://localhost:5173/youtube/callback` and
+  `http://127.0.0.1:5173/youtube/callback` are distinct Google redirect URIs.
 
 *** Verification run
 
 - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`: passed, 12 tests.
 - `npm run test:unit -- --run src/routes/youtube/unlink/server.spec.ts`: passed, 6 tests.
 - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "safe YouTube unlink outcomes" --workers=1`: passed, 1 test.
+- `npm run test:unit -- --run src/routes/youtube/link/server.spec.ts src/routes/youtube/callback/server.spec.ts src/lib/server/youtube/oauth.spec.ts src/lib/server/youtube/access-token.spec.ts`: passed, 15 tests.
 - `npm run check`: passed with 0 errors and 0 warnings.
 - `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/lib/server/youtube/managed-broadcast.ts src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts 'src/routes/room/[roomId]/backstage/+page.server.ts'`: passed.
 - `npm run fmt:check -- src/routes/youtube/unlink/+server.ts src/routes/youtube/unlink/server.spec.ts src/routes/dashboard/+page.svelte src/routes/dashboard/page.e2e.ts`: passed.
+- `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/routes/youtube/link/+server.ts src/routes/youtube/link/server.spec.ts src/routes/youtube/callback/+server.ts src/routes/youtube/callback/server.spec.ts README.md .env.example`: passed.
 
 *** Known risk or unresolved issue
 
@@ -63,12 +74,14 @@ try again.`
   channel or Google Cloud project still rejects the request.
 - Google documents token revocation as returning HTTP 400 with an error code for error conditions,
   so stale-token unlink must not depend on revocation success to remove a local unusable link.
+- Google requires the OAuth redirect URI to exactly match one authorized redirect URI in the Google
+  OAuth Web Client, including host and port.
 
 *** Next best step
 
-Unlink the stale YouTube channel again. It should clear the saved link and show the stale-auth
-unlink confirmation, then the Host should link the channel again before retrying managed Broadcast
-start.
+Use `http://localhost:5173/dashboard`, ensure the Google OAuth Web Client has
+`http://localhost:5173/youtube/callback` as an authorized redirect URI, then link the channel again
+and retry managed Broadcast start.
 
 ** 2026-06-24 GitHub publishing prep
 

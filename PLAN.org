@@ -1748,6 +1748,17 @@ Validate the full managed path on a real channel: link, one-click go-live, LIVE 
     - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "safe YouTube unlink outcomes" --workers=1`
     - `npm run check`
     - `npm run fmt:check -- src/routes/youtube/unlink/+server.ts src/routes/youtube/unlink/server.spec.ts src/routes/dashboard/+page.svelte src/routes/dashboard/page.e2e.ts`
+  - Follow-up observed: relinking from `http://localhost:5173/dashboard` failed at Google with
+    `Error 400: redirect_uri_mismatch`.
+  - Fixed YouTube OAuth link and callback code to prefer the current request origin for the Google
+    `redirect_uri`, preserving the local host and Vite port used by the Host, with `APP_ORIGIN` only
+    as fallback outside request handling.
+  - Updated local docs to make the exact Google OAuth callback requirement explicit for
+    `localhost:5173` vs `127.0.0.1:5173`.
+  - Verification passed:
+    - `npm run test:unit -- --run src/routes/youtube/link/server.spec.ts src/routes/youtube/callback/server.spec.ts src/lib/server/youtube/oauth.spec.ts src/lib/server/youtube/access-token.spec.ts`
+    - `npm run check`
+    - `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/routes/youtube/link/+server.ts src/routes/youtube/link/server.spec.ts src/routes/youtube/callback/+server.ts src/routes/youtube/callback/server.spec.ts README.md .env.example`
 - 2026-06-24 GitHub issue mirror:
   - bridge-005: https://github.com/ngobrolin/inilive-studio/issues/2
   - yt-004: https://github.com/ngobrolin/inilive-studio/issues/3

@@ -2,6 +2,7 @@ import type { RequestHandler } from "./$types";
 import {
   encryptYouTubeRefreshToken,
   getGoogleYouTubeClient,
+  getYouTubeOAuthConfig,
   getYouTubeStore,
 } from "$lib/server/youtube/runtime";
 
@@ -22,7 +23,9 @@ export const GET: RequestHandler = async ({ url }) => {
 
   try {
     const client = getGoogleYouTubeClient();
-    const tokens = await client.exchangeCode(code);
+    const tokens = await client.exchangeCode(code, {
+      redirectUri: getYouTubeOAuthConfig(url.origin).redirectUri,
+    });
     if (!tokens.refreshToken) {
       return redirectTo(failureLocation);
     }
