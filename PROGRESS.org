@@ -5,16 +5,47 @@
 - Repository root: ~/code/inilive-studio
 - Standard startup path: ./init.sh, then npm run dev when application runtime is needed.
 - Standard verification path: ./init.sh runs npm install and npm test. Additional useful gates are npm run check, npm run lint, npm run fmt:check, npm run build, and npm audit --audit-level=low.
-- Current highest-priority unfinished feature: yt-004 "Verify managed YouTube broadcast end-to-end" (HITL).
-- Current highest-priority unfinished AFK feature: none in the active YouTube milestone after yt-003 passed.
+- Current highest-priority unfinished feature: none in the active PLAN.org backlog after yt-004 was confirmed done and bridge-005 was closed by product-scope decision.
+- Current highest-priority unfinished AFK feature: none in the active PLAN.org backlog.
 - cleanup-001 "Remove or protect Milestone 1 authless prototype routes" is passing.
-- bridge-005 "Verify YouTube 720p30 end-to-end broadcast" requires a live-enabled YouTube account and real stream credentials (HITL).
+- bridge-005 "Verify YouTube 720p30 end-to-end broadcast" is closed by product-scope decision: v1 uses the managed YouTube link/Data API path instead of pasted YouTube RTMP credentials.
 - auth-001 "Add Host magic-link auth and sessions" is passing. Hosts can request magic links, exchange them for HttpOnly SameSite=Lax session cookies, and sessions persist in Postgres when DATABASE_URL is configured.
 - rooms-001 "Add reusable Host Rooms" is passing. Signed-in Hosts can create Rooms with Room Titles, list them on the Host dashboard, and Rooms persist in Postgres when DATABASE_URL is configured.
 - yt-001 "Link a Host YouTube channel through Google OAuth" is passing after real Google OAuth
   link/unlink HITL verification on 2026-06-21.
 
 * Session Log
+
+** 2026-07-04 yt-004 completion and bridge-005 scope closure
+
+*** Goal
+
+Record the product decision that v1 uses the managed YouTube link/Data API path and does not need
+the older manual pasted-credential bridge-005 HITL test.
+
+*** Completed
+
+- User confirmed yt-004 is done.
+- User confirmed Google OAuth is done.
+- User directed that bridge-005 should be skipped because the product will use the YouTube link
+  path instead.
+- Updated `PLAN.org` to mark yt-004 passing.
+- Updated `PLAN.org` to close bridge-005 as done by explicit product-scope decision, with rationale
+  recorded instead of false manual RTMP verification evidence.
+
+*** Verification run
+
+- `./init.sh` passed before tracker edits: 166 Vitest tests passed and 64 Playwright tests passed.
+
+*** Known risk or unresolved issue
+
+- The manual pasted YouTube RTMP credential path was not HITL-tested to final acceptance. This is
+  intentional for v1 because managed YouTube linking is now the product path.
+
+*** Next best step
+
+Plan the next milestone beyond the current `PLAN.org` backlog: launch readiness, deployment,
+observability, production OAuth/domain configuration, or another explicit v1 hardening slice.
 
 ** 2026-07-04 managed YouTube start failure diagnosis
 
