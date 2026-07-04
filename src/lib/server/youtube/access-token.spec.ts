@@ -5,6 +5,7 @@ import {
   decryptYouTubeRefreshToken,
   encryptYouTubeRefreshToken,
   getGoogleYouTubeClient,
+  GoogleYouTubeApiError,
   setYouTubeRuntimeForTests,
 } from "./runtime";
 import { createInMemoryYouTubeStore } from "./store";
@@ -146,5 +147,48 @@ describe("YouTube access tokens", () => {
       recordFromStart: true,
       monitorStream: { enableMonitorStream: false },
     });
+  });
+
+  it("keeps YouTube API error reasons without exposing request credentials", async () => {
+    const fetchGoogle = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit): Promise<Response> =>
+        Response.json(
+          {
+            error: {
+              code: 403,
+              message: "Live streaming is not enabled.",
+              errors: [
+                {
+                  domain: "youtube.liveBroadcast",
+                  reason: "liveStreamingNotEnabled",
+                  message: "Live streaming is not enabled.",
+                },
+              ],
+            },
+          },
+          { status: 403 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchGoogle);
+
+    await expect(
+      getGoogleYouTubeClient().createLiveBroadcast?.("fresh-access-token", {
+        title: "Launch Room",
+        visibility: "private",
+        latencyPreference: "low",
+      }),
+    ).rejects.toMatchObject({
+      name: "GoogleYouTubeApiError",
+      status: 403,
+      reason: "liveStreamingNotEnabled",
+    } satisfies Partial<GoogleYouTubeApiError>);
+
+    await expect(
+      getGoogleYouTubeClient().createLiveBroadcast?.("fresh-access-token", {
+        title: "Launch Room",
+        visibility: "private",
+        latencyPreference: "low",
+      }),
+    ).rejects.not.toThrow("fresh-access-token");
   });
 });

@@ -42,6 +42,7 @@ import { getHostSessionFromCookies } from "$lib/server/auth/host-session";
 import {
   completeManagedYouTubeBroadcast,
   createManagedYouTubeBroadcast,
+  describeManagedYouTubeBroadcastFailure,
 } from "$lib/server/youtube/managed-broadcast";
 import { getYouTubeStore } from "$lib/server/youtube/runtime";
 import { fail, redirect } from "@sveltejs/kit";
@@ -220,10 +221,9 @@ export const actions: Actions = {
               youtubeBroadcastId: managedBroadcast.youtubeBroadcastId,
               youtubeStreamId: managedBroadcast.youtubeStreamId,
             });
-          } catch {
+          } catch (error) {
             return fail(400, {
-              error:
-                "YouTube could not create the managed Broadcast. Check channel live permissions and API quota, then try again.",
+              error: describeManagedYouTubeBroadcastFailure(error),
             });
           }
         }

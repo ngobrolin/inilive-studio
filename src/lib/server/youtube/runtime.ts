@@ -7,6 +7,36 @@ import { createInMemoryYouTubeStore, type YouTubeStore } from "./store";
 
 const MANAGED_BROADCAST_SCHEDULED_DURATION_MS = 12 * 60 * 60 * 1000;
 
+export class GoogleYouTubeApiError extends Error {
+  readonly operation: string;
+  readonly status: number;
+  readonly reason: string | null;
+  readonly googleMessage: string | null;
+
+  constructor(input: {
+    operation: string;
+    status: number;
+    reason?: string | null;
+    googleMessage?: string | null;
+  }) {
+    super(
+      [
+        input.operation,
+        "failed",
+        `with status ${input.status}`,
+        input.reason ? `(${input.reason})` : null,
+      ]
+        .filter(Boolean)
+        .join(" "),
+    );
+    this.name = "GoogleYouTubeApiError";
+    this.operation = input.operation;
+    this.status = input.status;
+    this.reason = input.reason ?? null;
+    this.googleMessage = input.googleMessage ?? null;
+  }
+}
+
 export type GoogleYouTubeClient = {
   exchangeCode(code: string): Promise<{ accessToken: string; refreshToken: string | null }>;
   getOwnChannel(accessToken: string): Promise<{ id: string; title: string }>;
@@ -44,6 +74,63 @@ let inMemoryYouTubeStore: YouTubeStore | null = null;
 let googleClient: GoogleYouTubeClient | null = null;
 let refreshTokenEncrypter: ((refreshToken: string) => string) | null = null;
 let refreshTokenDecrypter: ((refreshTokenCiphertext: string) => string) | null = null;
+
+function getStringProperty(value: unknown, key: string): string | null {
+  if (!value || typeof value !== "object" || !(key in value)) {
+    return null;
+  }
+  const property = (value as Record<string, unknown>)[key];
+  return typeof property === "string" ? property : null;
+}
+
+function parseGoogleErrorBody(body: unknown): { reason: string | null; message: string | null } {
+  const oauthReason = getStringProperty(body, "error");
+  const oauthMessage = getStringProperty(body, "error_description");
+  if (oauthReason || oauthMessage) {
+    return { reason: oauthReason, message: oauthMessage };
+  }
+
+  if (!body || typeof body !== "object" || !("error" in body)) {
+    return { reason: null, message: null };
+  }
+  const error = (body as { error?: unknown }).error;
+  const message = getStringProperty(error, "message");
+  const errors =
+    error && typeof error === "object" && "errors" in error
+      ? (error as { errors?: unknown }).errors
+      : null;
+
+  if (Array.isArray(errors)) {
+    const firstError = errors.find((item) => item && typeof item === "object");
+    if (firstError) {
+      return {
+        reason: getStringProperty(firstError, "reason"),
+        message: getStringProperty(firstError, "message") ?? message,
+      };
+    }
+  }
+
+  return { reason: getStringProperty(error, "status"), message };
+}
+
+async function throwGoogleYouTubeApiError(response: Response, operation: string): Promise<never> {
+  let parsed: { reason: string | null; message: string | null } = {
+    reason: null,
+    message: null,
+  };
+  try {
+    parsed = parseGoogleErrorBody(await response.clone().json());
+  } catch {
+    // Some Google failures return an empty or non-JSON body; status still gives us a safe signal.
+  }
+
+  throw new GoogleYouTubeApiError({
+    operation,
+    status: response.status,
+    reason: parsed.reason,
+    googleMessage: parsed.message,
+  });
+}
 
 export function getYouTubeStore(): YouTubeStore {
   if (youtubeStore) {
@@ -91,7 +178,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google OAuth token exchange failed");
+        await throwGoogleYouTubeApiError(response, "Google OAuth token exchange");
       }
 
       const body = (await response.json()) as {
@@ -111,7 +198,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       );
 
       if (!response.ok) {
-        throw new Error("Google YouTube channel lookup failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube channel lookup");
       }
 
       const body = (await response.json()) as {
@@ -142,7 +229,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google OAuth access-token refresh failed");
+        await throwGoogleYouTubeApiError(response, "Google OAuth access-token refresh");
       }
 
       const body = (await response.json()) as { access_token?: string };
@@ -160,7 +247,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google OAuth token revocation failed");
+        await throwGoogleYouTubeApiError(response, "Google OAuth token revocation");
       }
     },
     async createLiveStream(accessToken, input) {
@@ -180,7 +267,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       );
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveStream creation failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveStream creation");
       }
 
       const body = (await response.json()) as {
@@ -212,7 +299,9 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
             snippet: {
               title: input.title,
               scheduledStartTime: new Date(now + 60_000).toISOString(),
-              scheduledEndTime: new Date(now + MANAGED_BROADCAST_SCHEDULED_DURATION_MS).toISOString(),
+              scheduledEndTime: new Date(
+                now + MANAGED_BROADCAST_SCHEDULED_DURATION_MS,
+              ).toISOString(),
             },
             status: { privacyStatus: input.visibility },
             contentDetails: {
@@ -229,7 +318,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       );
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveBroadcast creation failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveBroadcast creation");
       }
 
       const body = (await response.json()) as { id?: string };
@@ -250,7 +339,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveBroadcast bind failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveBroadcast bind");
       }
     },
     async getLiveStreamStatus(accessToken, input) {
@@ -262,7 +351,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveStream status lookup failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveStream status lookup");
       }
 
       const body = (await response.json()) as {
@@ -284,7 +373,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveBroadcast status lookup failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveBroadcast status lookup");
       }
 
       const body = (await response.json()) as {
@@ -310,7 +399,7 @@ export function getGoogleYouTubeClient(): GoogleYouTubeClient {
       });
 
       if (!response.ok) {
-        throw new Error("Google YouTube liveBroadcast transition failed");
+        await throwGoogleYouTubeApiError(response, "Google YouTube liveBroadcast transition");
       }
     },
   };

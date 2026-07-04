@@ -16,6 +16,45 @@
 
 * Session Log
 
+** 2026-07-04 managed YouTube start failure diagnosis
+
+*** Goal
+
+Diagnose the Host-visible error when starting a managed YouTube Broadcast:
+`YouTube could not create the managed Broadcast. Check channel live permissions and API quota, then
+try again.`
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed `PROGRESS.org`, `PLAN.org`, recent commits, and the managed YouTube start path.
+- Ran the standard startup path before changes; `./init.sh` passed with 161 Vitest tests and 64
+  Playwright tests.
+- Confirmed the generic error came from the product Room `broadcast` action catching every
+  `createManagedYouTubeBroadcast` failure without preserving Google's safe error reason.
+- Added structured Google YouTube API errors that retain HTTP status, operation, and safe Google
+  reason values such as `liveStreamingNotEnabled`, `invalidAutoStart`, or `invalid_grant`.
+- Mapped managed YouTube creation failures to more specific Host-facing recovery copy without
+  exposing access tokens, refresh tokens, stream keys, or request bodies.
+
+*** Verification run
+
+- `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`: passed, 12 tests.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/lib/server/youtube/managed-broadcast.ts src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts 'src/routes/room/[roomId]/backstage/+page.server.ts'`: passed.
+
+*** Known risk or unresolved issue
+
+- This improves the app-side diagnosis and recovery copy; it does not prove the real linked channel
+  can create a live Broadcast. The next retry should now show the exact YouTube reason if the
+  channel or Google Cloud project still rejects the request.
+
+*** Next best step
+
+Retry starting the managed Broadcast with the same linked channel and use the new Host-visible
+reason to decide whether the fix is channel setup, Google Cloud quota, relinking, or app-side
+request settings.
+
 ** 2026-06-24 GitHub publishing prep
 
 *** Goal

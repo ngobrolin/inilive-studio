@@ -1725,6 +1725,18 @@ Validate the full managed path on a real channel: link, one-click go-live, LIVE 
     - GREEN: same targeted test passed after the fix.
     - `npx playwright test 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts'` passed, 2 tests.
     - `npm run check` passed with 0 errors and 0 warnings.
+- 2026-07-04 user-reported managed Broadcast creation failure:
+  - Observed: starting a managed YouTube Broadcast showed only the generic Host error,
+    `YouTube could not create the managed Broadcast. Check channel live permissions and API quota,
+    then try again.`
+  - Fixed app-side diagnosis by preserving safe Google YouTube API failure reasons and mapping them
+    to specific Host recovery copy for live-streaming eligibility, live-permission blocks, quota or
+    rate limits, too many scheduled broadcasts, revoked OAuth authorization, and app-side invalid
+    managed Broadcast settings.
+  - Verification passed:
+    - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`
+    - `npm run check`
+    - `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/lib/server/youtube/managed-broadcast.ts src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts 'src/routes/room/[roomId]/backstage/+page.server.ts'`
 - 2026-06-24 GitHub issue mirror:
   - bridge-005: https://github.com/ngobrolin/inilive-studio/issues/2
   - yt-004: https://github.com/ngobrolin/inilive-studio/issues/3

@@ -3,9 +3,14 @@ import { createInMemoryYouTubeStore } from "./store";
 import {
   completeManagedYouTubeBroadcast,
   createManagedYouTubeBroadcast,
+  describeManagedYouTubeBroadcastFailure,
   transitionManagedYouTubeBroadcastLive,
 } from "./managed-broadcast";
-import { clearYouTubeRuntimeForTests, setYouTubeRuntimeForTests } from "./runtime";
+import {
+  clearYouTubeRuntimeForTests,
+  GoogleYouTubeApiError,
+  setYouTubeRuntimeForTests,
+} from "./runtime";
 
 describe("managed YouTube Broadcasts", () => {
   beforeEach(() => {
@@ -147,5 +152,34 @@ describe("managed YouTube Broadcasts", () => {
       broadcastId: "broadcast-1",
       status: "complete",
     });
+  });
+
+  it("explains linked-channel live streaming permission failures", () => {
+    const message = describeManagedYouTubeBroadcastFailure(
+      new GoogleYouTubeApiError({
+        operation: "Google YouTube liveBroadcast creation",
+        status: 403,
+        reason: "liveStreamingNotEnabled",
+        googleMessage: "Live streaming is not enabled.",
+      }),
+    );
+
+    expect(message).toContain("live streaming is not enabled");
+    expect(message).toContain("Enable live streaming in YouTube Studio");
+  });
+
+  it("separates app-side managed Broadcast setting rejections from channel readiness", () => {
+    const message = describeManagedYouTubeBroadcastFailure(
+      new GoogleYouTubeApiError({
+        operation: "Google YouTube liveBroadcast creation",
+        status: 400,
+        reason: "invalidAutoStart",
+        googleMessage: "Not all broadcasts support this setting.",
+      }),
+    );
+
+    expect(message).toContain("managed Broadcast settings");
+    expect(message).toContain("invalidAutoStart");
+    expect(message).not.toContain("Enable live streaming");
   });
 });
