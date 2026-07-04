@@ -1,5 +1,5 @@
 #+TITLE: PLAN
-#+LAST_UPDATED: 2026-06-20
+#+LAST_UPDATED: 2026-07-04
 
 * Project
   :PROPERTIES:
@@ -42,6 +42,19 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
     spike references in ADRs and media-001 history were left unchanged.
   - 2026-06-24: Added README installation and usage instructions for the local Graphify knowledge
     graph workflow. `graphify-out/` remains an ignored generated artifact.
+
+* Design Context
+
+- 2026-07-04: Initialized Impeccable product design context.
+  - Added `PRODUCT.md` with product register, Host/Guest/Room user context, product purpose,
+    confirmed personality words, anti-reference, design principles, and accessibility target.
+  - Default design register is `product`.
+  - Confirmed brand personality: calm, operational, trustworthy.
+  - Confirmed anti-reference: do not look or feel like a StreamYard clone.
+  - Confirmed accessibility target: WCAG 2.2 AA.
+  - Added `.impeccable/live/config.json` for SvelteKit live-mode injection through `src/app.html`.
+  - Impeccable CSP detection returned no CSP configuration, so no source-code CSP patch was needed.
+  - `DESIGN.md` is still pending; run `$impeccable document` when visual-system capture is needed.
 
 * Status Legend
 
