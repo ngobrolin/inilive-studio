@@ -1737,6 +1737,17 @@ Validate the full managed path on a real channel: link, one-click go-live, LIVE 
     - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`
     - `npm run check`
     - `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/lib/server/youtube/managed-broadcast.ts src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts 'src/routes/room/[roomId]/backstage/+page.server.ts'`
+  - Follow-up observed: after managed Broadcast start reported stale Google authorization, dashboard
+    unlink also failed with `Could not revoke Google access. The channel remains linked; please try
+    again.`
+  - Fixed stale-token unlink by treating Google revocation `invalid_grant` / `invalid_token` as
+    already-invalid authorization, deleting the local channel link, and showing a distinct dashboard
+    confirmation so the Host can link again.
+  - Verification passed:
+    - `npm run test:unit -- --run src/routes/youtube/unlink/server.spec.ts`
+    - `npx playwright test src/routes/dashboard/page.e2e.ts --grep "safe YouTube unlink outcomes" --workers=1`
+    - `npm run check`
+    - `npm run fmt:check -- src/routes/youtube/unlink/+server.ts src/routes/youtube/unlink/server.spec.ts src/routes/dashboard/+page.svelte src/routes/dashboard/page.e2e.ts`
 - 2026-06-24 GitHub issue mirror:
   - bridge-005: https://github.com/ngobrolin/inilive-studio/issues/2
   - yt-004: https://github.com/ngobrolin/inilive-studio/issues/3

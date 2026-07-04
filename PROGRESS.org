@@ -36,24 +36,39 @@ try again.`
   reason values such as `liveStreamingNotEnabled`, `invalidAutoStart`, or `invalid_grant`.
 - Mapped managed YouTube creation failures to more specific Host-facing recovery copy without
   exposing access tokens, refresh tokens, stream keys, or request bodies.
+- Follow-up retry exposed a stale stored authorization: managed Broadcast start reported
+  `invalid_grant`, and dashboard unlink reported `Could not revoke Google access. The channel
+  remains linked; please try again.`
+- Fixed unlink so Google `invalid_grant` / `invalid_token` revocation failures are treated as
+  already-invalid authorization, then the stale local YouTube channel link is deleted so the Host can
+  relink.
+- Kept non-stale Google revocation failures on the existing safe path that leaves the link intact
+  for retry.
+- Added dashboard copy for the stale-auth unlink path: the channel was unlinked locally because the
+  stored Google authorization was already invalid.
 
 *** Verification run
 
 - `npm run test:unit -- --run src/lib/server/youtube/access-token.spec.ts src/lib/server/youtube/managed-broadcast.spec.ts`: passed, 12 tests.
+- `npm run test:unit -- --run src/routes/youtube/unlink/server.spec.ts`: passed, 6 tests.
+- `npx playwright test src/routes/dashboard/page.e2e.ts --grep "safe YouTube unlink outcomes" --workers=1`: passed, 1 test.
 - `npm run check`: passed with 0 errors and 0 warnings.
 - `npm run fmt:check -- src/lib/server/youtube/runtime.ts src/lib/server/youtube/managed-broadcast.ts src/lib/server/youtube/managed-broadcast.spec.ts src/lib/server/youtube/access-token.spec.ts 'src/routes/room/[roomId]/backstage/+page.server.ts'`: passed.
+- `npm run fmt:check -- src/routes/youtube/unlink/+server.ts src/routes/youtube/unlink/server.spec.ts src/routes/dashboard/+page.svelte src/routes/dashboard/page.e2e.ts`: passed.
 
 *** Known risk or unresolved issue
 
 - This improves the app-side diagnosis and recovery copy; it does not prove the real linked channel
   can create a live Broadcast. The next retry should now show the exact YouTube reason if the
   channel or Google Cloud project still rejects the request.
+- Google documents token revocation as returning HTTP 400 with an error code for error conditions,
+  so stale-token unlink must not depend on revocation success to remove a local unusable link.
 
 *** Next best step
 
-Retry starting the managed Broadcast with the same linked channel and use the new Host-visible
-reason to decide whether the fix is channel setup, Google Cloud quota, relinking, or app-side
-request settings.
+Unlink the stale YouTube channel again. It should clear the saved link and show the stale-auth
+unlink confirmation, then the Host should link the channel again before retrying managed Broadcast
+start.
 
 ** 2026-06-24 GitHub publishing prep
 

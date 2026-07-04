@@ -81,6 +81,11 @@
 		<p class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
 			YouTube channel unlinked and Google access revoked.
 		</p>
+	{:else if data.youtubeLinkStatus === "unlinked-stale"}
+		<p class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+			YouTube channel unlinked. The stored Google authorization was already invalid, so you can
+			link the channel again.
+		</p>
 	{:else if data.youtubeLinkStatus === "not-linked"}
 		<p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
 			No linked YouTube channel was found. Link a channel before trying to unlink it.

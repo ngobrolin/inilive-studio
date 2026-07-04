@@ -6,6 +6,7 @@ import { buildHostSessionCookie, exchangeMagicLinkForSession } from "$lib/server
 import { generateSecureToken, hashToken } from "$lib/server/auth/tokens";
 import {
   clearYouTubeRuntimeForTests,
+  GoogleYouTubeApiError,
   setYouTubeRuntimeForTests,
 } from "$lib/server/youtube/runtime";
 import { createInMemoryYouTubeStore } from "$lib/server/youtube/store";
@@ -101,6 +102,40 @@ describe("YouTube unlink endpoint", () => {
     await expect(store.getChannelLinkForHost(hostAccountId)).resolves.toMatchObject({
       youtubeChannelId: "channel-1",
     });
+  });
+
+  it("removes a stale channel link when Google says the stored authorization is invalid", async () => {
+    const { sessionToken, expiresAt, hostAccountId } = await createSignedInHost();
+    const store = createInMemoryYouTubeStore();
+    await store.saveChannelLink({
+      hostAccountId,
+      youtubeChannelId: "channel-1",
+      youtubeChannelTitle: "Live Channel",
+      refreshTokenCiphertext: "encrypted-refresh-token",
+    });
+    setYouTubeRuntimeForTests({
+      store,
+      googleClient: {
+        exchangeCode: async () => ({ accessToken: "unused", refreshToken: null }),
+        getOwnChannel: async () => ({ id: "channel-1", title: "Live Channel" }),
+        refreshAccessToken: async () => "unused",
+        revokeToken: async () => {
+          throw new GoogleYouTubeApiError({
+            operation: "Google OAuth token revocation",
+            status: 400,
+            reason: "invalid_grant",
+            googleMessage: "Token has been expired or revoked.",
+          });
+        },
+      },
+      decryptRefreshToken: () => "stored-refresh-token",
+    });
+
+    const response = await postUnlinkRequest(sessionToken, expiresAt);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe("/dashboard?youtube=unlinked-stale");
+    await expect(store.getChannelLinkForHost(hostAccountId)).resolves.toBeNull();
   });
 
   it("reports local cleanup failure separately after Google revocation succeeds", async () => {

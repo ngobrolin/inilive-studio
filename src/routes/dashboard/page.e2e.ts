@@ -58,6 +58,13 @@ test("dashboard explains safe YouTube unlink outcomes", async ({ page, request }
   await page.goto("/dashboard?youtube=unlinked");
   await expect(page.getByText("YouTube channel unlinked and Google access revoked.")).toBeVisible();
 
+  await page.goto("/dashboard?youtube=unlinked-stale");
+  await expect(
+    page.getByText(
+      "YouTube channel unlinked. The stored Google authorization was already invalid, so you can link the channel again.",
+    ),
+  ).toBeVisible();
+
   await page.goto("/dashboard?youtube=not-linked");
   await expect(
     page.getByText(

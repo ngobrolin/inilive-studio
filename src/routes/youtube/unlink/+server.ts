@@ -4,6 +4,7 @@ import {
   decryptYouTubeRefreshToken,
   getGoogleYouTubeClient,
   getYouTubeStore,
+  GoogleYouTubeApiError,
 } from "$lib/server/youtube/runtime";
 
 export const POST: RequestHandler = async ({ cookies }) => {
@@ -18,11 +19,16 @@ export const POST: RequestHandler = async ({ cookies }) => {
     return redirectTo("/dashboard?youtube=not-linked");
   }
 
+  let staleGoogleAuthorization = false;
   try {
     const refreshToken = decryptYouTubeRefreshToken(channelLink.refreshTokenCiphertext);
     await getGoogleYouTubeClient().revokeToken(refreshToken);
-  } catch {
-    return redirectTo("/dashboard?youtube=unlink-failed");
+  } catch (error) {
+    if (isStaleGoogleAuthorization(error)) {
+      staleGoogleAuthorization = true;
+    } else {
+      return redirectTo("/dashboard?youtube=unlink-failed");
+    }
   }
 
   try {
@@ -31,8 +37,17 @@ export const POST: RequestHandler = async ({ cookies }) => {
     return redirectTo("/dashboard?youtube=unlink-cleanup-failed");
   }
 
-  return redirectTo("/dashboard?youtube=unlinked");
+  return redirectTo(
+    staleGoogleAuthorization ? "/dashboard?youtube=unlinked-stale" : "/dashboard?youtube=unlinked",
+  );
 };
+
+function isStaleGoogleAuthorization(error: unknown): boolean {
+  return (
+    error instanceof GoogleYouTubeApiError &&
+    (error.reason === "invalid_grant" || error.reason === "invalid_token")
+  );
+}
 
 function redirectTo(location: string) {
   return new Response(null, {
