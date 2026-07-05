@@ -76,6 +76,12 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
     - Verification: `npm run check`, targeted broadcast/presence unit tests, full
       `npx playwright test src/routes/room --workers=1`, Impeccable detector, Playwright desktop
       and mobile visual screenshots, and final `./init.sh` all passed.
+  - 2026-07-05: Added Open Design desktop prototype artifacts.
+    - `brand-spec.md` codifies the current `DESIGN.md` palette into OKLCH tokens.
+    - `inilive-studio-console-prototype.html` explores a high-fidelity Dashboard, Broadcast setup,
+      Backstage, and Studio Room flow while preserving the anti-StreamYard-clone design direction.
+    - Verification: `./init.sh` passed after fixing dev-dependency installation in `init.sh`; static
+      HTML/script checks and `git diff --check` passed.
 
 * Status Legend
 

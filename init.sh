@@ -6,7 +6,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
 # Replace these commands with the correct commands for your repository.
-INSTALL_CMD=(npm install)
+INSTALL_CMD=(npm install --include=dev)
 VERIFY_CMD=(npm test)
 START_CMD=(npm run dev)
 

@@ -16,6 +16,47 @@
 
 * Session Log
 
+** 2026-07-05 Open Design prototype - live studio console
+
+*** Goal
+
+Create a high-fidelity desktop prototype for a StreamYard-style live studio request while preserving
+iniLive Studio's approved anti-reference and Backstage Console design system.
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed `PROGRESS.org`, `PLAN.org`, recent commits, `DESIGN.md`, `PRODUCT.md`, and the current
+  design-system sidecar context.
+- Fixed the standard startup path so `init.sh` installs dev dependencies even when the local npm
+  config omits dev dependencies.
+- Ran `./init.sh` successfully after the startup fix.
+- Added `brand-spec.md` with OKLCH design tokens derived from `DESIGN.md`.
+- Added `inilive-studio-console-prototype.html`, a standalone high-fidelity desktop prototype with
+  Dashboard, Broadcast setup, Backstage, and Studio Room screens.
+
+*** Verification run
+
+- First `./init.sh` failed before app verification because local npm config omitted dev dependencies,
+  leaving `svelte-kit` and `vitest` unavailable.
+- Updated `init.sh` to run `npm install --include=dev`.
+- Reran `./init.sh`: passed, 166 Vitest tests and 64 Playwright tests.
+- `git diff --check`: passed.
+- Static artifact checks passed: no filler markers, required screen IDs present, balanced section and
+  button tags, inline prototype script parses.
+- Standalone Playwright screenshot verification was attempted but Chromium failed at launch with a
+  macOS sandbox Mach port permission error before the page loaded.
+
+*** Known risk or unresolved issue
+
+- The HTML artifact was structurally checked but not visually screenshotted because standalone
+  Chromium launch failed outside the repo's normal Playwright run.
+
+*** Next best step
+
+Open `inilive-studio-console-prototype.html` in a browser preview and choose whether to adapt the
+strongest ideas back into the Svelte product surfaces.
+
 ** 2026-07-04 impeccable polish Backstage
 
 *** Goal
