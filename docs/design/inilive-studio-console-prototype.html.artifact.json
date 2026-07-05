@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "iniLive Studio Console Prototype",
+  "entry": "inilive-studio-console-prototype.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "createdAt": "2026-07-05T03:31:21.562Z",
+  "updatedAt": "2026-07-05T03:31:21.581Z",
+  "metadata": {
+    "identifier": "inilive-studio-console-prototype",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}
