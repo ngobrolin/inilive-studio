@@ -265,33 +265,38 @@
 	});
 </script>
 
-<main class="mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-8 text-neutral-950">
-	<header class="border-b border-neutral-300 pb-5">
-		<p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
-			Backstage · Room {presence.roomId}
-		</p>
-		<h1 class="mt-2 text-4xl font-semibold">{roomHeading}</h1>
-		<p class="mt-3 max-w-2xl text-lg leading-8 text-neutral-700">
-			{roomDescription}
-		</p>
-		<div class="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
-			<p class="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700">{participantSummary}</p>
-			<p
-				class="rounded-full px-3 py-1 {hasLinkedYouTubeChannel
-					? 'bg-green-100 text-green-800'
-					: 'bg-amber-100 text-amber-950'}"
-			>
-				{youtubeSummary}
-			</p>
-			<p
-				class="rounded-full px-3 py-1 {isBroadcasting
-					? 'bg-cyan-100 text-cyan-950'
-					: 'bg-neutral-100 text-neutral-700'}"
-			>
-				{broadcastStateLabel}
-			</p>
-		</div>
-	</header>
+<main class="min-h-screen bg-neutral-100 px-5 py-6 text-neutral-950">
+	<div class="mx-auto max-w-[1440px]">
+		<header class="rounded-lg border border-neutral-300 bg-white p-5 shadow-sm">
+			<div class="flex flex-wrap items-start justify-between gap-5">
+				<div>
+					<p class="text-xs font-semibold uppercase tracking-[0.18em] text-neutral-500">
+						Backstage · Room {presence.roomId}
+					</p>
+					<h1 class="mt-2 text-4xl font-semibold">{roomHeading}</h1>
+					<p class="mt-3 max-w-3xl text-sm leading-6 text-neutral-600">
+						{roomDescription}
+					</p>
+				</div>
+				<div class="flex flex-wrap gap-2 text-xs font-semibold">
+					<p class="rounded-full bg-neutral-100 px-3 py-1 text-neutral-700">{participantSummary}</p>
+					<p
+						class="rounded-full px-3 py-1 {hasLinkedYouTubeChannel
+							? 'bg-green-100 text-green-800'
+							: 'bg-amber-100 text-amber-950'}"
+					>
+						{youtubeSummary}
+					</p>
+					<p
+						class="rounded-full px-3 py-1 {isBroadcasting
+							? 'bg-cyan-100 text-cyan-950'
+							: 'bg-neutral-100 text-neutral-700'}"
+					>
+						{broadcastStateLabel}
+					</p>
+				</div>
+			</div>
+		</header>
 
 	{#if actionError}
 		<p
@@ -300,245 +305,6 @@
 		>
 			{actionError}
 		</p>
-	{/if}
-
-	{#if activeHost && guestInvitePath}
-		<section
-			class="mt-6 {panelBaseClass} border-neutral-300 bg-white"
-			data-testid="guest-invite-controls"
-		>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Guest Invite</p>
-			<p class="mt-2 text-sm leading-6 text-neutral-600">
-				Share this link with Guests. The legacy <code class="font-mono text-xs">/invite/demo</code>
-				path no longer works for product Rooms.
-			</p>
-			<label class="mt-4 block text-xs font-medium text-neutral-600">
-				Guest Invite link
-				<input
-					class="mt-1 w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-cyan-700"
-					data-testid="guest-invite-link"
-					readonly
-					value={guestInvitePath}
-				/>
-			</label>
-		</section>
-	{/if}
-
-	<section
-		class="mt-6 {panelBaseClass} border-cyan-300 bg-cyan-50 text-cyan-950"
-		data-testid="screen-share-status"
-	>
-		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Screen Share</p>
-		{#if activeScreenShare}
-			<h2 class="mt-2 text-2xl font-semibold">
-				{activeScreenShare.displayName} is sharing their screen.
-			</h2>
-			<p class="mt-2 text-sm leading-6">
-				Screen Share is active and becomes the primary source for later Composed Room Feed work.
-			</p>
-		{:else}
-			<h2 class="mt-2 text-2xl font-semibold">No Screen Share is active.</h2>
-			<p class="mt-2 text-sm leading-6">
-				Only the Host can start Screen Share from Backstage.
-			</p>
-		{/if}
-
-		{#if activeHost}
-			<div class="mt-4 flex flex-wrap gap-3">
-				{#if activeScreenShare}
-					<button
-						class={signalButtonClass}
-						disabled={screenShareBusy}
-						onclick={() => void submitScreenShareAction('stop')}
-						type="button"
-					>
-						Stop Screen Share
-					</button>
-				{:else}
-					<button
-						class={signalButtonClass}
-						disabled={screenShareBusy}
-						onclick={() => void submitScreenShareAction('start')}
-						type="button"
-					>
-						Start Screen Share
-					</button>
-				{/if}
-			</div>
-			{#if screenShareError}
-				<p class="mt-3 text-sm font-semibold text-rose-800">{screenShareError}</p>
-			{/if}
-		{/if}
-	</section>
-
-	<section
-		aria-live="polite"
-		class={broadcastStatePanelClass}
-		data-testid="broadcast-state"
-	>
-		<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast State</p>
-		<h2 class="mt-2 text-2xl font-semibold">{broadcastStateLabel}</h2>
-		<p class="mt-2 text-sm leading-6">{broadcastStateDescription}</p>
-		{#if activeHost && liveBroadcast.youtubeControlRoomUrl}
-			<p class="mt-4 text-sm leading-6">
-				<a
-					class="font-semibold underline decoration-current underline-offset-4 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
-					data-testid="youtube-control-room-link"
-					href={liveBroadcast.youtubeControlRoomUrl}
-					rel="noreferrer"
-					target="_blank"
-				>
-					Open this YouTube live event in Live Control Room
-				</a>
-				<span class="block opacity-80">
-					Use this event-specific link for verification, not YouTube Studio's default stream-key page.
-				</span>
-			</p>
-		{/if}
-	</section>
-
-	{#if activeHost && liveBroadcast.health}
-		<section
-			aria-live="polite"
-			class={broadcastHealthPanelClass}
-			data-testid="broadcast-health"
-		>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast Health</p>
-			<h2 class="mt-2 text-2xl font-semibold">{broadcastHealthLabel}</h2>
-			<p class="mt-2 text-sm leading-6">{liveBroadcast.health.message}</p>
-		</section>
-	{/if}
-
-	{#if isCountdown}
-		<section
-			class="mt-6 rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
-			data-testid="broadcast-countdown"
-		>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em]">Countdown</p>
-			<p class="mt-2 text-4xl font-semibold tabular-nums">{countdownSecondsRemaining}</p>
-			<p class="mt-2 text-sm leading-6">
-				Going live in {countdownSecondsRemaining} second{countdownSecondsRemaining === 1 ? '' : 's'}.
-			</p>
-			{#if activeHost}
-				<form class="mt-4" method="POST" action={broadcastActionUrl}>
-					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-					<button
-						class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold transition hover:border-amber-700 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
-						name="broadcastAction"
-						type="submit"
-						value="cancel-countdown"
-					>
-						Cancel Countdown
-					</button>
-				</form>
-				<form bind:this={completeCountdownForm} class="hidden" method="POST" action={broadcastActionUrl}>
-					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-					<input name="broadcastAction" type="hidden" value="complete-countdown" />
-				</form>
-			{/if}
-		</section>
-	{/if}
-
-	{#if activeHost}
-		<section
-			class="mt-6 {panelBaseClass} border-neutral-300 bg-white"
-			data-testid="broadcast-controls"
-		>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
-				Broadcast controls
-			</p>
-			<h2 class="mt-1 text-2xl font-semibold">
-				{hasLinkedYouTubeChannel ? 'Managed YouTube Broadcast' : 'YouTube stream credentials'}
-			</h2>
-			{#if hasLinkedYouTubeChannel}
-				<p class="mt-2 text-sm leading-6 text-neutral-600">
-					iniLive Studio will create a new YouTube live event and use YouTube-issued ingest
-					credentials internally. You do not need to copy a Stream URL or Stream key from YouTube
-					Studio.
-				</p>
-			{:else}
-				<p class="mt-2 text-sm leading-6 text-neutral-600">
-					Paste the RTMP server URL and stream key for this Broadcast attempt only. Credentials
-					stay in memory and are not persisted or logged.
-				</p>
-			{/if}
-			<p class="mt-2 text-sm leading-6 text-neutral-600">
-				In v1, the YouTube archive is the recording. iniLive Studio does not store a separate copy.
-			</p>
-
-			{#if isBroadcasting}
-				<div class="mt-4 flex flex-wrap gap-3">
-					<form method="POST" action={broadcastActionUrl}>
-						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-						<button
-							class={dangerButtonClass}
-							name="broadcastAction"
-							type="submit"
-							value="end"
-						>
-							End Broadcast
-						</button>
-					</form>
-					<form method="POST" action={broadcastActionUrl}>
-						<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-						<button
-							class={dangerSecondaryButtonClass}
-							name="broadcastAction"
-							type="submit"
-							value="simulate-fail"
-						>
-							Simulate bridge failure
-						</button>
-					</form>
-				</div>
-			{:else if !isCountdown}
-				<form class="mt-4 grid gap-4" method="POST" action={broadcastActionUrl}>
-					<input name="hostParticipantId" type="hidden" value={activeHost.id} />
-					{#if hasLinkedYouTubeChannel}
-						<div class="rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
-							<p class="font-semibold">Ready for one-click YouTube setup.</p>
-							<p class="mt-1 leading-6">
-								Start will create a fresh YouTube live event for this Room and send the Composed Room
-								Feed to that event.
-							</p>
-						</div>
-					{:else}
-						<div>
-							<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
-							<input
-								class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
-								id="rtmp-server-url"
-								name="rtmpServerUrl"
-								placeholder="rtmp://a.rtmp.youtube.com/live2"
-								type="url"
-							/>
-						</div>
-						<div>
-							<label class="block text-sm font-semibold" for="stream-key">Stream key</label>
-							<input
-								class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
-								id="stream-key"
-								name="streamKey"
-								placeholder="Paste the YouTube stream key"
-								type="password"
-							/>
-						</div>
-					{/if}
-					<button
-						class={primaryButtonClass}
-						name="broadcastAction"
-						type="submit"
-						value="start"
-					>
-						{hasLinkedYouTubeChannel
-							? 'Start YouTube Broadcast Countdown'
-							: isProductRoom
-								? 'Start Broadcast Countdown'
-								: 'Start Broadcast'}
-					</button>
-				</form>
-			{/if}
-		</section>
 	{/if}
 
 	{#if activeParticipant?.removed}
@@ -594,8 +360,93 @@
 		</section>
 	{/if}
 
-	<section class="grid gap-4 py-8 lg:grid-cols-[minmax(0,1fr)_24rem]">
-		<section aria-labelledby="participant-grid-title" class="grid content-start gap-4">
+	<section class="grid gap-5 py-6 xl:grid-cols-[minmax(0,1fr)_25rem]">
+		<section aria-label="Studio workspace" class="grid content-start gap-5">
+			<ComposedFeedCanvas
+				activeScreenShare={activeScreenShare}
+				broadcast={liveBroadcast}
+				{hostWhipIngestGrant}
+				participants={visibleParticipants}
+			/>
+
+			<section
+				class="rounded-lg border border-neutral-300 bg-white p-5 shadow-sm"
+				data-testid="broadcast-preview"
+			>
+				<div class="flex items-start justify-between gap-3">
+					<div>
+						<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+							Backstage preview
+						</p>
+						<h2 class="mt-1 text-2xl font-semibold">Broadcast Preview</h2>
+					</div>
+					<p
+						class="rounded-full px-3 py-1 text-xs font-semibold {isBroadcasting
+							? 'bg-rose-100 text-rose-950'
+							: 'bg-amber-100 text-amber-950'}"
+					>
+						{isBroadcasting ? 'Live' : 'Not live'}
+					</p>
+				</div>
+				<div class="mt-4 overflow-hidden rounded-md bg-neutral-950 p-3 text-white">
+					<div class="aspect-video">
+						{#if activeScreenShare}
+							<div class="flex h-full flex-col justify-between bg-cyan-950 p-4">
+								<div>
+									<p class="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">
+										Screen Share source
+									</p>
+									<p class="mt-1 text-lg font-semibold">
+										{activeScreenShare.displayName}
+									</p>
+								</div>
+								<p class="text-xs text-cyan-100">
+									Screen Share becomes primary in the composed feed.
+								</p>
+							</div>
+						{:else}
+							<div class="grid h-full grid-cols-2 gap-2">
+								{#each previewParticipants as participant (participant.id)}
+									<div
+										class="flex min-h-0 flex-col justify-between rounded bg-neutral-800 p-2"
+									>
+										<div class="flex min-h-0 flex-1 items-center justify-center">
+											{#if participant.cameraEnabled}
+												<p class="text-xs font-semibold text-cyan-200">Camera on</p>
+											{:else}
+												<div class="text-center">
+													<div
+														class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 text-sm font-semibold"
+													>
+														{participant.displayName.slice(0, 1).toUpperCase()}
+													</div>
+													<p class="mt-1 text-[0.7rem] text-neutral-300">Camera off</p>
+												</div>
+											{/if}
+										</div>
+										<div class="mt-2 flex items-center justify-between gap-2 text-xs">
+											<p class="truncate font-semibold">{participant.displayName}</p>
+											<p class="shrink-0 text-neutral-300">
+												{participant.role === 'host' ? 'Host' : 'Guest'}
+											</p>
+										</div>
+									</div>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				</div>
+				<p class="mt-3 text-sm leading-6 text-neutral-600">
+					{#if isBroadcasting}
+						This Broadcast Preview shows what the Audience sees on YouTube while Broadcasting.
+					{:else}
+						This is the Room-visible Broadcast Preview while Backstage. It is not sent to a
+						Broadcast Destination yet.
+					{/if}
+				</p>
+			</section>
+
+			<section aria-labelledby="participant-grid-title" class="grid content-start gap-4">
 			<div>
 				<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
 					Collaboration view
@@ -698,90 +549,246 @@
 				{/each}
 			</div>
 		</section>
+		</section>
 
 		<aside class="grid content-start gap-4">
-			<ComposedFeedCanvas
-				activeScreenShare={activeScreenShare}
-				broadcast={liveBroadcast}
-				{hostWhipIngestGrant}
-				participants={visibleParticipants}
-			/>
+			{#if activeHost && guestInvitePath}
+				<section
+					class="{panelBaseClass} border-neutral-300 bg-white"
+					data-testid="guest-invite-controls"
+				>
+					<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">Guest Invite</p>
+					<p class="mt-2 text-sm leading-6 text-neutral-600">
+						Share this link with Guests. The legacy <code class="font-mono text-xs">/invite/demo</code>
+						path no longer works for product Rooms.
+					</p>
+					<label class="mt-4 block text-xs font-medium text-neutral-600">
+						Guest Invite link
+						<input
+							class="mt-1 w-full rounded-md border border-neutral-300 bg-neutral-50 px-3 py-2 font-mono text-xs focus:outline-none focus:ring-2 focus:ring-cyan-700"
+							data-testid="guest-invite-link"
+							readonly
+							value={guestInvitePath}
+						/>
+					</label>
+				</section>
+			{/if}
 
 			<section
-				class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm"
-				data-testid="broadcast-preview"
+				aria-live="polite"
+				class={broadcastStatePanelClass}
+				data-testid="broadcast-state"
 			>
-				<div class="flex items-start justify-between gap-3">
-					<div>
-						<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
-							Backstage preview
-						</p>
-						<h2 class="mt-1 text-2xl font-semibold">Broadcast Preview</h2>
-					</div>
-					<p
-						class="rounded-full px-3 py-1 text-xs font-semibold {isBroadcasting
-							? 'bg-rose-100 text-rose-950'
-							: 'bg-amber-100 text-amber-950'}"
-					>
-						{isBroadcasting ? 'Live' : 'Not live'}
+				<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast State</p>
+				<h2 class="mt-2 text-2xl font-semibold">{broadcastStateLabel}</h2>
+				<p class="mt-2 text-sm leading-6">{broadcastStateDescription}</p>
+				{#if activeHost && liveBroadcast.youtubeControlRoomUrl}
+					<p class="mt-4 text-sm leading-6">
+						<a
+							class="font-semibold underline decoration-current underline-offset-4 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
+							data-testid="youtube-control-room-link"
+							href={liveBroadcast.youtubeControlRoomUrl}
+							rel="noreferrer"
+							target="_blank"
+						>
+							Open this YouTube live event in Live Control Room
+						</a>
+						<span class="block opacity-80">
+							Use this event-specific link for verification, not YouTube Studio's default stream-key page.
+						</span>
 					</p>
-				</div>
-				<div class="mt-4 overflow-hidden rounded-md bg-neutral-950 p-3 text-white">
-					<div class="aspect-video">
-						{#if activeScreenShare}
-							<div class="flex h-full flex-col justify-between bg-cyan-950 p-4">
-								<div>
-									<p class="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">
-										Screen Share source
-									</p>
-									<p class="mt-1 text-lg font-semibold">
-										{activeScreenShare.displayName}
+				{/if}
+			</section>
+
+			{#if activeHost && liveBroadcast.health}
+				<section
+					aria-live="polite"
+					class={broadcastHealthPanelClass}
+					data-testid="broadcast-health"
+				>
+					<p class="text-sm font-semibold uppercase tracking-[0.14em]">Broadcast Health</p>
+					<h2 class="mt-2 text-2xl font-semibold">{broadcastHealthLabel}</h2>
+					<p class="mt-2 text-sm leading-6">{liveBroadcast.health.message}</p>
+				</section>
+			{/if}
+
+			{#if isCountdown}
+				<section
+					class="rounded-md border border-amber-300 bg-amber-50 p-5 text-amber-950 shadow-sm"
+					data-testid="broadcast-countdown"
+				>
+					<p class="text-sm font-semibold uppercase tracking-[0.14em]">Countdown</p>
+					<p class="mt-2 text-4xl font-semibold tabular-nums">{countdownSecondsRemaining}</p>
+					<p class="mt-2 text-sm leading-6">
+						Going live in {countdownSecondsRemaining} second{countdownSecondsRemaining === 1 ? '' : 's'}.
+					</p>
+					{#if activeHost}
+						<form class="mt-4" method="POST" action={broadcastActionUrl}>
+							<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+							<button
+								class="rounded-md border border-amber-400 px-4 py-3 text-sm font-semibold transition hover:border-amber-700 focus:outline-none focus:ring-2 focus:ring-cyan-700 focus:ring-offset-2"
+								name="broadcastAction"
+								type="submit"
+								value="cancel-countdown"
+							>
+								Cancel Countdown
+							</button>
+						</form>
+						<form bind:this={completeCountdownForm} class="hidden" method="POST" action={broadcastActionUrl}>
+							<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+							<input name="broadcastAction" type="hidden" value="complete-countdown" />
+						</form>
+					{/if}
+				</section>
+			{/if}
+
+			{#if activeHost}
+				<section
+					class="{panelBaseClass} border-neutral-300 bg-white"
+					data-testid="broadcast-controls"
+				>
+					<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+						Broadcast controls
+					</p>
+					<h2 class="mt-1 text-2xl font-semibold">
+						{hasLinkedYouTubeChannel ? 'Managed YouTube Broadcast' : 'YouTube stream credentials'}
+					</h2>
+					{#if hasLinkedYouTubeChannel}
+						<p class="mt-2 text-sm leading-6 text-neutral-600">
+							iniLive Studio will create a new YouTube live event and use YouTube-issued ingest
+							credentials internally. You do not need to copy a Stream URL or Stream key from YouTube
+							Studio.
+						</p>
+					{:else}
+						<p class="mt-2 text-sm leading-6 text-neutral-600">
+							Paste the RTMP server URL and stream key for this Broadcast attempt only. Credentials
+							stay in memory and are not persisted or logged.
+						</p>
+					{/if}
+					<p class="mt-2 text-sm leading-6 text-neutral-600">
+						In v1, the YouTube archive is the recording. iniLive Studio does not store a separate copy.
+					</p>
+
+					{#if isBroadcasting}
+						<div class="mt-4 flex flex-wrap gap-3">
+							<form method="POST" action={broadcastActionUrl}>
+								<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+								<button
+									class={dangerButtonClass}
+									name="broadcastAction"
+									type="submit"
+									value="end"
+								>
+									End Broadcast
+								</button>
+							</form>
+							<form method="POST" action={broadcastActionUrl}>
+								<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+								<button
+									class={dangerSecondaryButtonClass}
+									name="broadcastAction"
+									type="submit"
+									value="simulate-fail"
+								>
+									Simulate bridge failure
+								</button>
+							</form>
+						</div>
+					{:else if !isCountdown}
+						<form class="mt-4 grid gap-4" method="POST" action={broadcastActionUrl}>
+							<input name="hostParticipantId" type="hidden" value={activeHost.id} />
+							{#if hasLinkedYouTubeChannel}
+								<div class="rounded-md border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-950">
+									<p class="font-semibold">Ready for one-click YouTube setup.</p>
+									<p class="mt-1 leading-6">
+										Start will create a fresh YouTube live event for this Room and send the Composed Room
+										Feed to that event.
 									</p>
 								</div>
-								<p class="text-xs text-cyan-100">
-									Screen Share becomes primary in the composed feed.
-								</p>
-							</div>
+							{:else}
+								<div>
+									<label class="block text-sm font-semibold" for="rtmp-server-url">RTMP server URL</label>
+									<input
+										class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+										id="rtmp-server-url"
+										name="rtmpServerUrl"
+										placeholder="rtmp://a.rtmp.youtube.com/live2"
+										type="url"
+									/>
+								</div>
+								<div>
+									<label class="block text-sm font-semibold" for="stream-key">Stream key</label>
+									<input
+										class="mt-2 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-700"
+										id="stream-key"
+										name="streamKey"
+										placeholder="Paste the YouTube stream key"
+										type="password"
+									/>
+								</div>
+							{/if}
+							<button
+								class={primaryButtonClass}
+								name="broadcastAction"
+								type="submit"
+								value="start"
+							>
+								{hasLinkedYouTubeChannel
+									? 'Start YouTube Broadcast Countdown'
+									: isProductRoom
+										? 'Start Broadcast Countdown'
+										: 'Start Broadcast'}
+							</button>
+						</form>
+					{/if}
+				</section>
+			{/if}
+
+			<section
+				class="{panelBaseClass} border-cyan-300 bg-cyan-50 text-cyan-950"
+				data-testid="screen-share-status"
+			>
+				<p class="text-sm font-semibold uppercase tracking-[0.14em]">Screen Share</p>
+				{#if activeScreenShare}
+					<h2 class="mt-2 text-2xl font-semibold">
+						{activeScreenShare.displayName} is sharing their screen.
+					</h2>
+					<p class="mt-2 text-sm leading-6">
+						Screen Share is active and becomes the primary source for later Composed Room Feed work.
+					</p>
+				{:else}
+					<h2 class="mt-2 text-2xl font-semibold">No Screen Share is active.</h2>
+					<p class="mt-2 text-sm leading-6">
+						Only the Host can start Screen Share from Backstage.
+					</p>
+				{/if}
+
+				{#if activeHost}
+					<div class="mt-4 flex flex-wrap gap-3">
+						{#if activeScreenShare}
+							<button
+								class={signalButtonClass}
+								disabled={screenShareBusy}
+								onclick={() => void submitScreenShareAction('stop')}
+								type="button"
+							>
+								Stop Screen Share
+							</button>
 						{:else}
-							<div class="grid h-full grid-cols-2 gap-2">
-								{#each previewParticipants as participant (participant.id)}
-									<div
-										class="flex min-h-0 flex-col justify-between rounded bg-neutral-800 p-2"
-									>
-										<div class="flex min-h-0 flex-1 items-center justify-center">
-											{#if participant.cameraEnabled}
-												<p class="text-xs font-semibold text-cyan-200">Camera on</p>
-											{:else}
-												<div class="text-center">
-													<div
-														class="mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-neutral-700 text-sm font-semibold"
-													>
-														{participant.displayName.slice(0, 1).toUpperCase()}
-													</div>
-													<p class="mt-1 text-[0.7rem] text-neutral-300">Camera off</p>
-												</div>
-											{/if}
-										</div>
-										<div class="mt-2 flex items-center justify-between gap-2 text-xs">
-											<p class="truncate font-semibold">{participant.displayName}</p>
-											<p class="shrink-0 text-neutral-300">
-												{participant.role === 'host' ? 'Host' : 'Guest'}
-											</p>
-										</div>
-									</div>
-								{/each}
-							</div>
+							<button
+								class={signalButtonClass}
+								disabled={screenShareBusy}
+								onclick={() => void submitScreenShareAction('start')}
+								type="button"
+							>
+								Start Screen Share
+							</button>
 						{/if}
 					</div>
-				</div>
-				<p class="mt-3 text-sm leading-6 text-neutral-600">
-					{#if isBroadcasting}
-						This Broadcast Preview shows what the Audience sees on YouTube while Broadcasting.
-					{:else}
-						This is the Room-visible Broadcast Preview while Backstage. It is not sent to a
-						Broadcast Destination yet.
+					{#if screenShareError}
+						<p class="mt-3 text-sm font-semibold text-rose-800">{screenShareError}</p>
 					{/if}
-				</p>
+				{/if}
 			</section>
 
 			<MediaConnectionPanel
@@ -859,4 +866,5 @@
 			</section>
 		</aside>
 	</section>
+	</div>
 </main>

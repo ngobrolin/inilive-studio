@@ -1,5 +1,5 @@
 #+TITLE: PLAN
-#+LAST_UPDATED: 2026-07-04
+#+LAST_UPDATED: 2026-07-05
 
 * Project
   :PROPERTIES:
@@ -82,6 +82,17 @@ iniLive Studio is a browser-based production Room where a signed-in Host brings 
       Backstage, and Studio Room flow while preserving the anti-StreamYard-clone design direction.
     - Verification: `./init.sh` passed after fixing dev-dependency installation in `init.sh`; static
       HTML/script checks and `git diff --check` passed.
+  - 2026-07-05: Implemented the approved console prototype direction in production UI.
+    - `/dashboard` now uses the Host dashboard rhythm from the prototype: a wide operational shell,
+      reusable Room list, Create Room panel, YouTube readiness, and Broadcast setup next action.
+    - Product Backstage now puts the real Composed Room Feed in the primary workspace and moves
+      Guest Invite, Broadcast State, Broadcast Health, Countdown, Broadcast controls, Screen Share,
+      media, Capacity, and Room Chat into an operator rail.
+    - `ComposedFeedCanvas.svelte` now uses the dark media-plane treatment while preserving canvas,
+      captureStream, and WHIP behavior.
+    - Verification: `npm run check`, targeted dashboard/Backstage/Broadcast/Screen Share Playwright
+      specs, temporary visual smoke screenshots, `git diff --check`, and final `./init.sh` all
+      passed.
 
 * Status Legend
 

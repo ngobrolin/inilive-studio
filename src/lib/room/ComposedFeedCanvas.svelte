@@ -417,10 +417,10 @@
 
 </script>
 
-<section class="rounded-md border border-neutral-300 bg-white p-5 shadow-sm" data-testid="composed-feed">
+<section class="rounded-lg border border-neutral-800 bg-neutral-950 p-4 text-white shadow-sm" data-testid="composed-feed">
 	<div class="flex flex-wrap items-start justify-between gap-3">
 		<div>
-			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-500">
+			<p class="text-sm font-semibold uppercase tracking-[0.14em] text-neutral-400">
 				Composed Room Feed
 			</p>
 			<h2 class="mt-1 text-2xl font-semibold">Canvas output</h2>
@@ -430,7 +430,7 @@
 		</p>
 	</div>
 
-	<div class="mt-4 overflow-hidden rounded-md border border-neutral-800 bg-neutral-950">
+	<div class="mt-4 overflow-hidden rounded-md border border-neutral-700 bg-black">
 		<canvas
 			class="aspect-video w-full"
 			data-testid="composition-canvas"
@@ -441,37 +441,37 @@
 	</div>
 
 	<dl class="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-		<div class="rounded-md bg-neutral-100 p-3">
-			<dt class="font-semibold text-neutral-600">Stream</dt>
-			<dd class="mt-1 font-semibold text-neutral-950" data-testid="capture-stream-status">
+		<div class="rounded-md border border-white/10 bg-white/5 p-3">
+			<dt class="font-semibold text-neutral-300">Stream</dt>
+			<dd class="mt-1 font-semibold text-white" data-testid="capture-stream-status">
 				{captureStatus}
 			</dd>
 		</div>
-		<div class="rounded-md bg-neutral-100 p-3">
-			<dt class="font-semibold text-neutral-600">Measured fps</dt>
+		<div class="rounded-md border border-white/10 bg-white/5 p-3">
+			<dt class="font-semibold text-neutral-300">Measured fps</dt>
 			<dd
 				bind:this={fpsDisplay}
-				class="mt-1 font-semibold text-neutral-950"
+				class="mt-1 font-semibold text-white"
 				data-testid="composition-fps"
 			>
 				Measuring
 			</dd>
 		</div>
-		<div class="rounded-md bg-neutral-100 p-3">
-			<dt class="font-semibold text-neutral-600">Primary source</dt>
-			<dd class="mt-1 font-semibold text-neutral-950" data-testid="composition-primary-source">
+		<div class="rounded-md border border-white/10 bg-white/5 p-3">
+			<dt class="font-semibold text-neutral-300">Primary source</dt>
+			<dd class="mt-1 font-semibold text-white" data-testid="composition-primary-source">
 				{activeScreenShare ? 'Screen Share' : 'Participant grid'}
 			</dd>
 		</div>
-		<div class="rounded-md bg-neutral-100 p-3">
-			<dt class="font-semibold text-neutral-600">WHIP ingest</dt>
-			<dd class="mt-1 font-semibold text-neutral-950" data-testid="whip-ingest-status">
+		<div class="rounded-md border border-white/10 bg-white/5 p-3">
+			<dt class="font-semibold text-neutral-300">WHIP ingest</dt>
+			<dd class="mt-1 font-semibold text-white" data-testid="whip-ingest-status">
 				{whipStatus}
 			</dd>
 		</div>
 	</dl>
 
-	<p class="mt-3 text-sm leading-6 text-neutral-600">
+	<p class="mt-3 text-sm leading-6 text-neutral-300">
 		This canvas is the Room feed used for Broadcast Preview and WHIP ingest.
 	</p>
 </section>

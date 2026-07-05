@@ -16,6 +16,62 @@
 
 * Session Log
 
+** 2026-07-05 Implement Open Design console prototype in product UI
+
+*** Goal
+
+Adapt the approved `inilive-studio-console-prototype.html` direction into the actual SvelteKit
+product surfaces without turning it into a static copy.
+
+*** Completed
+
+- Confirmed working directory: `/Users/riza/code/inilive-studio`.
+- Reviewed `PROGRESS.org`, `PLAN.org`, recent commits, `DESIGN.md`, `brand-spec.md`, the
+  standalone prototype, dashboard UI, Backstage UI, Composed Room Feed, and affected tests.
+- Ran the standard startup path before edits; `./init.sh` passed.
+- Redesigned `/dashboard` around the prototype's Host dashboard rhythm:
+  - wider console layout;
+  - reusable production Room list;
+  - right-side Create Room, Broadcast setup, YouTube readiness, and next-action panels;
+  - preserved Room creation, Guest Invite regeneration, YouTube link/unlink flows, and existing
+    labels used by tests.
+- Reworked product Backstage in `RoomPresencePanel.svelte`:
+  - moved the real Composed Room Feed into the primary workspace column;
+  - kept Broadcast Preview, participant grid, and live canvas output visible together;
+  - moved Guest Invite, Broadcast State, Broadcast Health, Countdown, Broadcast controls,
+    Screen Share, media, Capacity, and Room Chat into an operator rail;
+  - preserved Host/Guest authorization boundaries, form actions, and existing `data-testid`
+    contracts.
+- Restyled `ComposedFeedCanvas.svelte` as the dark media plane from the prototype while keeping
+  the same canvas and WHIP status behavior.
+
+*** Verification run
+
+- `./init.sh` before edits: passed.
+- `npm run check`: passed with 0 errors and 0 warnings.
+- `npx playwright test src/routes/dashboard/page.e2e.ts 'src/routes/room/\[roomId\]/composition-preview.e2e.ts' 'src/routes/room/\[roomId\]/shell.e2e.ts' --workers=1`: passed, 23 tests.
+- `npx playwright test 'src/routes/room/\[roomId\]/broadcast.e2e.ts' 'src/routes/room/\[roomId\]/screen-share.e2e.ts' 'src/routes/room/\[roomId\]/screen-share-broadcast.e2e.ts' src/routes/dashboard/broadcasts.e2e.ts --workers=1`: passed, 14 tests.
+- Temporary Playwright visual smoke passed and wrote screenshots outside the repo:
+  - `/private/tmp/inilive-redesign-dashboard.png`
+  - `/private/tmp/inilive-redesign-backstage.png`
+- `git diff --check`: passed.
+- Final `./init.sh`: passed, 162 Vitest tests, 4 skipped, and 64 Playwright tests.
+
+*** Known risk or unresolved issue
+
+- A direct raw Chromium launch and one standalone `npm run test:unit -- --run` attempt hit the
+  macOS Mach-port browser-runner permission issue seen in earlier prototype verification. The
+  repo's standard `./init.sh` path passed immediately afterward.
+- The working tree already contains unrelated prototype artifact changes:
+  `inilive-studio-console-prototype.html`, `inilive-studio-console-prototype.html.artifact.json`,
+  and `mr781cxz-DESIGN.md`. They were left untouched and should not be included with this UI
+  implementation commit unless intentionally reviewed.
+
+*** Next best step
+
+Open the product dashboard and a product Room Backstage page locally, review the screenshots, and
+decide whether Join Check should receive the same console shell treatment next.
+
 ** 2026-07-05 Open Design prototype - live studio console
 
 *** Goal
